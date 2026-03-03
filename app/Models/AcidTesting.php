@@ -79,6 +79,10 @@ class AcidTesting extends Model
     {
         return $this->hasMany(AcidTestPercentageDetail::class, 'acid_test_id');
     }
+    public function acidTest()
+    {
+        return $this->belongsTo(AcidTesting::class, 'acid_test_id');
+    }
 
     public function receiving()
     {
@@ -94,4 +98,8 @@ class AcidTesting extends Model
     {
         return $this->belongsTo(User::class, 'updated_by')->select('id', 'name');
     }
+   
+
+
+    
 }

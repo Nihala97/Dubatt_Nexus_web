@@ -28,6 +28,8 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->integer('created_by');
             $table->integer('updated_by');
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 

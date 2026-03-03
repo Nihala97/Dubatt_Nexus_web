@@ -16,7 +16,7 @@ class AcidTestingController extends Controller
      */
     public function index(Request $request)
     {
-        $tests = AcidTesting::with(['supplier', 'createdBy', 'updatedBy'])
+        $tests = AcidTesting::with(['supplier', 'createdBy', 'updatedBy', 'details'])
             ->when($request->supplier_id, fn($q) => $q->where('supplier_id', $request->supplier_id))
             ->when($request->status !== null, fn($q) => $q->where('status', $request->status))
             ->when($request->date_from, fn($q) => $q->whereDate('test_date', '>=', $request->date_from))

@@ -9,7 +9,8 @@ use App\Http\Controllers\Api\MaterialController;
 use App\Http\Controllers\Api\ReceivingController;
 use App\Http\Controllers\Api\AcidTestingController;
 use App\Http\Controllers\Api\AcidStockConditionController;
-use App\Http\Controllers\Api\BbsuController;
+use App\Http\Controllers\Api\BbsuBatchController;
+
 
 
 // future imports:
@@ -82,22 +83,7 @@ Route::middleware('auth:sanctum')->group(function () {
           Route::delete('/{id}', [MaterialController::class, 'destroy']);
      });
 
-    // ── Receiving ────────────────────────────────────────────────
-//     Route::prefix('receivings')->middleware('module:receiving')->group(function () {
-//         Route::get('/',                [ReceivingController::class, 'index']);
-//         Route::get('/{id}',            [ReceivingController::class, 'show']);
-//         Route::get('/lot/{lotNo}',     [ReceivingController::class, 'getByLot']);
-
-//         Route::post('/',               [ReceivingController::class, 'store'])
-//              ->middleware('module:receiving,can_create');
-//         Route::put('/{id}',            [ReceivingController::class, 'update'])
-//              ->middleware('module:receiving,can_edit');
-//         Route::patch('/{id}/status',   [ReceivingController::class, 'updateStatus'])
-//              ->middleware('module:receiving,can_edit');
-//         Route::delete('/{id}',         [ReceivingController::class, 'destroy'])
-//              ->middleware('module:receiving,can_delete');
-//     });
-
+ 
     // ── Receiving ─────────────────────────────────────────────────────
      Route::prefix('receivings')->middleware('module:receiving')->group(function () {
           Route::get('/',               [ReceivingController::class, 'index']);
@@ -145,29 +131,28 @@ Route::middleware('auth:sanctum')->group(function () {
                ->middleware('module:acid-testing,can_delete');
      });
 
-     Route::prefix('bbsu')->middleware('module:bbsu')->group(function () {
+     Route::prefix('bbsu-batches')->name('bbsu.')->group(function () {
 
-          // ── Static/named routes FIRST (before /{id}) ─────────────────
-          Route::get('/generate-doc-no',      [BbsuController::class, 'generateDocNo']);
-          Route::get('/output-materials',     [BbsuController::class, 'outputMaterials']);
-          Route::get('/available-lots',       [BbsuController::class, 'availableLots']);
+          // List all batches (with filters: status, category, doc_date, batch_no)
+          Route::get('/', [BbsuBatchController::class, 'index'])->name('index');
       
-          // ── CRUD ──────────────────────────────────────────────────────
-          Route::get('/',                     [BbsuController::class, 'index']);
-          Route::get('/{id}',                 [BbsuController::class, 'show']);
+          // Create new BBSU batch (header + input details + output material + power consumption)
+          Route::post('/', [BbsuBatchController::class, 'store'])->name('store');
       
-          Route::post('/',                    [BbsuController::class, 'store'])
-               ->middleware('module:bbsu,can_create');
+          // Show single batch with all related data
+          Route::get('/{bbsu_batch}', [BbsuBatchController::class, 'show'])->name('show');
       
-          Route::put('/{id}',                 [BbsuController::class, 'update'])
-               ->middleware('module:bbsu,can_edit');
+          // Update batch and all child records
+          Route::put('/{bbsu_batch}', [BbsuBatchController::class, 'update'])->name('update');
       
-          Route::patch('/{id}/status',        [BbsuController::class, 'updateStatus'])
-               ->middleware('module:bbsu,can_edit');
+          // Soft-delete batch
+          Route::delete('/{bbsu_batch}', [BbsuBatchController::class, 'destroy'])->name('destroy');
       
-          Route::delete('/{id}',              [BbsuController::class, 'destroy'])
-               ->middleware('module:bbsu,can_delete');
-      });
+          // Update batch status only
+          Route::patch('/{bbsu_batch}/status', [BbsuBatchController::class, 'updateStatus'])->name('updateStatus');
+          Route::get('/reports/acid-summary', [BbsuBatchController::class, 'acidSummary']) ->name('acidSummary');
+
+     });
     // ── Smelting ──────────────────────────────────────────────────
     // Route::prefix('smelting')->middleware('module:smelting')->group(function () { ... });
 

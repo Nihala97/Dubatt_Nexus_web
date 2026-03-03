@@ -291,20 +291,18 @@
             Receiving
         </a>
 
-        <a href="#" class="nav-item">
+        <a href="{{ route('admin.mes.acidTesting.index') }}" class="nav-item {{ request()->routeIs('admin.mes.acidTesting.*') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11"/>
             </svg>
             Acid Test
-            <span class="badge">Soon</span>
         </a>
 
-        <a href="#" class="nav-item">
+        <a href="{{ route('admin.mes.bbsu.index') }}" class="nav-item {{ request()->routeIs('admin.mes.bbsu.*') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 6h18M3 12h18M3 18h18"/>
             </svg>
             BBSU
-            <span class="badge">Soon</span>
         </a>
 
         <a href="#" class="nav-item">
