@@ -315,8 +315,8 @@
                 : '—';
             return `<tr>
                 <td style="padding-right:0;"><div class="checkbox-wrap"><input type="checkbox"></div></td>
-                <td><strong style="color:var(--gr-text-dark);">${item.lot_number ?? '—'}</strong></td>
                 <td><div style="display:flex;flex-direction:column;gap:2px;"><span style="font-weight:500;">${date}</span></div></td>
+                <td><strong style="color:var(--gr-text-dark);">${item.lot_number ?? '—'}</strong></td>
                 <td>${item.vehicle_number ?? '—'}</td>
                 <td><div style="display:flex;flex-direction:column;gap:2px;">
                     <span style="font-weight:600;color:var(--gr-text-dark);">${item.supplier?.supplier_name ?? '—'}</span>

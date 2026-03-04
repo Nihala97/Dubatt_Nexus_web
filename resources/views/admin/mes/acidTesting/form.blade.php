@@ -7,7 +7,7 @@
     <span style="margin:0 8px;color:var(--border);">/</span>
     <a href="{{ route('admin.mes.acidTesting.index') }}" style="color:var(--text-muted);text-decoration:none;">Acid Testing</a>
     <span style="margin:0 8px;color:var(--border);">/</span>
-    <strong>Create Record</strong>
+    <strong id="breadcrumbTitle">Loading...</strong>
 @endsection
 
 @push('styles')
@@ -18,7 +18,9 @@
     --text-muted:#6b8a78; --error:#dc2626; --shadow-sm:0 2px 8px rgba(0,0,0,0.06);
     --radius:12px;
   }
-
+  .form-page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+  .form-page-header h2 { font-size:clamp(18px,2.5vw,24px); font-weight:700; color:var(--text); margin-bottom:3px; }
+  .form-page-header p { font-size:13px; color:var(--text-muted); }
   .page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
   .page-header h2 { font-size:clamp(18px,2.5vw,23px); font-weight:800; color:var(--text); margin-bottom:3px; letter-spacing:-0.3px; }
   .page-header p { font-size:13px; color:var(--text-muted); }
@@ -108,6 +110,9 @@
   .form-alert.error   { background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; display:block; }
   .form-alert.success { background:#d1fae5; border:1px solid #6ee7b7; color:#065f46; display:block; }
 
+  .status-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; white-space:nowrap; margin-top:10px; }
+  .status-badge.draft     { background:#e0e7ff; color:#3730a3; }
+  .status-badge.submitted { background:#d1fae5; color:#065f46; }
   @media(max-width:768px) { .form-grid-2 { grid-template-columns:1fr 1fr; } }
   @media(max-width:520px) {
     .form-grid-2 { grid-template-columns:1fr; }
@@ -120,18 +125,19 @@
 @section('content')
 
   <!-- Page Header -->
-  <div class="page-header">
+  <div class="form-page-header" id="pageHeader">
     <div>
-      <h2>Acid Testing</h2>
-      <p>Record pallet weights, net weights and acid content readings for incoming battery lots</p>
+        <h2 id="pageTitle">Loading...</h2>
+        <p id="pageSubtitle"></p>
+        <div id="statusBadge"></div>
     </div>
-    <div style="display:flex;gap:10px;">
-      <a href="{{ route('admin.mes.acidTesting.index') }}" class="btn btn-outline btn-sm">
-        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-        Back to List
-      </a>
+    <div style="display:flex;gap:10px;" id="headerActions">
+        <a href="{{ route('admin.mes.acidTesting.index') }}" class="btn btn-outline btn-sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to List
+        </a>
     </div>
-  </div>
+</div>
 
   <div id="formAlert" class="form-alert"></div>
 
@@ -183,7 +189,7 @@
           <div class="input-wrap">
             <svg class="ico" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             <input type="text" id="supplier_name" class="autofilled" readonly placeholder="Select a lot first...">
-            <input type="hidden" id="supplier" name="supplier">
+            
           </div>
         </div>
 
@@ -266,15 +272,17 @@
       </div>
     </div>
   </div>
-
+  {{-- ═══ Hidden fields ═══ --}}
+  <input type="hidden" id="supplier" name="supplier">
+  <input type="hidden" id="invoice_qty" name="invoice_qty">
   {{-- ═══ STICKY FOOTER ═══ --}}
-  <div class="form-actions">
+  <div class="form-actions" id="formActions">
     <a href="{{ route('admin.mes.acidTesting.index') }}" class="btn btn-outline btn-sm">Cancel</a>
     <div style="display:flex;gap:10px;align-items:center;">
-      <!-- <button type="button" class="btn btn-primary btn-sm" onclick="saveRecord()"> -->
+      <span id="autosaveStatus" style="font-size:12px;color:var(--text-muted);display:none;"></span>
       <button type="button" class="btn btn-primary btn-sm" id="btnSave" onclick="saveForm()">
         <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Create Record
+        <span id="btnSaveLabel">Create Record</span>
       </button>
     </div>
   </div>
@@ -289,7 +297,8 @@ const isCreate   = PATH_PARTS[PATH_PARTS.length - 1] === 'create';
 const recordId   = isCreate ? null : PATH_PARTS[PATH_PARTS.length - 2];
 let isSubmitted  = false;
 let autosaveTimer;
-
+console.log("isCreate", isCreate);
+console.log("recordId", recordId);
 const REMARKS_OPTIONS = [
     { value: 1000024, text: 'USED GEL BATTERY/ABS'   },
     { value: 1000025, text: 'USED TRACTION BATTERY'   },
@@ -317,10 +326,10 @@ async function init() {
       
         // Set defaults
         // document.getElementById('receipt_date').value = new Date().toISOString().split('T')[0];
-        // document.getElementById('pageTitle').textContent       = 'Create Receiving';
-        // document.getElementById('pageSubtitle').textContent    = 'Record new raw material receiving log';
-        // document.getElementById('breadcrumbTitle').textContent = 'Create Receiving';
-        // document.getElementById('btnSaveLabel').textContent    = 'Create Record';
+        document.getElementById('pageTitle').textContent       = 'Create Acid Testing';
+        document.getElementById('pageSubtitle').textContent    = 'Record new raw material Acid Testing log';
+        document.getElementById('breadcrumbTitle').textContent = 'Create Acid Testing';
+        document.getElementById('btnSaveLabel').textContent    = 'Create Record';
     } else {
         await loadRecord();
     }
@@ -391,30 +400,30 @@ async function loadRecord() {
     }
 
     // Update page header
-    // document.getElementById('pageTitle').textContent    = 'Edit Acid Testing';
-    // document.getElementById('pageSubtitle').textContent = 'Update acid testing details';
-    // document.getElementById('breadcrumbTitle').textContent = 'Edit Acid Testing';
-    // document.getElementById('btnSaveLabel').textContent = 'Save Draft';
+    document.getElementById('pageTitle').textContent    = 'Edit Acid Testing';
+    document.getElementById('pageSubtitle').textContent = 'Update acid testing details';
+    document.getElementById('breadcrumbTitle').textContent = 'Edit Acid Testing';
+    document.getElementById('btnSaveLabel').textContent = 'Save Draft';
 
     // Status badge and read-only mode
-    // const statusBadge = document.getElementById('statusBadge');
-    // if (isSubmitted) {
-    //     statusBadge.innerHTML = '<div class="status-badge submitted">Status: Submitted</div>';
-    //     setReadonly(true);
-    // } else {
-    //     statusBadge.innerHTML = '<div class="status-badge draft">Status: Draft</div>';
+    const statusBadge = document.getElementById('statusBadge');
+    if (isSubmitted) {
+        statusBadge.innerHTML = '<div class="status-badge submitted">Status: Submitted</div>';
+        setReadonly(true);
+    } else {
+        statusBadge.innerHTML = '<div class="status-badge draft">Status: Draft</div>';
 
-    //     // Add Submit button dynamically if not submitted
-    //     const actionsDiv = document.getElementById('headerActions');
-    //     const submitBtn  = document.createElement('button');
-    //     submitBtn.className = 'btn btn-outline btn-sm';
-    //     submitBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Submit Record`;
-    //     submitBtn.onclick   = submitRecord;
-    //     actionsDiv.prepend(submitBtn);
+        // Add Submit button dynamically if not submitted
+        const actionsDiv = document.getElementById('headerActions');
+        const submitBtn  = document.createElement('button');
+        submitBtn.className = 'btn btn-outline btn-sm';
+        submitBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Submit Record`;
+        submitBtn.onclick   = submitRecord;
+        actionsDiv.prepend(submitBtn);
 
-    //     // Setup autosave
-    //     setupAutosave();
-    // }
+        // Setup autosave
+        setupAutosave();
+    }
 }
 // ── GET /api/receivings — populate lot dropdown ───────────────────────────────
 async function loadLots() {
@@ -453,7 +462,7 @@ async function loadLots() {
 // ── GET /api/receivings/lot/{lotNo} — autofill fields ────────────────────────
 async function onLotChange() {
     const lotNo     = document.getElementById('lot_no').value;
-    const autoFields = ['vehicle', 'supplier_name', 'inhouse_weight'];
+    const autoFields = ['vehicle', 'supplier_name', 'inhouse_weight', 'supplier', 'invoice_qty'];
 
     currentLotData = null;
     autoFields.forEach(f => {
@@ -482,13 +491,14 @@ async function onLotChange() {
     const json = await res.json();
     const data = json.data ?? json;
     currentLotData = data;
-console.log("data",data);
+    console.log("data",data);
     // ⚠️ Adjust keys below to match your actual API response field names
     const fieldMap = {
         vehicle       : data.vehicle_no                  ?? data.vehicle_number  ?? '',
         supplier_name : data.supplier?.supplier_name     ?? data.supplier_name   ?? '',
         inhouse_weight: data.received_qty ?? data.received_qty  ?? '',
         supplier: data.supplier_id ?? data.supplier_id   ?? '',
+        invoice_qty: data.invoice_qty ?? data.invoice_qty   ?? '',
     };
 
     autoFields.forEach(f => {
@@ -504,7 +514,8 @@ console.log("data",data);
 
     spinner.classList.remove('active');
     document.getElementById('lot_no').disabled = false;
-    console.log("fieldMap",fieldMap);
+    console.log("supplier",document.getElementById("supplier").value);
+    console.log("invoice_qty",document.getElementById("invoice_qty").value);
 }
 
 // ── Calculations ─────────────────────────────────────────────────────────────
@@ -702,12 +713,12 @@ function buildPayload() {
     return {
         test_date                    : document.getElementById('date').value,
         lot_number                   : document.getElementById('lot_no').value,
-        supplier_id                  : currentLotData.supplier?.id ?? currentLotData.supplier_id,
+        supplier_id                  : document.getElementById('supplier').value,
         vehicle_number               : document.getElementById('vehicle').value,
         avg_pallet_weight            : parseFloat(document.getElementById('avg_pallet_weight').value)       || 0,
         foreign_material_weight      : parseFloat(document.getElementById('foreign_material_weight').value) || 0,
-        invoice_qty                  : parseFloat(currentLotData.invoice_qty  ?? currentLotData.received_qty ?? 0),
-        received_qty                 : parseFloat(currentLotData.received_qty ?? 0),
+        invoice_qty                  : parseFloat(document.getElementById('invoice_qty').value)       || 0,
+        received_qty                 : parseFloat(document.getElementById('inhouse_weight').value)       || 0,
         avg_pallet_and_foreign_weight: parseFloat(document.getElementById('avg_pallet_foreign_weight').value) || 0,
         details,
     };
@@ -777,6 +788,55 @@ function showFieldErrors(errors) {
         if (errEl) errEl.textContent = Array.isArray(messages) ? messages[0] : messages;
         if (input) input.classList.add('is-invalid');
     });
+}
+function setReadonly(readonly) {
+    const fields = ['date','lot_no','vehicle','supplier_name','avg_pallet_weight','inhouse_weight','inhouse_weight','foreign_material_weight','avg_pallet_foreign_weight'];
+    fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (readonly) { el.setAttribute('disabled', true); el.setAttribute('readonly', true); }
+        else          { el.removeAttribute('disabled'); el.removeAttribute('readonly'); }
+    });
+    document.getElementById('formActions').style.display = readonly ? 'none' : 'flex';
+}
+async function submitRecord() {
+    if (!confirm('Submit this record? It will be locked from further edits.')) return;
+
+    // Save first, then submit
+    await saveForm(true);
+
+    const res = await apiFetch(`/acid-testings/${recordId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 1 }),
+    });
+
+    if (res?.ok) {
+        showAlert('Record submitted successfully.', 'success');
+        setTimeout(() => window.location.href = '{{ route('admin.mes.acidTesting.index') }}', 1500);
+    } else {
+        const d = await res.json();
+        showAlert(d.message ?? 'Submit failed.');
+    }
+}
+function setupAutosave() {
+    const fields = ['receipt_date','lot_no','vehicle_number','supplier_id','material_id','invoice_qty','received_qty','unit','remarks'];
+    fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('change', scheduleAutosave);
+        if (['text','number'].includes(el.type) || el.tagName === 'TEXTAREA') {
+            el.addEventListener('keyup', scheduleAutosave);
+        }
+    });
+}
+
+function scheduleAutosave() {
+    const status = document.getElementById('autosaveStatus');
+    status.style.display = 'inline';
+    status.style.color   = 'var(--text-muted)';
+    status.textContent   = 'Saving...';
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => saveForm(true), 3000);
 }
 // async function saveRecord() {
 //     const payload = buildPayload();

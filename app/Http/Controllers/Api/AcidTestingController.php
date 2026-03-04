@@ -216,7 +216,7 @@ class AcidTestingController extends Controller
             'avg_pallet_weight'       => 'sometimes|required|numeric|min:0',
             'foreign_material_weight' => 'nullable|numeric|min:0',
             'vehicle_number'          => 'nullable|string|max:50',
-            'details.*.avg_pallet_and_foreign_weight' => 'required|numeric|min:0',
+            'avg_pallet_and_foreign_weight' => 'required|numeric|min:0',
 
             'details'                          => 'sometimes|required|array|min:1',
             'details.*.pallet_no'              => 'required|integer|min:1',
