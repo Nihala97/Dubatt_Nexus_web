@@ -237,7 +237,10 @@
 @endsection
 
 @push('scripts')
-<script>
+<script type="module">
+// ── Import DataService for offline support ────────────────────────
+import { DataService } from '/pwa/data-service.js';
+const ds = new DataService('receiving');
 // ── Determine if this is create or edit ───────────────────────────
 const PATH_PARTS = window.location.pathname.split('/').filter(Boolean);
 // URL pattern: /admin/mes/receiving/{id}/edit  OR  /admin/mes/receiving/create
@@ -246,6 +249,7 @@ const recordId   = isCreate ? null : PATH_PARTS[PATH_PARTS.length - 2];
 
 let isSubmitted  = false;
 let autosaveTimer;
+let _localId     = null; // tracks IndexedDB local record id
 
 // ── Helpers ───────────────────────────────────────────────────────
 function showAlert(msg, type = 'error') {
@@ -376,7 +380,7 @@ async function loadRecord() {
     }
 }
 
-// ── Save (create or update) ───────────────────────────────────────
+// ── Save — now uses DataService (offline-aware) ───────────────────
 async function saveForm(silent = false) {
     clearAlert();
     clearFieldErrors();
@@ -384,42 +388,104 @@ async function saveForm(silent = false) {
     const btn = document.getElementById('btnSave');
     btn.disabled = true;
 
-    const method   = isCreate ? 'POST' : 'PUT';
-    const endpoint = isCreate ? '/receivings' : `/receivings/${recordId}`;
-
-    const res = await apiFetch(endpoint, {
-        method,
-        body: JSON.stringify(getFormData()),
-    });
+    const result = await ds.save(
+        getFormData(),
+        _localId,                    // local IndexedDB id (null on first save)
+        isCreate ? null : recordId   // server id (null when creating)
+    );
 
     btn.disabled = false;
 
-    if (!res) return;
+    if (result.success) {
+        // Remember local_id for subsequent saves in this session
+        _localId = result.local_id;
 
-    const data = await res.json();
-
-    if (res.ok && data.status === 'ok') {
-        if (!silent) {
-            if (isCreate) {
-                // Redirect to edit page of newly created record
-                window.location.href = `{{ url('/admin/mes/receiving') }}/${data.data.id}/edit`;
+        if (result.synced) {
+            // ── Online: saved to server ───────────────────────────
+            if (!silent) {
+                if (isCreate) {
+                    window.location.href = `/admin/mes/receiving/${result.server_id}/edit`;
+                } else {
+                    showAlert('Record saved successfully.', 'success');
+                }
             } else {
-                showAlert('Record saved successfully.', 'success');
+                const status = document.getElementById('autosaveStatus');
+                status.style.display = 'inline';
+                status.textContent = 'Autosaved at ' + new Date().toLocaleTimeString();
+                setTimeout(() => status.style.display = 'none', 5000);
             }
+
         } else {
-            // Autosave — just update status text
-            const status = document.getElementById('autosaveStatus');
-            status.style.display = 'inline';
-            status.textContent = 'Autosaved at ' + new Date().toLocaleTimeString();
-            setTimeout(() => status.style.display = 'none', 5000);
+            // ── Offline: saved to IndexedDB ───────────────────────
+            if (!silent) {
+                showAlert(
+                    '📱 Saved offline — will sync automatically when reconnected.',
+                    'success'
+                );
+            } else {
+                const status = document.getElementById('autosaveStatus');
+                status.style.display = 'inline';
+                status.textContent = '📱 Saved offline';
+                setTimeout(() => status.style.display = 'none', 5000);
+            }
         }
-    } else if (res.status === 422) {
-        showFieldErrors(data.errors ?? {});
-        if (!silent) showAlert(data.message ?? 'Please fix the errors below.');
+
+    } else if (result.validation_error) {
+        // ── Server returned 422 validation errors ─────────────────
+        showFieldErrors(result.errors ?? {});
+        if (!silent) showAlert(result.message ?? 'Please fix the errors below.');
+
     } else {
-        if (!silent) showAlert(data.message ?? 'Something went wrong.');
+        if (!silent) showAlert('Something went wrong. Please try again.');
     }
 }
+
+// Expose saveForm globally so the onclick in the blade HTML can call it
+window.saveForm = saveForm;
+// ── Save (create or update) ───────────────────────────────────────
+// async function saveForm(silent = false) {
+//     clearAlert();
+//     clearFieldErrors();
+
+//     const btn = document.getElementById('btnSave');
+//     btn.disabled = true;
+
+//     const method   = isCreate ? 'POST' : 'PUT';
+//     const endpoint = isCreate ? '/receivings' : `/receivings/${recordId}`;
+
+//     const res = await apiFetch(endpoint, {
+//         method,
+//         body: JSON.stringify(getFormData()),
+//     });
+
+//     btn.disabled = false;
+
+//     if (!res) return;
+
+//     const data = await res.json();
+
+//     if (res.ok && data.status === 'ok') {
+//         if (!silent) {
+//             if (isCreate) {
+//                 // Redirect to edit page of newly created record
+//                 window.location.href = `{{ url('/admin/mes/receiving') }}/${data.data.id}/edit`;
+//             } else {
+//                 showAlert('Record saved successfully.', 'success');
+//             }
+//         } else {
+//             // Autosave — just update status text
+//             const status = document.getElementById('autosaveStatus');
+//             status.style.display = 'inline';
+//             status.textContent = 'Autosaved at ' + new Date().toLocaleTimeString();
+//             setTimeout(() => status.style.display = 'none', 5000);
+//         }
+//     } else if (res.status === 422) {
+//         showFieldErrors(data.errors ?? {});
+//         if (!silent) showAlert(data.message ?? 'Please fix the errors below.');
+//     } else {
+//         if (!silent) showAlert(data.message ?? 'Something went wrong.');
+//     }
+// }
 
 // ── Submit record ─────────────────────────────────────────────────
 async function submitRecord() {

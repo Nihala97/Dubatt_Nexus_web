@@ -5,6 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Dashboard') — DUBATT NEXUS</title>
+
+    {{-- ── PWA: manifest + theme colour ── --}}
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#1a7a3a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="DUBATT NEXUS">
+    <link rel="apple-touch-icon" href="{{ asset('icons/icon-192.png') }}">
+    {{-- ── END PWA HEAD ── --}}
+
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -340,7 +351,6 @@
         </a>
     </nav>
 
-    <!-- User info filled by JS from localStorage -->
     <div class="sidebar-footer">
         <div class="user-card">
             <div class="user-avatar" id="sidebarAvatar">?</div>
@@ -400,14 +410,13 @@
     const API_BASE = '{{ url('/api') }}';
     const LOGIN_URL = '{{ route('login') }}';
 
-    // ── Auth guard — redirect to login if no token ────────────────
+    // ── Auth guard ────────────────────────────────────────────────
     const _token = localStorage.getItem('auth_token');
     const _user  = JSON.parse(localStorage.getItem('auth_user') || 'null');
 
     if (!_token || !_user) {
         window.location.href = LOGIN_URL;
     } else {
-        // Populate sidebar user info
         document.getElementById('sidebarAvatar').textContent = _user.name
             ? _user.name.charAt(0).toUpperCase()
             : '?';
@@ -415,7 +424,7 @@
         document.getElementById('sidebarRole').textContent = _user.role  ?? '—';
     }
 
-    // ── Global API helper — always sends Bearer token ─────────────
+    // ── Global API helper ─────────────────────────────────────────
     async function apiFetch(endpoint, options = {}) {
         const token = localStorage.getItem('auth_token');
         const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -428,7 +437,6 @@
             },
         });
 
-        // Token expired or revoked — force re-login
         if (res.status === 401) {
             localStorage.removeItem('auth_token');
             localStorage.removeItem('auth_user');
@@ -463,6 +471,10 @@
         document.getElementById('sidebarOverlay').classList.remove('show');
     }
 </script>
+
+{{-- ── PWA Boot — loads SW + offline sync system ── --}}
+<script type="module" src="{{ asset('pwa/pwa-boot.js') }}"></script>
+
 @stack('scripts')
 </body>
 </html>
