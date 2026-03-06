@@ -20,10 +20,13 @@ return new class extends Migration
             $table->string('contact_number', 20)->nullable();
             $table->string('supplier_email')->nullable();
 
+            $table->integer('status')->default(0);
             $table->boolean('is_active')->default(true);
             $table->integer('created_by');
-            $table->integer('updated_by');
+            $table->integer('updated_by')->default(null)->nullable();
             $table->timestamps();
+            $table->softDeletes();
+
         });
     }
 

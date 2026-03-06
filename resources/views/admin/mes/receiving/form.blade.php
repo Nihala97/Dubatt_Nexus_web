@@ -237,7 +237,7 @@
 @endsection
 
 @push('scripts')
-<script type="module">
+<script>
 // <script type="module">
 
 // // ── Import DataService for offline support ────────────────────────

@@ -44,7 +44,7 @@ class ReceivingController extends Controller
     {
         $data               = $request->validated();
         $data['created_by'] = auth()->id();
-        $data['updated_by'] = auth()->id();
+        // $data['updated_by'] = auth()->id();
         $data['status']     = 0; // 0 = Pending
 
         $receiving = Receiving::create($data);
@@ -176,6 +176,25 @@ class ReceivingController extends Controller
         return response()->json([
             'status'  => 'ok',
             'message' => 'Receiving record deleted successfully.',
+        ]);
+    }
+    public function getApprovedLots()
+    {
+        $lots = Receiving::where('status', 1)
+            ->where('is_active', 1)
+            ->select('id', 'lot_no')
+            ->get();
+
+        if ($lots->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No lots found.'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'data' => $lots
         ]);
     }
 }

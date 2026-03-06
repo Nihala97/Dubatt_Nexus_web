@@ -436,10 +436,10 @@ async function loadLots() {
     sel.innerHTML = '<option value="">Loading lots…</option>';
     sel.disabled  = true;
 
-    const res = await apiFetch('/receivings');
+    const res = await apiFetch('/receivings/approved-lots');
 
     if (!res || !res.ok) {
-        sel.innerHTML = '<option value="">Failed to load lots</option>';
+        sel.innerHTML = '<option value="">No lots found</option>';
         sel.disabled  = false;
         return;
     }

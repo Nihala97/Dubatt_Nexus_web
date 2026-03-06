@@ -29,15 +29,13 @@ return new class extends Migration
             $table->decimal('terminals_yield', 8, 4)->default(0);
             $table->decimal('acid_qty', 15, 4)->default(0);
             $table->decimal('acid_yield', 8, 4)->default(0);
-            $table->string('status')->default('active');
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-            $table->unsignedBigInteger('created_by')->nullable();
-            $table->unsignedBigInteger('updated_by')->nullable();
 
-            $table->foreign('bbsu_batch_id')->references('id')->on('bbsu_batches')->cascadeOnDelete();
-            $table->foreign('created_by')->references('id')->on('users')->nullOnDelete();
-            $table->foreign('updated_by')->references('id')->on('users')->nullOnDelete();
+            $table->integer('status')->default(0);
+            $table->boolean('is_active')->default(true);
+            $table->integer('created_by');
+            $table->integer('updated_by')->default(null)->nullable();
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 

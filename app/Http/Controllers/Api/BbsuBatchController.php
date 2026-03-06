@@ -85,7 +85,7 @@ class BbsuBatchController extends Controller
                     'lot_no'          => $detail['lot_no'],
                     'quantity'        => $detail['quantity'],
                     'acid_percentage' => $detail['acid_percentage'],
-                    'status'          => 'active',
+                    'status'          => 0,
                     'is_active'       => true,
                     'created_by'      => $userId,
                     'updated_by'      => $userId,
@@ -114,7 +114,7 @@ class BbsuBatchController extends Controller
                 'terminals_yield'       => $om['terminals_yield'],
                 'acid_qty'              => $om['acid_qty'],
                 'acid_yield'            => $om['acid_yield'],
-                'status'                => 'active',
+                'status'                => 0,
                 'is_active'             => true,
                 'created_by'            => $userId,
                 'updated_by'            => $userId,
@@ -127,7 +127,7 @@ class BbsuBatchController extends Controller
                 'initial_power'           => $pc['initial_power'],
                 'final_power'             => $pc['final_power'],
                 'total_power_consumption' => $pc['total_power_consumption'],
-                'status'                  => 'active',
+                'status'                  => 0,
                 'is_active'               => true,
                 'created_by'              => $userId,
                 'updated_by'              => $userId,
@@ -226,7 +226,7 @@ class BbsuBatchController extends Controller
                         'lot_no'          => $detail['lot_no'],
                         'quantity'        => $detail['quantity'],
                         'acid_percentage' => $detail['acid_percentage'],
-                        'status'          => 'active',
+                        'status'          => 0,
                         'is_active'       => true,
                         'created_by'      => $userId,
                         'updated_by'      => $userId,
@@ -395,11 +395,11 @@ class BbsuBatchController extends Controller
     
             $result->push([
                 'ulab_type'            => 5,
-                'material_description' => $first->stockCondition->description ?? null,
+                'material_description' => $first->stockCondition->description ?? 'ACID',
                 'lot_no'               => $first->acidTest->receiving->lot_no ?? null,
                 'unit'                 => $first->acidTest->receiving->unit   ?? null,
                 'avg_acid_pct'         => $typeFive->sum('avg_acid_pct'),
-                'net_weight'           => $typeFive->sum('net_weight'),
+                'net_weight'           => $typeFive->sum('gross_weight'), //mk changed
             ]);
         }
     
@@ -411,7 +411,7 @@ class BbsuBatchController extends Controller
                 'lot_no'               => $row->acidTest->receiving->lot_no   ?? null,
                 'unit'                 => $row->acidTest->receiving->unit      ?? null,
                 'avg_acid_pct'         => $row->avg_acid_pct,
-                'net_weight'           => $row->net_weight,
+                'net_weight'           => $row->gross_weight,//mk changed
             ]);
         }
     

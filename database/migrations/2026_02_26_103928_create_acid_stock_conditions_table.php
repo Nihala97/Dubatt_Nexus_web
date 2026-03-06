@@ -21,7 +21,7 @@ return new class extends Migration
             $table->integer('status')->default(0);
             $table->boolean('is_active')->default(true);
             $table->integer('created_by');
-            $table->integer('updated_by');
+            $table->integer('updated_by')->default(null)->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

@@ -7,7 +7,7 @@
     <title>@yield('title', 'Dashboard') — DUBATT NEXUS</title>
 
     {{-- ── PWA: manifest + theme colour ── --}}
-    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <!-- <link rel="manifest" href="{{ asset('manifest.json') }}"> -->
     <meta name="theme-color" content="#1a7a3a">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -473,7 +473,7 @@
 </script>
 
 {{-- ── PWA Boot — loads SW + offline sync system ── --}}
-<script type="module" src="{{ asset('pwa/pwa-boot.js') }}"></script>
+<!-- <script type="module" src="{{ asset('pwa/pwa-boot.js') }}"></script> -->
 
 @stack('scripts')
 </body>

@@ -571,45 +571,148 @@ function recalcTotals() {
 }
 
 // ─── QTY Modal ────────────────────────────────────────────────────
-function openQtyModal(rowIdx) {
+async function openQtyModal(rowIdx) {
     activeRowIndex = rowIdx;
-    const lotNo    = document.getElementById(`lot_no_${rowIdx}`)?.value;
-    const lot      = lotNo ? lotOptions.find(l => l.lot_no === lotNo) : null;
-    const rows     = lot ? [lot] : lotOptions;
+
+    const lotNo = document.getElementById(`lot_no_${rowIdx}`)?.value;
+    if (!lotNo) {
+        alert('Please select a Lot No first.');
+        return;
+    }
+
+    // ── Show loading state in modal ───────────────────────────────
+    document.getElementById('qtyModalBody').innerHTML = `
+        <tr>
+            <td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">
+                Loading lot data...
+            </td>
+        </tr>
+    `;
+    document.getElementById('qtyModal').classList.add('open');
+
+    // ── Fetch acid summary for selected lot ───────────────────────
+    const res = await apiFetch(`/bbsu-batches/acid-summary/${lotNo}`);
+
+    if (!res?.ok) {
+        document.getElementById('qtyModalBody').innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align:center;padding:24px;color:#dc2626;">
+                    Failed to load data for lot <strong>${lotNo}</strong>.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    const json = await res.json();
+    const rows = json.data ?? [];
+
+    if (!rows.length) {
+        document.getElementById('qtyModalBody').innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">
+                    No data found for lot <strong>${lotNo}</strong>.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    // ── Render rows ───────────────────────────────────────────────
+    const existing = document.getElementById(`qty_val_${rowIdx}`)?.value;
 
     document.getElementById('qtyModalBody').innerHTML = rows.map((l, i) => `
         <tr>
             <td><strong>${l.lot_no}</strong></td>
-            <td>${l.material ?? l.material_name ?? '—'}</td>
-            <td>${l.acid_pct ?? '—'}%</td>
-            <td>${l.unit ?? 'MT'}</td>
-            <td><span class="avail-badge">${parseFloat(l.available_qty || 0).toFixed(2)} ${l.unit ?? 'MT'}</span></td>
-            <td><input type="number" class="assign-input" id="assign_${i}" placeholder="0.00" step="0.01" min="0" max="${l.available_qty ?? ''}" data-lot="${l.lot_no}"></td>
+            <td>${l.material_description ?? '—'}</td>
+            <td>${parseFloat(l.avg_acid_pct || 0).toFixed(2)}%</td>
+            <td>${l.unit ?? 'KG'}</td>
+            <td><span class="avail-badge">${parseFloat(l.net_weight || 0).toFixed(3)} ${l.unit ?? 'KG'}</span></td>
+            <td>
+                <input type="number" class="assign-input" id="assign_${i}"
+                    placeholder="0.00" step="0.01" min="0"
+                    max="${l.net_weight ?? ''}"
+                    data-lot="${l.lot_no}"
+                    data-ulab="${l.ulab_type}"
+                    value="${rows.length === 1 && existing ? existing : ''}">
+            </td>
         </tr>
     `).join('');
-
-    const existing = document.getElementById(`qty_val_${rowIdx}`)?.value;
-    if (existing && rows.length === 1) document.getElementById('assign_0').value = existing;
-
-    document.getElementById('qtyModal').classList.add('open');
 }
+// function openQtyModal(rowIdx) {
+//     activeRowIndex = rowIdx;
+//     const lotNo    = document.getElementById(`lot_no_${rowIdx}`)?.value;
+//     const lot      = lotNo ? lotOptions.find(l => l.lot_no === lotNo) : null;
+//     const rows     = lot ? [lot] : lotOptions;
+
+//     document.getElementById('qtyModalBody').innerHTML = rows.map((l, i) => `
+//         <tr>
+//             <td><strong>${l.lot_no}</strong></td>
+//             <td>${l.material ?? l.material_name ?? '—'}</td>
+//             <td>${l.acid_pct ?? '—'}%</td>
+//             <td>${l.unit ?? 'MT'}</td>
+//             <td><span class="avail-badge">${parseFloat(l.available_qty || 0).toFixed(2)} ${l.unit ?? 'MT'}</span></td>
+//             <td><input type="number" class="assign-input" id="assign_${i}" placeholder="0.00" step="0.01" min="0" max="${l.available_qty ?? ''}" data-lot="${l.lot_no}"></td>
+//         </tr>
+//     `).join('');
+
+//     const existing = document.getElementById(`qty_val_${rowIdx}`)?.value;
+//     if (existing && rows.length === 1) document.getElementById('assign_0').value = existing;
+
+//     document.getElementById('qtyModal').classList.add('open');
+// }
 
 function closeQtyModal() {
     document.getElementById('qtyModal').classList.remove('open');
     activeRowIndex = null;
 }
 
+// function confirmQtyAssign() {
+//     if (activeRowIndex === null) return;
+//     let assigned = 0;
+//     document.querySelectorAll('#qtyModalBody .assign-input').forEach(inp => { assigned += parseFloat(inp.value) || 0; });
+
+//     document.getElementById(`qty_val_${activeRowIndex}`).value = assigned;
+//     const display = document.getElementById(`qty_display_${activeRowIndex}`);
+//     if (display) {
+//         display.textContent = assigned ? assigned.toFixed(2) + ' MT' : 'Enter qty...';
+//         display.style.color = assigned ? 'var(--text)' : 'var(--text-muted)';
+//     }
+//     recalcTotals();
+//     closeQtyModal();
+// }
 function confirmQtyAssign() {
     if (activeRowIndex === null) return;
-    let assigned = 0;
-    document.querySelectorAll('#qtyModalBody .assign-input').forEach(inp => { assigned += parseFloat(inp.value) || 0; });
 
+    let assigned  = 0;
+    let acidPct   = 0;
+
+    document.querySelectorAll('#qtyModalBody .assign-input').forEach((inp, i) => {
+        const qty = parseFloat(inp.value) || 0;
+        if (qty > 0) {
+            assigned += qty;
+            // Get avg_acid_pct from the same row — 3rd <td> contains "XX.XX%"
+            const row      = inp.closest('tr');
+            const acidCell = row.querySelectorAll('td')[2]; // Acid % column
+            const cellText = acidCell?.textContent?.replace('%', '').trim();
+            acidPct        = parseFloat(cellText) || 0;
+        }
+    });
+
+    // Fill qty hidden + display
     document.getElementById(`qty_val_${activeRowIndex}`).value = assigned;
     const display = document.getElementById(`qty_display_${activeRowIndex}`);
     if (display) {
-        display.textContent = assigned ? assigned.toFixed(2) + ' MT' : 'Enter qty...';
+        display.textContent = assigned ? assigned.toFixed(2) + ' KG' : 'Enter qty...';
         display.style.color = assigned ? 'var(--text)' : 'var(--text-muted)';
     }
+
+    // Auto-fill Acid % from the row where qty was entered
+    // if (acidPct > 0) {
+        const acidField = document.getElementById(`acid_${activeRowIndex}`);
+        if (acidField) acidField.value = acidPct.toFixed(2);
+    // }
+
     recalcTotals();
     closeQtyModal();
 }

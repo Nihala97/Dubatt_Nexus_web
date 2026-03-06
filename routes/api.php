@@ -87,6 +87,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Receiving ─────────────────────────────────────────────────────
      Route::prefix('receivings')->middleware('module:receiving')->group(function () {
           Route::get('/',               [ReceivingController::class, 'index']);
+          Route::get('/approved-lots',  [ReceivingController::class, 'getApprovedLots']);
           Route::get('/lot/{lotNo}',    [ReceivingController::class, 'getByLot']);
           Route::get('/{id}',           [ReceivingController::class, 'show']);
      

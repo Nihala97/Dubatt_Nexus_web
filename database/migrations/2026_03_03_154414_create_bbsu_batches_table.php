@@ -13,7 +13,18 @@ return new class extends Migration
     {
         Schema::create('bbsu_batches', function (Blueprint $table) {
             $table->id();
+            $table->string('batch_no');
+            $table->dateTime('start_time');
+            $table->dateTime('end_time');
+            $table->date('doc_date');
+            $table->string('category');
+
+            $table->integer('status')->default(0);
+            $table->boolean('is_active')->default(true);
+            $table->integer('created_by');
+            $table->integer('updated_by')->default(null)->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
