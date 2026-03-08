@@ -11,7 +11,7 @@ use App\Http\Controllers\Api\AcidTestingController;
 use App\Http\Controllers\Api\AcidStockConditionController;
 use App\Http\Controllers\Api\BbsuBatchController;
 use App\Http\Controllers\Api\SmeltingBatchController;
-
+use App\Http\Controllers\Api\RefiningBatchController;
 
 // future imports:
 // use App\Http\Controllers\Api\BbsuController;
@@ -171,8 +171,24 @@ Route::middleware('auth:sanctum')->group(function () {
           Route::delete('/{id}',       [SmeltingBatchController::class, 'destroy']);
           Route::patch('/{id}/status', [SmeltingBatchController::class, 'updateStatus']);
      });
+     // ── Refining ──────────────────────────────────────────────────
+     Route::prefix('refining')->middleware('module:refining')->group(function () {
 
-    // ── Refining ──────────────────────────────────────────────────
-    // Route::prefix('refining')->middleware('module:refining')->group(function () { ... });
+          Route::get('/generate-batch-no', [RefiningBatchController::class, 'generateBatchNo']);
+          Route::get('/smelting-lots/{materialId}',[RefiningBatchController::class, 'getSmeltingLots']);
+          Route::get('/process-names', [RefiningBatchController::class, 'getProcessNames']);
+
+          Route::get('/', [RefiningBatchController::class, 'index']);
+          Route::post('/', [RefiningBatchController::class, 'store']);
+
+          Route::get('/{id}', [RefiningBatchController::class, 'show']);
+          Route::put('/{id}', [RefiningBatchController::class, 'update']);
+          Route::post('/{id}/autosave', [RefiningBatchController::class, 'autosave']);
+          Route::post('/{id}/submit', [RefiningBatchController::class, 'submit']);
+          Route::delete('/{id}', [RefiningBatchController::class, 'destroy']);
+
+
+     });
 
 });
+

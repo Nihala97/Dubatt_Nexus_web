@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\ReceivingWebController;
 use App\Http\Controllers\Web\BbsuWebController;
 use App\Http\Controllers\Web\AcidTestingWebController;
 use App\Http\Controllers\Web\Smeltingwebcontroller;
+use App\Http\Controllers\Web\RefiningWebController;
 // Guest — login page
 Route::get('/',      [AuthWebController::class, 'showLogin'])->name('login');
 Route::get('/login', [AuthWebController::class, 'showLogin'])->name('login.get');
@@ -38,4 +39,10 @@ Route::prefix('admin/mes/smelting')->name('admin.mes.smelting.')->group(function
     Route::delete('/{id}',    [Smeltingwebcontroller::class, 'destroy'])->name('destroy');
 
 });
+Route::prefix('admin/mes/refining')->name('admin.mes.refining.')->group(function () {
+    Route::get('/',           [RefiningWebController::class, 'index'])->name('index');
+    Route::get('/create',     [RefiningWebController::class, 'create'])->name('create');
+    Route::get('/{id}/edit',  [RefiningWebController::class, 'edit'])->name('edit');
+    Route::delete('/{id}',    [RefiningWebController::class, 'destroy'])->name('destroy');
 
+});
