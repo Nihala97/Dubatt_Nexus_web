@@ -337,25 +337,58 @@ class SmeltingBatchController extends Controller
         ]);
     }
 
-    // ── PATCH /api/smelting-batches/{id}/status ───────────────────
-    public function updateStatus(Request $request, $id): JsonResponse
+    /**
+     * PATCH /api/smelting-batches/{id}/status
+     * Update status only
+     * Status: 0=Pending, 1=Approved, 2=In Progress, 3=Completed, 4=Cancelled
+     */
+    public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|integer',
+            'status' => 'required|integer|in:0,1,2,3,4',
         ]);
 
-        $batch = SmeltingBatch::findOrFail($id);
-        $batch->update([
+        $receiving = SmeltingBatch::findOrFail($id);
+
+        // Prevent cancelling if already in downstream process
+        if ($request->status == 4 && $receiving->status >= 2) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Cannot cancel — lot is already in downstream processing.',
+            ], 422);
+        }
+
+        $receiving->update([
             'status'     => $request->status,
-            'updated_by' => Auth::id(),
+            'updated_by' => auth()->id(),
         ]);
 
         return response()->json([
             'status'  => 'ok',
             'message' => 'Status updated successfully.',
-            'data'    => $batch,
+            'data'    => ['status' => $receiving->status],
         ]);
     }
+
+    // ── PATCH /api/smelting-batches/{id}/status ───────────────────
+    // public function updateStatus(Request $request, $id): JsonResponse
+    // {
+    //     $request->validate([
+    //         'status' => 'required|integer',
+    //     ]);
+
+    //     $batch = SmeltingBatch::findOrFail($id);
+    //     $batch->update([
+    //         'status'     => $request->status,
+    //         'updated_by' => Auth::id(),
+    //     ]);
+
+    //     return response()->json([
+    //         'status'  => 'ok',
+    //         'message' => 'Status updated successfully.',
+    //         'data'    => $batch,
+    //     ]);
+    // }
     // ── GET /api/smelting-batches/generate-batch-no ───────────────────
     public function generateBatchNo(): JsonResponse
     {

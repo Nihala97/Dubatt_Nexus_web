@@ -980,17 +980,26 @@
                         <table class="lot-table">
                             <thead>
                                 <tr>
-                                    <th style="width:32px"></th>
-                                    <th>BBSU Batch No</th>
-                                    <th>Material</th>
-                                    <th>Unit</th>
-                                    <th>Output Qty</th>
-                                    <th>Used Qty</th>
-                                    <th>Available Qty</th>
-                                    <th>Assign Qty</th>
+                                    <th>DOC NO</th>
+                                    <th>MATERIAL DESCRIPTION</th>
+                                    <th>UNIT</th>
+                                    <th>AVAILABLE QTY</th>
+                                    <th>ASSIGN QTY</th>
                                 </tr>
                             </thead>
                             <tbody id="bbsuLotTbody"></tbody>
+                            <tfoot id="bbsuLotTfoot" style="display:none">
+                                <tr style="background:var(--gl)">
+                                    <td colspan="3"
+                                        style="text-align:right;padding:8px 12px;font-size:11px;font-weight:700;color:var(--g);letter-spacing:.7px">
+                                        TOTAL ASSIGN QTY</td>
+                                    <td colspan="2" style="padding:8px 12px">
+                                        <span id="bbsuTotalAssign"
+                                            style="font-size:14px;font-weight:800;color:var(--g)">0.000</span>
+                                        <span style="font-size:11px;color:var(--txtmu);margin-left:4px">KG</span>
+                                    </td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
@@ -1013,6 +1022,156 @@
             }
         }
     </style>
+
+    {{-- ── Output QTY Window Modal ── --}}
+    <div class="modal-overlay" id="outputQtyModal" onclick="closeOutputModal(event)">
+        <div class="modal-box" style="max-width:420px">
+            <div class="modal-head">
+                <div class="modal-head-left">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M5 8l6 6 6-6" />
+                    </svg>
+                    <div>
+                        <div class="modal-title">Output QTY Window</div>
+                        <div class="modal-subtitle" id="outputModalSubtitle">Enter block weights — total auto-calculates
+                        </div>
+                    </div>
+                </div>
+                <button class="modal-close" onclick="closeOutputModal()" title="Close">✕</button>
+            </div>
+            <div class="modal-body" style="padding:0">
+                <table style="width:100%;border-collapse:collapse">
+                    <thead>
+                        <tr style="background:var(--gl)">
+                            <th
+                                style="padding:9px 14px;font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:right;width:80px">
+                                SL NO</th>
+                            <th
+                                style="padding:9px 14px;font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:right">
+                                QTY (KG)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="outputBlockTbody">
+                        {{-- rows added by JS --}}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:var(--gl);border-top:2px solid var(--bdr)">
+                            <td
+                                style="padding:10px 14px;font-size:11px;font-weight:800;letter-spacing:.8px;color:var(--g);text-align:right">
+                                TOTAL</td>
+                            <td style="padding:10px 14px;text-align:right">
+                                <span id="outputBlockTotal"
+                                    style="font-size:15px;font-weight:800;color:var(--g)">0.000</span>
+                                <span style="font-size:11px;color:var(--txtmu);margin-left:3px">KG</span>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="modal-footer" style="justify-content:space-between">
+                <button class="btn btn-outline btn-sm" onclick="addOutputRow()" style="gap:5px">
+                    <svg viewBox="0 0 24 24"
+                        style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    ADD
+                </button>
+                <div style="display:flex;gap:8px">
+                    <button class="btn btn-outline btn-sm" onclick="closeOutputModal()">Cancel</button>
+                    <button class="btn btn-primary btn-sm" onclick="confirmOutputQty()">
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ── Flux BBSU Lot Selection Modal ── --}}
+    <div class="modal-overlay" id="fluxLotModal" onclick="closeFluxModal(event)">
+        <div class="modal-box">
+            <div class="modal-head">
+                <div class="modal-head-left">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" />
+                    </svg>
+                    <div>
+                        <div class="modal-title" id="fluxModalTitle">Select BBSU Batch</div>
+                        <div class="modal-subtitle" id="fluxModalSubtitle">Enter the quantity to assign from each BBSU batch
+                        </div>
+                    </div>
+                </div>
+                <button class="modal-close" onclick="closeFluxModal()" title="Close">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="fluxLotTableWrap">
+                    <div class="lot-loading" id="fluxLotLoading">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--g)" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round"
+                            style="animation:spin 1s linear infinite;display:inline-block">
+                            <line x1="12" y1="2" x2="12" y2="6" />
+                            <line x1="12" y1="18" x2="12" y2="22" />
+                            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+                            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+                            <line x1="2" y1="12" x2="6" y2="12" />
+                            <line x1="18" y1="12" x2="22" y2="12" />
+                            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+                            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+                        </svg>
+                        <p style="margin-top:8px">Loading available BBSU batches…</p>
+                    </div>
+                    <div class="lot-empty" id="fluxLotEmpty" style="display:none">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#c8dfd1" stroke-width="1.5"
+                            stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 10px">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        No submitted BBSU batches found for this material with available quantity.
+                    </div>
+                    <div class="tbl-wrap" id="fluxLotTableScroll" style="display:none">
+                        <table class="lot-table">
+                            <thead>
+                                <tr>
+                                    <th>DOC NO</th>
+                                    <th>MATERIAL DESCRIPTION</th>
+                                    <th>UNIT</th>
+                                    <th>AVAILABLE QTY</th>
+                                    <th>ASSIGN QTY</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fluxLotTbody"></tbody>
+                            <tfoot id="fluxLotTfoot" style="display:none">
+                                <tr style="background:var(--gl)">
+                                    <td colspan="3"
+                                        style="text-align:right;padding:8px 12px;font-size:11px;font-weight:700;color:var(--g);letter-spacing:.7px">
+                                        TOTAL ASSIGN QTY</td>
+                                    <td colspan="2" style="padding:8px 12px">
+                                        <span id="fluxTotalAssign"
+                                            style="font-size:14px;font-weight:800;color:var(--g)">0.000</span>
+                                        <span style="font-size:11px;color:var(--txtmu);margin-left:4px">KG</span>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline btn-sm" onclick="closeFluxModal()">Cancel</button>
+                <button class="btn btn-primary btn-sm" id="fluxConfirmBtn" onclick="confirmFluxSelection()" disabled>
+                    <svg viewBox="0 0 24 24">
+                        <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
 
     {{-- ═══════════════════════════════════════════════════════════════
     SECTION 1 — Primary Details
@@ -1127,7 +1286,6 @@
                             <tr>
                                 <th style="width:36px">#</th>
                                 <th>Raw Material</th>
-                                <th>BBSU Batch</th>
                                 <th>QTY (KG)</th>
                                 <th>Yield %</th>
                                 <th>Expected</th>
@@ -1137,7 +1295,7 @@
                         <tbody id="rawBody"></tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="3" style="text-align:right;padding-right:10px">TOTAL</td>
+                                <td colspan="2" style="text-align:right;padding-right:10px">TOTAL</td>
                                 <td><input type="text" id="rawTotalQty" readonly class="ri ro"
                                         style="font-weight:700;color:var(--g)"></td>
                                 <td></td>
@@ -1376,9 +1534,9 @@
                                     <path
                                         d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0" />
                                 </svg>
-                                <select id="output_material" onchange="triggerAutosave()">
-                                    <option value="">Select…</option>
-                                    {{-- Populated by JS from items API --}}
+                                <select id="output_material" onchange="onOutputMaterialChange();triggerAutosave()">
+                                    <option value="">Select material…</option>
+                                    {{-- Populated by JS from materials table --}}
                                 </select>
                             </div>
                         </div>
@@ -1388,8 +1546,10 @@
                                 <svg class="ico" viewBox="0 0 24 24">
                                     <circle cx="12" cy="12" r="10" />
                                 </svg>
-                                <input type="number" id="output_qty" step="0.001" placeholder="0.000"
-                                    oninput="triggerAutosave()">
+                                <input type="number" id="output_qty" step="0.001"
+                                    placeholder="Click to enter block weights…" onclick="openOutputModal()" readonly
+                                    style="cursor:pointer;background:var(--gxl)"
+                                    title="Click to enter output block quantities">
                             </div>
                         </div>
                     </div>
@@ -1453,9 +1613,9 @@
                     <polyline points="17 21 17 13 7 13 7 21" />
                     <polyline points="7 3 7 8 15 8" />
                 </svg>
-                <span id="btnSaveLabel">Create Batch</span>
+                <span id="btnSaveLabel">Save</span>
             </button>
-            <button type="button" class="btn btn-outline btn-sm" id="btnSubmit" onclick="submitBatch()"
+            <button type="button" class="btn btn-outline btn-sm" id="btnSubmit" onclick="submitRecord()"
                 style="display:none">
                 <svg viewBox="0 0 24 24">
                     <polyline points="20 6 9 17 4 12" />
@@ -1494,11 +1654,9 @@
 
             if (isCreate) {
                 const res = await apiFetch('/smelting-batches/generate-batch-no');
-
                 if (res?.ok) {
                     const d = await res.json();
                     console.log(d);
-                    console.log(d.batch_no);
                     document.getElementById('batch_no').value = d.data.batch_no;
                 }
                 document.getElementById('pageTitle').textContent = 'Create Smelting Batch';
@@ -1517,30 +1675,31 @@
         // ── Load items for dropdowns ─────────────────────────────────────────
         async function loadItems() {
             try {
-                const res = await apiFetch('/materials');
+                // Query the materials table directly (SELECT * FROM materials)
+                const res = await apiFetch('/materials?per_page=500');
                 if (res?.ok) {
                     const d = await res.json();
                     itemsList = d.data?.data ?? d.data ?? [];
-                    console.log(itemsList);
                 }
-            } catch (e) { console.warn('Items load failed', e); }
+            } catch (e) { console.warn('Materials load failed', e); }
         }
 
         function buildOutputDropdown() {
             const sel = document.getElementById('output_material');
+            sel.innerHTML = '<option value="">Select material…</option>';
             itemsList.forEach(item => {
                 const o = document.createElement('option');
-                o.value = item.id ?? item.name;
-                o.textContent = item.name ?? item.item_name;
+                o.value = item.id;
+                o.textContent = item.name ?? item.item_name ?? item.material_name;
                 sel.appendChild(o);
             });
         }
 
         function getItemOptions(selectedId) {
             if (!itemsList.length) return '<option value="">Select material…</option>';
-            return '<option value="">Select…</option>' +
+            return '<option value="">Select material…</option>' +
                 itemsList.map(i =>
-                    `<option value="${i.id}" ${String(i.id) === String(selectedId) ? 'selected' : ''}>${i.name ?? i.secondary_name}</option>`
+                    `<option value="${i.id}" ${String(i.id) === String(selectedId) ? 'selected' : ''}>${i.name ?? i.item_name ?? i.material_name}</option>`
                 ).join('');
         }
 
@@ -1555,15 +1714,15 @@
                 const firingOpts = FIRING_OPTIONS.map(f =>
                     `<option value="${f}">${f || 'Select…'}</option>`).join('');
                 tr.innerHTML = `
-          <td style="font-size:12px;font-weight:600;padding-left:10px;white-space:nowrap">${name}</td>
-          <td><button class="proc-btn proc-start" onclick="setProcessTime(${idx},'start')">START</button></td>
-          <td style="padding:4px 4px"><input type="time" class="ri" id="proc_start_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
-          <td><button class="proc-btn proc-end" onclick="setProcessTime(${idx},'end')">END</button></td>
-          <td style="padding:4px 4px"><input type="time" class="ri" id="proc_end_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
-          <td><input type="text" class="ri ro" id="proc_total_${idx}" readonly placeholder="0 min" style="min-width:70px;font-weight:700;color:var(--g);background:var(--gxl)"></td>
-          <td style="position:relative" class="sc">
-            <select class="rs" id="proc_firing_${idx}" onchange="triggerAutosave()" style="min-width:100px">${firingOpts}</select>
-          </td>`;
+                  <td style="font-size:12px;font-weight:600;padding-left:10px;white-space:nowrap">${name}</td>
+                  <td><button class="proc-btn proc-start" onclick="setProcessTime(${idx},'start')">START</button></td>
+                  <td style="padding:4px 4px"><input type="time" class="ri" id="proc_start_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
+                  <td><button class="proc-btn proc-end" onclick="setProcessTime(${idx},'end')">END</button></td>
+                  <td style="padding:4px 4px"><input type="time" class="ri" id="proc_end_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
+                  <td><input type="text" class="ri ro" id="proc_total_${idx}" readonly placeholder="0 min" style="min-width:70px;font-weight:700;color:var(--g);background:var(--gxl)"></td>
+                  <td style="position:relative" class="sc">
+                    <select class="rs" id="proc_firing_${idx}" onchange="triggerAutosave()" style="min-width:100px">${firingOpts}</select>
+                  </td>`;
                 tbody.appendChild(tr);
             });
         }
@@ -1617,46 +1776,32 @@
             tr.dataset.bbsuBatchNo = data.bbsu_batch_no || '';
             tr.dataset.bbsuAvailableQty = data.bbsu_available_qty || '';
             tr.innerHTML = `
-        <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-        <td style="position:relative" class="sc">
-          <select class="rs" id="rm_id_${i}" name="raw_materials[${i}][raw_material_id]"
-            onchange="onRawMaterialChange(${i});triggerAutosave()"
-            style="min-width:130px">${getItemOptions(data.raw_material_id)}</select>
-        </td>
-        <td>
-          <div id="rm_bbsu_tag_${i}" style="min-width:110px;display:flex;align-items:center;gap:5px">
-            ${data.bbsu_batch_no
-                    ? `<span class="lot-bbsu-tag" title="Available: ${data.bbsu_available_qty ?? '?'} KG">${data.bbsu_batch_no}</span>
-                 <button type="button" class="del-btn" style="flex-shrink:0" onclick="clearBbsuOnRow(${i})" title="Clear BBSU selection">
-                   <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                 </button>`
-                    : `<button type="button" id="rm_bbsu_btn_${i}"
-                   class="btn btn-outline btn-sm" style="font-size:11px;padding:5px 10px;white-space:nowrap"
-                   onclick="openBbsuModal(${i})" ${data.raw_material_id ? '' : 'disabled'}>
-                   <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
-                   Select Lot
-                 </button>`
-                }
-          </div>
-          <input type="hidden" id="rm_bbsu_id_${i}"  name="raw_materials[${i}][bbsu_batch_id]"  value="${data.bbsu_batch_id ?? ''}">
-          <input type="hidden" id="rm_bbsu_no_${i}"  name="raw_materials[${i}][bbsu_batch_no]"  value="${data.bbsu_batch_no ?? ''}">
-        </td>
-        <td>
-          <input type="number" class="ri" id="rm_qty_${i}" name="raw_materials[${i}][raw_material_qty]"
-            value="${data.raw_material_qty ?? ''}" step="0.001" placeholder="0.000"
-            oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"
-            onfocus="onRawQtyFocus(${i})"
-            style="min-width:90px">
-        </td>
-        <td><input type="number" class="ri" id="rm_yield_${i}" name="raw_materials[${i}][raw_material_yield_pct]"
-          value="${data.raw_material_yield_pct ?? ''}" step="0.01" placeholder="0.00"
-          oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"></td>
-        <td><input type="number" class="ri ro" id="rm_exp_${i}"
-          value="${data.expected_output_qty ?? ''}" readonly placeholder="0.000"
-          style="background:#eef6f1;color:var(--g);font-weight:600"></td>
-        <td><button class="del-btn" onclick="removeRow('rrow-${i}',recalcRawTotals)" title="Remove">
-          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-        </button></td>`;
+                <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                <td style="position:relative" class="sc">
+                  <select class="rs" id="rm_id_${i}" name="raw_materials[${i}][raw_material_id]"
+                    onchange="onRawMaterialChange(${i});triggerAutosave()"
+                    style="min-width:130px">${getItemOptions(data.raw_material_id)}</select>
+                </td>
+                <td>
+                  <input type="number" class="ri" id="rm_qty_${i}" name="raw_materials[${i}][raw_material_qty]"
+                    value="${data.raw_material_qty ?? ''}" step="0.001" placeholder="0.000"
+                    oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"
+                    onclick="onRawQtyClick(${i})"
+                    onfocus="onRawQtyFocus(${i})"
+                    style="min-width:90px;cursor:pointer"
+                    title="Click to assign from BBSU batch">
+                  <input type="hidden" id="rm_bbsu_id_${i}" name="raw_materials[${i}][bbsu_batch_id]" value="${data.bbsu_batch_id ?? ''}">
+                  <input type="hidden" id="rm_bbsu_no_${i}" name="raw_materials[${i}][bbsu_batch_no]" value="${data.bbsu_batch_no ?? ''}">
+                </td>
+                <td><input type="number" class="ri" id="rm_yield_${i}" name="raw_materials[${i}][raw_material_yield_pct]"
+                  value="${data.raw_material_yield_pct ?? ''}" step="0.01" placeholder="0.00"
+                  oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"></td>
+                <td><input type="number" class="ri ro" id="rm_exp_${i}"
+                  value="${data.expected_output_qty ?? ''}" readonly placeholder="0.000"
+                  style="background:#eef6f1;color:var(--g);font-weight:600"></td>
+                <td><button class="del-btn" onclick="removeRow('rrow-${i}',recalcRawTotals)" title="Remove">
+                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
         }
@@ -1664,12 +1809,14 @@
         // Called when material dropdown changes — enable/reset BBSU button
         function onRawMaterialChange(i) {
             clearBbsuOnRow(i);
-            const btn = document.getElementById(`rm_bbsu_btn_${i}`);
-            const sel = document.getElementById(`rm_id_${i}`);
-            if (btn) btn.disabled = !sel?.value;
         }
 
         // When user focuses the QTY field — if no BBSU selected yet AND material chosen, open modal
+        function onRawQtyClick(i) {
+            const materialId = document.getElementById(`rm_id_${i}`)?.value;
+            if (materialId) openBbsuModal(i);
+        }
+
         function onRawQtyFocus(i) {
             const materialId = document.getElementById(`rm_id_${i}`)?.value;
             const bbsuId = document.getElementById(`rm_bbsu_id_${i}`)?.value;
@@ -1680,20 +1827,14 @@
 
         // Clear BBSU selection on a row
         function clearBbsuOnRow(i) {
-            document.getElementById(`rm_bbsu_id_${i}`).value = '';
-            document.getElementById(`rm_bbsu_no_${i}`).value = '';
-            const tagCell = document.getElementById(`rm_bbsu_tag_${i}`);
-            if (tagCell) {
-                const materialId = document.getElementById(`rm_id_${i}`)?.value;
-                tagCell.innerHTML = `<button type="button" id="rm_bbsu_btn_${i}"
-          class="btn btn-outline btn-sm" style="font-size:11px;padding:5px 10px;white-space:nowrap"
-          onclick="openBbsuModal(${i})" ${materialId ? '' : 'disabled'}>
-          <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
-          Select Lot
-        </button>`;
-            }
+            const idEl = document.getElementById(`rm_bbsu_id_${i}`);
+            const noEl = document.getElementById(`rm_bbsu_no_${i}`);
+            if (idEl) idEl.value = '';
+            if (noEl) noEl.value = '';
+            const qtyEl = document.getElementById(`rm_qty_${i}`);
+            if (qtyEl) { qtyEl.title = 'Click to assign from BBSU batch'; qtyEl.style.borderColor = ''; }
             const tr = document.getElementById(`rrow-${i}`);
-            if (tr) { tr.dataset.bbsuBatchId = ''; tr.dataset.bbsuBatchNo = ''; }
+            if (tr) { tr.dataset.bbsuBatchId = ''; tr.dataset.bbsuBatchNo = ''; tr.dataset.bbsuSelections = ''; }
             triggerAutosave();
         }
 
@@ -1723,18 +1864,27 @@
             const tr = document.createElement('tr');
             tr.id = `frow-${i}`;
             tr.dataset.rowIndex = i;
+            tr.dataset.fluxBbsuSelections = data.flux_bbsu_selections ? JSON.stringify(data.flux_bbsu_selections) : '';
             tr.innerHTML = `
-        <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-        <td style="position:relative" class="sc">
-          <select class="rs" id="fl_id_${i}" onchange="triggerAutosave()"
-            style="min-width:130px">${getItemOptions(data.chemical_id)}</select>
-        </td>
-        <td><input type="number" class="ri" id="fl_qty_${i}"
-          value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
-          oninput="recalcFluxTotals();triggerAutosave()"></td>
-        <td><button class="del-btn" onclick="removeRow('frow-${i}',recalcFluxTotals)" title="Remove">
-          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-        </button></td>`;
+                <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                <td style="position:relative" class="sc">
+                  <select class="rs" id="fl_id_${i}" onchange="onFluxMaterialChange(${i});triggerAutosave()"
+                    style="min-width:130px">${getItemOptions(data.chemical_id)}</select>
+                </td>
+                <td>
+                  <input type="number" class="ri" id="fl_qty_${i}"
+                    value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
+                    oninput="recalcFluxTotals();triggerAutosave()"
+                    onclick="onFluxQtyClick(${i})"
+                    onfocus="onFluxQtyFocus(${i})"
+                    style="min-width:90px;cursor:pointer"
+                    title="Click to assign from BBSU batch">
+                  <input type="hidden" id="fl_bbsu_id_${i}" value="${data.fl_bbsu_batch_id ?? ''}">
+                  <input type="hidden" id="fl_bbsu_no_${i}" value="${data.fl_bbsu_batch_no ?? ''}">
+                </td>
+                <td><button class="del-btn" onclick="removeRow('frow-${i}',recalcFluxTotals)" title="Remove">
+                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
         }
@@ -1748,6 +1898,34 @@
             document.getElementById('fluxTotalQty').value = qty ? qty.toFixed(3) : '';
         }
 
+        // ── Flux BBSU helpers ───────────────────────────────────────────
+        function onFluxMaterialChange(i) {
+            clearFluxBbsuOnRow(i);
+        }
+
+        function onFluxQtyClick(i) {
+            const materialId = document.getElementById(`fl_id_${i}`)?.value;
+            if (materialId) openFluxModal(i);
+        }
+
+        function onFluxQtyFocus(i) {
+            const materialId = document.getElementById(`fl_id_${i}`)?.value;
+            const bbsuId = document.getElementById(`fl_bbsu_id_${i}`)?.value;
+            if (materialId && !bbsuId) openFluxModal(i);
+        }
+
+        function clearFluxBbsuOnRow(i) {
+            const idEl = document.getElementById(`fl_bbsu_id_${i}`);
+            const noEl = document.getElementById(`fl_bbsu_no_${i}`);
+            if (idEl) idEl.value = '';
+            if (noEl) noEl.value = '';
+            const qtyEl = document.getElementById(`fl_qty_${i}`);
+            if (qtyEl) { qtyEl.title = 'Click to assign from BBSU batch'; qtyEl.style.borderColor = ''; }
+            const tr = document.getElementById(`frow-${i}`);
+            if (tr) tr.dataset.fluxBbsuSelections = '';
+            triggerAutosave();
+        }
+
         // ── Temperature rows ────────────────────────────────────────────────
         function addTempRow(data = {}) {
             tempRowCount++;
@@ -1757,15 +1935,15 @@
             tr.id = `trow-${i}`;
             tr.dataset.rowIndex = i;
             tr.innerHTML = `
-        <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-        <td><input type="time" class="ri" id="temp_time_${i}" value="${data.record_time ?? ''}" oninput="triggerAutosave()"></td>
-        <td><input type="number" class="ri" id="temp_inside_${i}" value="${data.inside_temp_before_charging ?? ''}" step="0.01" placeholder="°C" oninput="triggerAutosave()"></td>
-        <td><input type="text" class="ri" id="temp_pgc_${i}" value="${data.process_gas_chamber_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
-        <td><input type="text" class="ri" id="temp_shell_${i}" value="${data.shell_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
-        <td><input type="text" class="ri" id="temp_bag_${i}" value="${data.bag_house_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
-        <td><button class="del-btn" onclick="removeRow('trow-${i}',null)" title="Remove">
-          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-        </button></td>`;
+                <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                <td><input type="time" class="ri" id="temp_time_${i}" value="${data.record_time ?? ''}" oninput="triggerAutosave()"></td>
+                <td><input type="number" class="ri" id="temp_inside_${i}" value="${data.inside_temp_before_charging ?? ''}" step="0.01" placeholder="°C" oninput="triggerAutosave()"></td>
+                <td><input type="text" class="ri" id="temp_pgc_${i}" value="${data.process_gas_chamber_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
+                <td><input type="text" class="ri" id="temp_shell_${i}" value="${data.shell_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
+                <td><input type="text" class="ri" id="temp_bag_${i}" value="${data.bag_house_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
+                <td><button class="del-btn" onclick="removeRow('trow-${i}',null)" title="Remove">
+                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
         }
@@ -1802,8 +1980,8 @@
             document.getElementById('id_fan_final').value = data.id_fan_final ?? '';
             document.getElementById('rotary_power_initial').value = data.rotary_power_initial ?? '';
             document.getElementById('rotary_power_final').value = data.rotary_power_final ?? '';
-            document.getElementById('output_qty').value = data.output_qty ?? '';
             document.getElementById('output_material').value = data.output_material ?? '';
+            loadOutputBlocks(data.output_blocks);   // fills output_qty from block weights
 
             calcConsumption('id_fan');
             calcConsumption('rotary_power');
@@ -1857,10 +2035,20 @@
                 const i = tr.dataset.rowIndex;
                 const id = document.getElementById(`rm_id_${i}`)?.value;
                 if (!id) return;
+                // For multi-bbsu: bbsu_selections holds each batch+qty pair;
+                // bbsu_batch_id/no hold first (or only) value for backward compat
+                const bbsuSelections = tr.dataset.bbsuSelections
+                    ? JSON.parse(tr.dataset.bbsuSelections) : null;
+                const bbsuIdRaw = document.getElementById(`rm_bbsu_id_${i}`)?.value || null;
+                const bbsuNoRaw = document.getElementById(`rm_bbsu_no_${i}`)?.value || null;
+                // first id/no only (backward compat with single-batch DB column)
+                const firstBbsuId = bbsuIdRaw ? bbsuIdRaw.split(',')[0] : null;
+                const firstBbsuNo = bbsuNoRaw ? bbsuNoRaw.split(',')[0] : null;
                 raw_materials.push({
                     raw_material_id: id,
-                    bbsu_batch_id: document.getElementById(`rm_bbsu_id_${i}`)?.value || null,
-                    bbsu_batch_no: document.getElementById(`rm_bbsu_no_${i}`)?.value || null,
+                    bbsu_batch_id: firstBbsuId,
+                    bbsu_batch_no: firstBbsuNo,
+                    bbsu_selections: bbsuSelections, // full multi-batch detail
                     raw_material_qty: document.getElementById(`rm_qty_${i}`)?.value || 0,
                     raw_material_yield_pct: document.getElementById(`rm_yield_${i}`)?.value || 0,
                     expected_output_qty: document.getElementById(`rm_exp_${i}`)?.value || 0,
@@ -1872,7 +2060,17 @@
                 const i = tr.dataset.rowIndex;
                 const id = document.getElementById(`fl_id_${i}`)?.value;
                 if (!id) return;
-                flux_chemicals.push({ chemical_id: id, qty: document.getElementById(`fl_qty_${i}`)?.value || 0 });
+                const fluxSelections = tr.dataset.fluxBbsuSelections
+                    ? JSON.parse(tr.dataset.fluxBbsuSelections) : null;
+                const fluxBbsuIdRaw = document.getElementById(`fl_bbsu_id_${i}`)?.value || null;
+                const fluxBbsuNoRaw = document.getElementById(`fl_bbsu_no_${i}`)?.value || null;
+                flux_chemicals.push({
+                    chemical_id: id,
+                    bbsu_batch_id: fluxBbsuIdRaw ? fluxBbsuIdRaw.split(',')[0] : null,
+                    bbsu_batch_no: fluxBbsuNoRaw ? fluxBbsuNoRaw.split(',')[0] : null,
+                    bbsu_selections: fluxSelections,
+                    qty: document.getElementById(`fl_qty_${i}`)?.value || 0,
+                });
             });
 
             const process_details = PROCESS_NAMES.map((name, idx) => ({
@@ -1925,6 +2123,11 @@
                 flux_chemicals,
                 process_details,
                 temperature_records,
+                output_blocks: outputBlockRows.map((r, idx) => ({
+                    material_id: document.getElementById('output_material').value || null,
+                    block_sl_no: idx + 1,
+                    block_weight: parseFloat(r.qty) || 0,
+                })).filter(r => r.block_weight > 0),
             };
         }
 
@@ -1962,19 +2165,38 @@
         }
 
         // ── Submit ───────────────────────────────────────────────────────────
-        async function submitBatch() {
-            if (!confirm('Submit this batch? It will be locked from further edits.')) return;
+        // async function submitBatch() {
+        //     if (!confirm('Submit this batch? It will be locked from further edits.')) return;
+        //     await saveForm(true);
+        //     const res = await apiFetch(`/smelting-batches/${recordId}/submit`, { method: 'POST', body: '{}' });
+        //     if (res?.ok) {
+        //         showAlert('Batch submitted and locked.', 'success');
+        //         setTimeout(() => window.location.href = '{{ route("admin.mes.smelting.index") }}', 1400);
+        //     } else {
+        //         const d = await res?.json();
+        //         showAlert(d?.message ?? 'Submit failed.');
+        //     }
+        // }
+
+        async function submitRecord() {
+            if (!confirm('Submit this record? It will be locked from further edits.')) return;
+
+            // Save first, then submit
             await saveForm(true);
-            const res = await apiFetch(`/smelting-batches/${recordId}/submit`, { method: 'POST', body: '{}' });
+
+            const res = await apiFetch(`/smelting-batches/${recordId}/status`, {
+                method: 'PATCH',
+                body: JSON.stringify({ status: 1 }),
+            });
+
             if (res?.ok) {
-                showAlert('Batch submitted and locked.', 'success');
-                setTimeout(() => window.location.href = '{{ route("admin.mes.smelting.index") }}', 1400);
+                showAlert('Record submitted successfully.', 'success');
+                setTimeout(() => window.location.href = '{{ route('admin.mes.smelting.index') }}', 1500);
             } else {
-                const d = await res?.json();
-                showAlert(d?.message ?? 'Submit failed.');
+                const d = await res.json();
+                showAlert(d.message ?? 'Submit failed.');
             }
         }
-
         // ── Autosave ─────────────────────────────────────────────────────────
         function setupAutosave() {
             const watch = ['date', 'rotary_no', 'start_time', 'end_time', 'lpg_consumption', 'o2_consumption',
@@ -2039,32 +2261,145 @@
         }
 
         // ════════════════════════════════════════════════════════════════
-        // BBSU LOT SELECTION MODAL
+        // OUTPUT QTY WINDOW MODAL
+        // User enters block SL NO + weight rows; total → output_qty field
         // ════════════════════════════════════════════════════════════════
-        let bbsuActiveRowIndex = null;      // which raw-material row triggered modal
-        let bbsuSelectedBatchId = null;    // selected bbsu_batch_id
-        let bbsuSelectedBatchNo = null;    // selected bbsu_batch_no
-        let bbsuSelectedAssignQty = null;   // qty the user typed in the assign column
+        let outputBlockRows = [];   // [{qty}] persisted across modal opens
+        const OUTPUT_MAX_ROWS = 1; // screenshot shows 11 fixed rows
+
+        function onOutputMaterialChange() {
+            // When material changes, clear blocks
+            outputBlockRows = [];
+            document.getElementById('output_qty').value = '';
+        }
+
+        function openOutputModal() {
+            const matId = document.getElementById('output_material').value;
+            if (!matId) {
+                showAlert('Please select a material first.', 'error');
+                return;
+            }
+            const matName = document.getElementById('output_material').selectedOptions[0]?.text ?? '';
+            document.getElementById('outputModalSubtitle').textContent = matName
+                ? `Material: ${matName} — enter block weights`
+                : 'Enter block weights — total auto-calculates';
+
+            // Render rows
+            renderOutputRows();
+            document.getElementById('outputQtyModal').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeOutputModal(e) {
+            if (e && e.target !== document.getElementById('outputQtyModal')) return;
+            document.getElementById('outputQtyModal').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function renderOutputRows() {
+            const tbody = document.getElementById('outputBlockTbody');
+            tbody.innerHTML = '';
+            // Always show at least OUTPUT_MAX_ROWS rows
+            const count = Math.max(OUTPUT_MAX_ROWS, outputBlockRows.length);
+            for (let i = 0; i < count; i++) {
+                const qty = outputBlockRows[i]?.qty ?? '';
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--bdr)';
+                tr.innerHTML = `
+                  <td style="padding:5px 14px;font-size:12.5px;font-weight:700;color:var(--g);text-align:right;
+                             background:var(--gxl);width:80px;border-right:1px solid var(--bdr)">${i + 1}</td>
+                  <td style="padding:4px 10px">
+                    <input type="number" step="0.001" min="0" placeholder="0.000"
+                      value="${qty}"
+                      style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:6px;
+                             font-family:'Outfit',sans-serif;font-size:13px;text-align:right;
+                             background:var(--white);outline:none;transition:border-color .15s"
+                      oninput="onOutputQtyInput(this, ${i})"
+                      onfocus="this.style.borderColor='var(--g)'"
+                      onblur="this.style.borderColor='var(--bdr)'">
+                  </td>`;
+                tbody.appendChild(tr);
+            }
+            recalcOutputTotal();
+        }
+
+        function addOutputRow() {
+            // Save current values first
+            syncOutputRows();
+            outputBlockRows.push({ qty: '' });
+            renderOutputRows();
+            // Focus the new row's input
+            const inputs = document.querySelectorAll('#outputBlockTbody input');
+            if (inputs.length) inputs[inputs.length - 1].focus();
+        }
+
+        function syncOutputRows() {
+            document.querySelectorAll('#outputBlockTbody input').forEach((inp, idx) => {
+                if (!outputBlockRows[idx]) outputBlockRows[idx] = {};
+                outputBlockRows[idx].qty = inp.value;
+            });
+        }
+
+        function onOutputQtyInput(inp, rowIdx) {
+            if (!outputBlockRows[rowIdx]) outputBlockRows[rowIdx] = {};
+            outputBlockRows[rowIdx].qty = inp.value;
+            recalcOutputTotal();
+        }
+
+        function recalcOutputTotal() {
+            let total = 0;
+            document.querySelectorAll('#outputBlockTbody input').forEach(inp => {
+                const v = parseFloat(inp.value);
+                if (!isNaN(v) && v > 0) total += v;
+            });
+            document.getElementById('outputBlockTotal').textContent = total > 0 ? total.toFixed(3) : '0.000';
+        }
+
+        function confirmOutputQty() {
+            syncOutputRows();
+            const total = outputBlockRows.reduce((s, r) => {
+                const v = parseFloat(r.qty);
+                return s + (isNaN(v) || v <= 0 ? 0 : v);
+            }, 0);
+
+            document.getElementById('output_qty').value = total > 0 ? total.toFixed(3) : '';
+            triggerAutosave();
+
+            document.getElementById('outputQtyModal').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        // ── Populate output_blocks from saved data (edit mode) ──────────
+        function loadOutputBlocks(blocks) {
+            if (!blocks?.length) return;
+            outputBlockRows = blocks.map(b => ({ qty: b.block_weight ?? 0 }));
+            const total = outputBlockRows.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0);
+            if (total > 0) document.getElementById('output_qty').value = total.toFixed(3);
+        }
+
+        // ════════════════════════════════════════════════════════════════
+        // BBSU LOT SELECTION MODAL
+        // Supports multi-row selection: user assigns qty per BBSU batch,
+        // sum of all assign qtys populates the raw material QTY field.
+        // Multiple selected batches are stored as comma-separated in
+        // hidden fields (bbsu_batch_id / bbsu_batch_no).
+        // ════════════════════════════════════════════════════════════════
+        let bbsuActiveRowIndex = null;   // which raw-material row triggered modal
 
         function openBbsuModal(rowIndex) {
             const materialId = document.getElementById(`rm_id_${rowIndex}`)?.value;
             if (!materialId) return;
 
             bbsuActiveRowIndex = rowIndex;
-            bbsuSelectedBatchId = null;
-            bbsuSelectedBatchNo = null;
-            bbsuSelectedAssignQty = null;
 
             const materialName = document.getElementById(`rm_id_${rowIndex}`)?.selectedOptions[0]?.text ?? 'Material';
             document.getElementById('bbsuModalTitle').textContent = 'Select BBSU Batch — ' + materialName;
-            document.getElementById('bbsuModalSubtitle').textContent = 'Shows submitted BBSU batches where this material is the output. Select a batch and enter the quantity to assign.';
+            document.getElementById('bbsuModalSubtitle').textContent = 'Enter the quantity to assign from each BBSU batch. Total will be applied to the QTY field.';
             document.getElementById('bbsuConfirmBtn').disabled = true;
 
-            // Show modal
             document.getElementById('bbsuLotModal').classList.add('open');
             document.body.style.overflow = 'hidden';
 
-            // Load data
             loadBbsuLots(materialId, rowIndex);
         }
 
@@ -2080,145 +2415,314 @@
             const empty = document.getElementById('bbsuLotEmpty');
             const scroll = document.getElementById('bbsuLotTableScroll');
             const tbody = document.getElementById('bbsuLotTbody');
+            const tfoot = document.getElementById('bbsuLotTfoot');
 
             loading.style.display = 'block';
             empty.style.display = 'none';
             scroll.style.display = 'none';
+            tfoot.style.display = 'none';
             tbody.innerHTML = '';
+            document.getElementById('bbsuTotalAssign').textContent = '0.000';
+            document.getElementById('bbsuConfirmBtn').disabled = true;
 
-            // Exclude current smelting batch so its own usage doesn't double-count
             const excl = recordId ? `?exclude_smelting_id=${recordId}` : '';
             const res = await apiFetch(`/smelting-batches/bbsu-lots/${materialId}${excl}`, { method: 'GET' });
-
             loading.style.display = 'none';
 
-            if (!res || !res.data || res.data.length === 0) {
-                empty.style.display = 'block';
-                return;
-            }
+            // apiFetch returns a Response object — parse JSON
+            if (!res || !res.ok) { empty.style.display = 'block'; return; }
+            const json = await res.json();
+            const lots = json.data ?? [];
+
+            if (!lots.length) { empty.style.display = 'block'; return; }
 
             scroll.style.display = 'block';
+            tfoot.style.display = '';
 
-            res.data.forEach(lot => {
+            lots.forEach(lot => {
                 const availClass = lot.available_qty <= 0 ? 'avail-zero'
                     : lot.available_qty < 50 ? 'avail-low'
                         : 'avail-good';
-
                 const tr = document.createElement('tr');
                 tr.dataset.bbsuId = lot.bbsu_batch_id;
                 tr.dataset.bbsuNo = lot.batch_no;
                 tr.dataset.availableQty = lot.available_qty;
-                tr.innerHTML = `
-          <td>
-            <div style="width:18px;height:18px;border-radius:50%;border:2px solid var(--bdr);
-                 display:flex;align-items:center;justify-content:center" id="bbs_radio_${lot.bbsu_batch_id}">
-            </div>
-          </td>
-          <td><span class="lot-bbsu-tag">${lot.batch_no}</span></td>
-          <td style="font-size:12.5px">${lot.material_name}</td>
-          <td style="font-weight:600;color:var(--txtm)">${lot.material_unit}</td>
-          <td style="font-weight:600">${Number(lot.output_qty).toFixed(3)}</td>
-          <td style="color:var(--warn)">${Number(lot.already_used_qty).toFixed(3)}</td>
-          <td><span class="avail-pill ${availClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
-          <td>
-            <input type="number" class="assign-input" id="bbs_assign_${lot.bbsu_batch_id}"
-              placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
-              ${lot.available_qty <= 0 ? 'disabled title="No stock available"' : ''}
-              oninput="onAssignQtyInput(${lot.bbsu_batch_id}, ${lot.available_qty})"
-              onclick="event.stopPropagation()">
-          </td>`;
 
-                tr.addEventListener('click', () => selectBbsuRow(tr, lot));
+                tr.innerHTML = `
+                  <td><span class="lot-bbsu-tag">${lot.batch_no}</span></td>
+                  <td style="font-size:12.5px;font-weight:600">${lot.material_name}</td>
+                  <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
+                  <td><span class="avail-pill ${availClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
+                  <td>
+                    <input type="number" class="assign-input" id="bbs_assign_${lot.bbsu_batch_id}"
+                      placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
+                      ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
+                      oninput="onAssignQtyInput(${lot.bbsu_batch_id}, ${lot.available_qty})"
+                      onclick="event.stopPropagation()">
+                  </td>`;
+
+                // clicking the row focuses the assign input
+                tr.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'INPUT') return;
+                    const inp = document.getElementById(`bbs_assign_${lot.bbsu_batch_id}`);
+                    if (inp && !inp.disabled) inp.focus();
+                });
+
                 tbody.appendChild(tr);
             });
         }
 
-        function selectBbsuRow(tr, lot) {
-            if (lot.available_qty <= 0) return;
-
-            // Deselect previous
-            document.querySelectorAll('#bbsuLotTbody tr').forEach(r => {
-                r.classList.remove('selected');
-                const radio = document.getElementById(`bbs_radio_${r.dataset.bbsuId}`);
-                if (radio) radio.innerHTML = '';
-            });
-
-            tr.classList.add('selected');
-            const radio = document.getElementById(`bbs_radio_${lot.bbsu_batch_id}`);
-            if (radio) radio.innerHTML = `<div style="width:9px;height:9px;border-radius:50%;background:var(--g)"></div>`;
-
-            bbsuSelectedBatchId = lot.bbsu_batch_id;
-            bbsuSelectedBatchNo = lot.batch_no;
-
-            // Focus the assign input for this row
-            const assignInput = document.getElementById(`bbs_assign_${lot.bbsu_batch_id}`);
-            if (assignInput) {
-                assignInput.focus();
-            }
-
-            // Read current assign qty (may already be filled)
-            bbsuSelectedAssignQty = assignInput?.value ? parseFloat(assignInput.value) : null;
-            document.getElementById('bbsuConfirmBtn').disabled = !bbsuSelectedAssignQty;
-        }
-
+        // Called every time any assign-qty input changes
         function onAssignQtyInput(bbsuId, maxQty) {
             const input = document.getElementById(`bbs_assign_${bbsuId}`);
             if (!input) return;
 
             let val = parseFloat(input.value);
-            if (isNaN(val) || val <= 0) { val = null; }
-            if (val && val > maxQty) {
+            if (isNaN(val) || val < 0) { val = 0; input.value = ''; }
+            if (val > maxQty) {
                 val = parseFloat(maxQty.toFixed(3));
                 input.value = val.toFixed(3);
-                input.style.borderColor = '#d97706';
+                input.style.borderColor = '#d97706'; // orange = capped
             } else {
-                input.style.borderColor = val ? 'var(--g)' : '';
+                input.style.borderColor = val > 0 ? 'var(--g)' : '';
             }
 
-            // Auto-select this row when user types in it
+            // Highlight row if qty > 0
             const tr = input.closest('tr');
-            if (tr) {
-                const lot = { bbsu_batch_id: bbsuId, batch_no: tr.dataset.bbsuNo, available_qty: maxQty };
-                selectBbsuRow(tr, lot);
-            }
+            if (tr) tr.classList.toggle('selected', val > 0);
 
-            bbsuSelectedAssignQty = val;
-            document.getElementById('bbsuConfirmBtn').disabled = !val;
+            recalcBbsuModalTotal();
         }
 
+        // Sum all filled assign-qty inputs and update total + confirm button
+        function recalcBbsuModalTotal() {
+            let total = 0;
+            document.querySelectorAll('#bbsuLotTbody .assign-input').forEach(inp => {
+                const v = parseFloat(inp.value);
+                if (!isNaN(v) && v > 0) total += v;
+            });
+            document.getElementById('bbsuTotalAssign').textContent = total > 0 ? total.toFixed(3) : '0.000';
+            document.getElementById('bbsuConfirmBtn').disabled = total <= 0;
+        }
+
+        // OK button — collect all rows that have assign qty > 0
         function confirmBbsuSelection() {
-            if (!bbsuActiveRowIndex || !bbsuSelectedBatchId || !bbsuSelectedAssignQty) return;
+            if (!bbsuActiveRowIndex) return;
 
             const i = bbsuActiveRowIndex;
+            const selections = [];
 
-            // Write hidden fields
-            document.getElementById(`rm_bbsu_id_${i}`).value = bbsuSelectedBatchId;
-            document.getElementById(`rm_bbsu_no_${i}`).value = bbsuSelectedBatchNo;
+            document.querySelectorAll('#bbsuLotTbody tr').forEach(tr => {
+                const bbsuId = tr.dataset.bbsuId;
+                const bbsuNo = tr.dataset.bbsuNo;
+                const inp = document.getElementById(`bbs_assign_${bbsuId}`);
+                const qty = parseFloat(inp?.value);
+                if (!isNaN(qty) && qty > 0) {
+                    selections.push({ bbsuId, bbsuNo, qty });
+                }
+            });
 
-            // Populate qty field
+            if (!selections.length) return;
+
+            const totalQty = selections.reduce((s, r) => s + r.qty, 0);
+            // Store first batch id/no in hidden fields (for single-batch compat);
+            // store all as JSON in a data attribute on the row for multi-batch awareness
+            const batchIds = selections.map(r => r.bbsuId).join(',');
+            const batchNos = selections.map(r => r.bbsuNo).join(',');
+
+            document.getElementById(`rm_bbsu_id_${i}`).value = batchIds;
+            document.getElementById(`rm_bbsu_no_${i}`).value = batchNos;
+
+            // Also store full detail on the row element for buildPayload
+            const tr = document.getElementById(`rrow-${i}`);
+            if (tr) tr.dataset.bbsuSelections = JSON.stringify(selections);
+
+            // Set QTY field to total assigned qty
             const qtyInput = document.getElementById(`rm_qty_${i}`);
             if (qtyInput) {
-                qtyInput.value = bbsuSelectedAssignQty.toFixed(3);
+                qtyInput.value = totalQty.toFixed(3);
                 calcRawExpected(i);
                 recalcRawTotals();
             }
 
-            // Update BBSU tag cell
-            const tagCell = document.getElementById(`rm_bbsu_tag_${i}`);
-            if (tagCell) {
-                tagCell.innerHTML = `
-          <span class="lot-bbsu-tag" title="Assign qty: ${bbsuSelectedAssignQty} KG">${bbsuSelectedBatchNo}</span>
-          <button type="button" class="del-btn" style="flex-shrink:0" onclick="clearBbsuOnRow(${i})" title="Clear BBSU selection">
-            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>`;
+            // Show selected batches as tooltip on the QTY input
+            const qtyEl = document.getElementById(`rm_qty_${i}`);
+            if (qtyEl) {
+                qtyEl.title = 'BBSU: ' + selections.map(r => `${r.bbsuNo} (${r.qty} KG)`).join(', ');
+                qtyEl.style.borderColor = 'var(--g)';
             }
 
             triggerAutosave();
-
-            // Close modal
             document.getElementById('bbsuLotModal').classList.remove('open');
             document.body.style.overflow = '';
             bbsuActiveRowIndex = null;
+        }
+
+        // ════════════════════════════════════════════════════════════════
+        // FLUX BBSU LOT SELECTION MODAL
+        // Same pattern as raw-material BBSU modal — reuses same API endpoint
+        // getBbsuLots, filtering by the selected flux/chemical item id.
+        // ════════════════════════════════════════════════════════════════
+        let fluxActiveRowIndex = null;
+
+        function openFluxModal(rowIndex) {
+            const materialId = document.getElementById(`fl_id_${rowIndex}`)?.value;
+            if (!materialId) return;
+
+            fluxActiveRowIndex = rowIndex;
+
+            const materialName = document.getElementById(`fl_id_${rowIndex}`)?.selectedOptions[0]?.text ?? 'Chemical';
+            document.getElementById('fluxModalTitle').textContent = 'Select BBSU Batch — ' + materialName;
+            document.getElementById('fluxModalSubtitle').textContent = 'Enter the quantity to assign from each BBSU batch. Total will be applied to the QTY field.';
+            document.getElementById('fluxConfirmBtn').disabled = true;
+
+            document.getElementById('fluxLotModal').classList.add('open');
+            document.body.style.overflow = 'hidden';
+
+            loadFluxLots(materialId, rowIndex);
+        }
+
+        function closeFluxModal(e) {
+            if (e && e.target !== document.getElementById('fluxLotModal')) return;
+            document.getElementById('fluxLotModal').classList.remove('open');
+            document.body.style.overflow = '';
+            fluxActiveRowIndex = null;
+        }
+
+        async function loadFluxLots(materialId, rowIndex) {
+            const loading = document.getElementById('fluxLotLoading');
+            const empty = document.getElementById('fluxLotEmpty');
+            const scroll = document.getElementById('fluxLotTableScroll');
+            const tbody = document.getElementById('fluxLotTbody');
+            const tfoot = document.getElementById('fluxLotTfoot');
+
+            loading.style.display = 'block';
+            empty.style.display = 'none';
+            scroll.style.display = 'none';
+            tfoot.style.display = 'none';
+            tbody.innerHTML = '';
+            document.getElementById('fluxTotalAssign').textContent = '0.000';
+            document.getElementById('fluxConfirmBtn').disabled = true;
+
+            const excl = recordId ? `?exclude_smelting_id=${recordId}` : '';
+            const res = await apiFetch(`/smelting-batches/bbsu-lots/${materialId}${excl}`, { method: 'GET' });
+            loading.style.display = 'none';
+
+            if (!res || !res.ok) { empty.style.display = 'block'; return; }
+            const json = await res.json();
+            const lots = json.data ?? [];
+
+            if (!lots.length) { empty.style.display = 'block'; return; }
+
+            scroll.style.display = 'block';
+            tfoot.style.display = '';
+
+            lots.forEach(lot => {
+                const availClass = lot.available_qty <= 0 ? 'avail-zero'
+                    : lot.available_qty < 50 ? 'avail-low'
+                        : 'avail-good';
+                const tr = document.createElement('tr');
+                tr.dataset.bbsuId = lot.bbsu_batch_id;
+                tr.dataset.bbsuNo = lot.batch_no;
+                tr.dataset.availableQty = lot.available_qty;
+
+                tr.innerHTML = `
+                  <td><span class="lot-bbsu-tag">${lot.batch_no}</span></td>
+                  <td style="font-size:12.5px;font-weight:600">${lot.material_name}</td>
+                  <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
+                  <td><span class="avail-pill ${availClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
+                  <td>
+                    <input type="number" class="assign-input" id="flux_assign_${lot.bbsu_batch_id}"
+                      placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
+                      ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
+                      oninput="onFluxAssignInput(${lot.bbsu_batch_id}, ${lot.available_qty})"
+                      onclick="event.stopPropagation()">
+                  </td>`;
+
+                tr.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'INPUT') return;
+                    const inp = document.getElementById(`flux_assign_${lot.bbsu_batch_id}`);
+                    if (inp && !inp.disabled) inp.focus();
+                });
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function onFluxAssignInput(bbsuId, maxQty) {
+            const input = document.getElementById(`flux_assign_${bbsuId}`);
+            if (!input) return;
+
+            let val = parseFloat(input.value);
+            if (isNaN(val) || val < 0) { val = 0; input.value = ''; }
+            if (val > maxQty) {
+                val = parseFloat(maxQty.toFixed(3));
+                input.value = val.toFixed(3);
+                input.style.borderColor = '#d97706';
+            } else {
+                input.style.borderColor = val > 0 ? 'var(--g)' : '';
+            }
+
+            const tr = input.closest('tr');
+            if (tr) tr.classList.toggle('selected', val > 0);
+
+            recalcFluxModalTotal();
+        }
+
+        function recalcFluxModalTotal() {
+            let total = 0;
+            document.querySelectorAll('#fluxLotTbody .assign-input').forEach(inp => {
+                const v = parseFloat(inp.value);
+                if (!isNaN(v) && v > 0) total += v;
+            });
+            document.getElementById('fluxTotalAssign').textContent = total > 0 ? total.toFixed(3) : '0.000';
+            document.getElementById('fluxConfirmBtn').disabled = total <= 0;
+        }
+
+        function confirmFluxSelection() {
+            if (!fluxActiveRowIndex) return;
+
+            const i = fluxActiveRowIndex;
+            const selections = [];
+
+            document.querySelectorAll('#fluxLotTbody tr').forEach(tr => {
+                const bbsuId = tr.dataset.bbsuId;
+                const bbsuNo = tr.dataset.bbsuNo;
+                const inp = document.getElementById(`flux_assign_${bbsuId}`);
+                const qty = parseFloat(inp?.value);
+                if (!isNaN(qty) && qty > 0) selections.push({ bbsuId, bbsuNo, qty });
+            });
+
+            if (!selections.length) return;
+
+            const totalQty = selections.reduce((s, r) => s + r.qty, 0);
+            const batchIds = selections.map(r => r.bbsuId).join(',');
+            const batchNos = selections.map(r => r.bbsuNo).join(',');
+
+            document.getElementById(`fl_bbsu_id_${i}`).value = batchIds;
+            document.getElementById(`fl_bbsu_no_${i}`).value = batchNos;
+
+            const tr = document.getElementById(`frow-${i}`);
+            if (tr) tr.dataset.fluxBbsuSelections = JSON.stringify(selections);
+
+            // Set QTY field to total assigned qty
+            const qtyInput = document.getElementById(`fl_qty_${i}`);
+            if (qtyInput) {
+                qtyInput.value = totalQty.toFixed(3);
+                recalcFluxTotals();
+            }
+
+            // Show selected batches as tooltip on the QTY input
+            const fluxQtyEl = document.getElementById(`fl_qty_${i}`);
+            if (fluxQtyEl) {
+                fluxQtyEl.title = 'BBSU: ' + selections.map(r => `${r.bbsuNo} (${r.qty} KG)`).join(', ');
+                fluxQtyEl.style.borderColor = 'var(--g)';
+            }
+
+            triggerAutosave();
+            document.getElementById('fluxLotModal').classList.remove('open');
+            document.body.style.overflow = '';
+            fluxActiveRowIndex = null;
         }
     </script>
 @endpush

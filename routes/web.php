@@ -35,5 +35,7 @@ Route::prefix('admin/mes/smelting')->name('admin.mes.smelting.')->group(function
     Route::get('/',           [Smeltingwebcontroller::class, 'index'])->name('index');
     Route::get('/create',     [Smeltingwebcontroller::class, 'create'])->name('create');
     Route::get('/{id}/edit',  [Smeltingwebcontroller::class, 'edit'])->name('edit');
+    Route::delete('/{id}',    [Smeltingwebcontroller::class, 'destroy'])->name('destroy');
+
 });
 

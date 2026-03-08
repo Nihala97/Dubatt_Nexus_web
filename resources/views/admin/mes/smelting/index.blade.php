@@ -1,4 +1,3 @@
-
 @extends('admin.layouts.app')
 @section('title', 'Smelting Batches')
 
@@ -708,7 +707,7 @@
     {{-- ── Data — all queries live here, controller stays untouched ── --}}
     @php
         // Filtered paginated list (mirrors what acid testing index does in-blade)
-        $q = \App\Models\SmeltingBatch::with(['outputMaterial', 'createdBy'])
+        $q = \App\Models\SmeltingBatch::with(['createdBy'])
             ->where('is_active', true);
 
         if (request('status'))
@@ -1050,6 +1049,14 @@
         function debounceSearch(input) {
             clearTimeout(searchTimer);
             searchTimer = setTimeout(() => document.getElementById('filterForm').submit(), 500);
+        }
+        async function deleteRecord(id, e) {
+            e.stopPropagation();
+            document.querySelectorAll('.action-dropdown').forEach(d => d.classList.remove('show'));
+            if (!confirm('Are you sure you want to delete this record?')) return;
+            const res = await apiFetch(`/receivings/${id}`, { method: 'DELETE' });
+            if (res?.ok) { loadReceivings(); }
+            else { const d = await res.json(); alert(d.message ?? 'Delete failed.'); }
         }
     </script>
 @endpush
