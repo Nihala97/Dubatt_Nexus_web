@@ -23,10 +23,17 @@ Route::prefix('admin/mes/receiving')->name('admin.mes.receiving.')->group(functi
     Route::get('/{id}/edit',  [ReceivingWebController::class, 'edit'])->name('edit');
 });
 Route::prefix('admin/mes/acidTesting')->name('admin.mes.acidTesting.')->group(function () {
-    Route::get('/',           [AcidTestingWebController::class, 'index'])->name('index');
-    Route::get('/create',     [AcidTestingWebController::class, 'create'])->name('create');
-    Route::get('/{id}/edit',  [AcidTestingWebController::class, 'edit'])->name('edit');
+    Route::get('/', [AcidTestingWebController::class, 'index'])->name('index');
+    Route::get('/create', [AcidTestingWebController::class, 'create'])->name('create');
+    Route::get('/{id}/edit', [AcidTestingWebController::class, 'edit'])->name('edit');
+    Route::get('/{id}/print', [AcidTestingWebController::class, 'printView'])->name('print');
+    Route::delete('/{id}', [AcidTestingWebController::class, 'destroy'])->name('destroy');
 });
+// Route::prefix('admin/mes/acidTesting')->name('admin.mes.acidTesting.')->group(function () {
+//     Route::get('/',           [AcidTestingWebController::class, 'index'])->name('index');
+//     Route::get('/create',     [AcidTestingWebController::class, 'create'])->name('create');
+//     Route::get('/{id}/edit',  [AcidTestingWebController::class, 'edit'])->name('edit');
+// });
 Route::prefix('admin/mes/bbsu')->name('admin.mes.bbsu.')->group(function () {
     Route::get('/',           [BbsuWebController::class, 'index'])->name('index');
     Route::get('/create',     [BbsuWebController::class, 'create'])->name('create');

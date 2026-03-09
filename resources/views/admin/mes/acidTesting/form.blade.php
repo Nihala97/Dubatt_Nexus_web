@@ -1,287 +1,1333 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Acid Testing — Create Record')
+@section('title', 'Acid Testing')
 
 @section('breadcrumb')
-    <a href="{{ route('admin.dashboard') }}" style="color:var(--text-muted);text-decoration:none;">Dashboard</a>
-    <span style="margin:0 8px;color:var(--border);">/</span>
-    <a href="{{ route('admin.mes.acidTesting.index') }}" style="color:var(--text-muted);text-decoration:none;">Acid Testing</a>
-    <span style="margin:0 8px;color:var(--border);">/</span>
-    <strong id="breadcrumbTitle">Loading...</strong>
+  <a href="{{ route('admin.dashboard') }}" style="color:var(--text-muted);text-decoration:none;">Dashboard</a>
+  <span style="margin:0 6px;color:var(--border);">/</span>
+  <a href="{{ route('admin.mes.acidTesting.index') }}" style="color:var(--text-muted);text-decoration:none;">Acid
+    Testing</a>
+  <span style="margin:0 6px;color:var(--border);">/</span>
+  <strong id="breadcrumbTitle">Loading…</strong>
 @endsection
 
 @push('styles')
-<style>
-  :root {
-    --green:#1a7a3a; --green-dark:#145f2d; --green-light:#e8f5ed; --green-xlight:#f2faf5;
-    --white:#ffffff; --bg:#f4f7f5; --border:#dde8e2; --text:#1e2d26; --text-mid:#3d5449;
-    --text-muted:#6b8a78; --error:#dc2626; --shadow-sm:0 2px 8px rgba(0,0,0,0.06);
-    --radius:12px;
-  }
-  .form-page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
-  .form-page-header h2 { font-size:clamp(18px,2.5vw,24px); font-weight:700; color:var(--text); margin-bottom:3px; }
-  .form-page-header p { font-size:13px; color:var(--text-muted); }
-  .page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
-  .page-header h2 { font-size:clamp(18px,2.5vw,23px); font-weight:800; color:var(--text); margin-bottom:3px; letter-spacing:-0.3px; }
-  .page-header p { font-size:13px; color:var(--text-muted); }
+  <style>
+    /* ── Design tokens ──────────────────────────────────────────── */
+    :root {
+      --g: #1a7a3a;
+      --gd: #145f2d;
+      --gl: #e8f5ed;
+      --gxl: #f2faf5;
+      --white: #fff;
+      --bg: #f4f7f5;
+      --bdr: #dde8e2;
+      --txt: #1e2d26;
+      --txtm: #3d5449;
+      --txtmu: #6b8a78;
+      --err: #dc2626;
+      --warn: #d97706;
+      --sh: 0 1px 6px rgba(26, 122, 58, .07), 0 4px 18px rgba(26, 122, 58, .05);
+      --r: 12px;
+    }
 
-  .btn { display:inline-flex; align-items:center; gap:7px; padding:10px 18px; border-radius:9px;
-         font-family:'Outfit',sans-serif; font-size:13.5px; font-weight:600; cursor:pointer;
-         text-decoration:none; border:none; transition:all 0.2s; white-space:nowrap; }
-  .btn svg { width:15px; height:15px; stroke:currentColor; flex-shrink:0; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-  .btn-primary { background:var(--green); color:#fff; }
-  .btn-primary:hover { background:var(--green-dark); box-shadow:0 4px 14px rgba(26,122,58,0.28); transform:translateY(-1px); }
-  .btn-outline { background:var(--white); color:var(--text-mid); border:1.5px solid var(--border); }
-  .btn-outline:hover { border-color:var(--green); color:var(--green); background:var(--green-xlight); }
-  .btn-sm { padding:8px 15px; font-size:13px; }
-  .btn-add { background:var(--green); color:#fff; padding:9px 16px; border-radius:8px; font-size:13px; font-weight:700; border:none; cursor:pointer; font-family:'Outfit',sans-serif; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s; white-space:nowrap; }
-  .btn-add:hover { background:var(--green-dark); transform:translateY(-1px); }
-  .btn-add svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box
+    }
 
-  .form-card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-sm); margin-bottom:20px; }
-  .form-section-head { padding:13px 22px; background:var(--green-light); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
-  .form-section-head svg { width:15px; height:15px; stroke:var(--green); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
-  .form-section-head span { font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); }
-  .form-section-body { padding:26px 22px 30px; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--txt)
+    }
 
-  .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:18px 28px; }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
 
-  .field { display:flex; flex-direction:column; }
-  .field label { font-size:11px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-mid); margin-bottom:7px; }
-  .field label .req { color:var(--error); }
-  .autofill-tag { display:inline-block; background:#dbeafe; color:#1d4ed8; font-size:10px; font-weight:600; padding:2px 7px; border-radius:10px; text-transform:uppercase; letter-spacing:0.8px; margin-left:6px; }
+    @keyframes flashFill {
+      0% {
+        background: #d1fae5
+      }
 
-  .input-wrap { position:relative; }
-  .input-wrap .ico { position:absolute; left:12px; top:50%; transform:translateY(-50%); width:14px; height:14px; stroke:var(--text-muted); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; pointer-events:none; }
-  input[type="text"], input[type="number"], input[type="date"], select {
-    width:100%; padding:10px 13px 10px 38px; border:1.5px solid var(--border); border-radius:9px;
-    background:var(--green-xlight); font-family:'Outfit',sans-serif; font-size:13.5px; color:var(--text);
-    outline:none; appearance:none; transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;
-  }
-  input:focus, select:focus { border-color:var(--green); background:var(--white); box-shadow:0 0 0 4px rgba(26,122,58,0.08); }
-  input::placeholder { color:var(--text-muted); }
-  input[readonly], input.autofilled { background:#eef6f1; color:var(--text-mid); cursor:default; border-color:#c8dfd1; }
-  input.autofilled:focus { box-shadow:none; border-color:#c8dfd1; }
-  .select-wrap::after { content:''; position:absolute; right:12px; top:50%; transform:translateY(-50%); border-left:5px solid transparent; border-right:5px solid transparent; border-top:5px solid var(--text-muted); pointer-events:none; }
-  .error-msg { margin-top:5px; font-size:11.5px; color:var(--error); }
+      100% {
+        background: #eef6f1
+      }
+    }
 
-  /* Lot loading spinner */
-  .lot-loading { display:none; position:absolute; right:32px; top:50%; transform:translateY(-50%); }
-  .lot-loading.active { display:block; }
-  .lot-loading svg { width:14px; height:14px; stroke:var(--green); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; animation:spin 0.8s linear infinite; }
-  @keyframes spin { to { transform:rotate(360deg); } }
+    @keyframes sddIn {
+      from {
+        opacity: 0;
+        transform: translateY(-4px)
+      }
 
-  /* Prefill flash */
-  @keyframes flashFill { 0% { background:#d1fae5; } 100% { background:#eef6f1; } }
-  .autofilled.flash { animation:flashFill 0.7s ease forwards; }
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
 
-  /* Pallet table */
-  .pallet-table-wrap { overflow-x:auto; }
-  .pallet-table { width:100%; border-collapse:collapse; min-width:700px; }
-  .pallet-table thead th { font-size:10.5px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--green); background:var(--green-light); padding:10px 12px; border-bottom:2px solid var(--border); text-align:left; white-space:nowrap; }
-  .pallet-table thead th:first-child { text-align:center; width:52px; }
-  .pallet-table tbody td { padding:7px 8px; border-bottom:1px solid #edf2ef; vertical-align:top; }
-  .pallet-table tbody tr:last-child td { border-bottom:none; }
-  .pallet-table tbody tr:hover td { background:#f7fbf8; }
-  .pallet-table tfoot td { background:var(--green-light); font-weight:700; font-size:13px; color:var(--green); padding:9px 12px; }
+    @keyframes pulse {
 
-  .sr-cell { text-align:center; font-size:13px; font-weight:700; color:var(--green); padding-top:10px !important; }
-  .row-input { width:100%; padding:8px 11px; border:1.5px solid var(--border); border-radius:7px; background:var(--green-xlight); font-family:'Outfit',sans-serif; font-size:13px; color:var(--text); outline:none; transition:border-color 0.2s,background 0.2s; }
-  .row-input:focus { border-color:var(--green); background:var(--white); box-shadow:0 0 0 3px rgba(26,122,58,0.08); }
-  .row-select { width:100%; padding:8px 28px 8px 11px; border:1.5px solid var(--border); border-radius:7px; background:var(--green-xlight); font-family:'Outfit',sans-serif; font-size:13px; color:var(--text); outline:none; appearance:none; transition:border-color 0.2s,background 0.2s; }
-  .row-select:focus { border-color:var(--green); background:var(--white); box-shadow:0 0 0 3px rgba(26,122,58,0.08); }
-  .select-cell-wrap { position:relative; }
-  .select-cell-wrap::after { content:''; position:absolute; right:10px; top:50%; transform:translateY(-50%); border-left:4px solid transparent; border-right:4px solid transparent; border-top:4px solid var(--text-muted); pointer-events:none; }
+      0%,
+      100% {
+        opacity: 1
+      }
 
-  /* Acid sub-fields */
-  .acid-fields { margin-top:8px; display:none; grid-template-columns:repeat(4,1fr); gap:6px; }
-  .acid-fields.visible { display:grid; }
-  .acid-field-label { font-size:9.5px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px; white-space:nowrap; }
+      50% {
+        opacity: .4
+      }
+    }
 
-  .delete-btn { width:28px; height:28px; background:#fee2e2; border:none; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; margin:auto; }
-  .delete-btn:hover { background:#fca5a5; }
-  .delete-btn svg { width:13px; height:13px; stroke:#dc2626; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    /* ── Page header ────────────────────────────────────────────── */
+    .ph {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px
+    }
 
-  .add-row-wrap { padding:14px 0 0; display:flex; justify-content:flex-end; }
+    .ph h2 {
+      font-size: clamp(17px, 2.3vw, 22px);
+      font-weight: 800;
+      color: var(--txt);
+      letter-spacing: -.3px
+    }
 
-  .form-actions { position:sticky; bottom:0; background:var(--white); border-top:1px solid var(--border); padding:15px 22px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; z-index:10; box-shadow:0 -4px 16px rgba(0,0,0,0.06); }
+    .ph p {
+      font-size: 12.5px;
+      color: var(--txtmu);
+      margin-top: 2px
+    }
 
-  .form-alert { display:none; padding:11px 16px; border-radius:9px; font-size:13px; font-weight:500; margin-bottom:16px; }
-  .form-alert.error   { background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; display:block; }
-  .form-alert.success { background:#d1fae5; border:1px solid #6ee7b7; color:#065f46; display:block; }
+    /* ── Buttons ────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 17px;
+      border-radius: 9px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      border: none;
+      transition: all .2s;
+      white-space: nowrap
+    }
 
-  .status-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; white-space:nowrap; margin-top:10px; }
-  .status-badge.draft     { background:#e0e7ff; color:#3730a3; }
-  .status-badge.submitted { background:#d1fae5; color:#065f46; }
-  @media(max-width:768px) { .form-grid-2 { grid-template-columns:1fr 1fr; } }
-  @media(max-width:520px) {
-    .form-grid-2 { grid-template-columns:1fr; }
-    .form-actions { flex-direction:column; align-items:stretch; }
-    .form-actions .btn { justify-content:center; }
-  }
-</style>
+    .btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .btn-primary {
+      background: var(--g);
+      color: #fff
+    }
+
+    .btn-primary:hover {
+      background: var(--gd);
+      box-shadow: 0 4px 14px rgba(26, 122, 58, .28);
+      transform: translateY(-1px)
+    }
+
+    .btn-outline {
+      background: var(--white);
+      color: var(--txtm);
+      border: 1.5px solid var(--bdr)
+    }
+
+    .btn-outline:hover {
+      border-color: var(--g);
+      color: var(--g);
+      background: var(--gxl)
+    }
+
+    .btn-sm {
+      padding: 7px 13px;
+      font-size: 12.5px
+    }
+
+    .btn-add {
+      background: var(--g);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 7px;
+      font-size: 12.5px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all .2s
+    }
+
+    .btn-add:hover {
+      background: var(--gd);
+      transform: translateY(-1px)
+    }
+
+    .btn-add svg {
+      width: 13px;
+      height: 13px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .del-btn {
+      width: 26px;
+      height: 26px;
+      background: #fee2e2;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .18s;
+      margin: auto
+    }
+
+    .del-btn:hover {
+      background: #fca5a5
+    }
+
+    .del-btn svg {
+      width: 12px;
+      height: 12px;
+      stroke: #dc2626;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    /* ── Cards ──────────────────────────────────────────────────── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--bdr);
+      border-radius: var(--r);
+      box-shadow: var(--sh);
+      margin-bottom: 18px;
+      overflow: hidden
+    }
+
+    .card-head {
+      padding: 11px 20px;
+      background: var(--gl);
+      border-bottom: 1px solid var(--bdr);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px
+    }
+
+    .card-head-left {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .card-head-left svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--g);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .card-head span {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--g)
+    }
+
+    .card-body {
+      padding: 20px
+    }
+
+    /* ── Fields ─────────────────────────────────────────────────── */
+    .fg2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 24px
+    }
+
+    .fg4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px 20px
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px
+    }
+
+    .field label {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+      color: var(--txtm);
+      display: flex;
+      align-items: center;
+      gap: 5px
+    }
+
+    .field label .req {
+      color: var(--err)
+    }
+
+    .badge-auto {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .7px;
+      padding: 1px 7px;
+      border-radius: 10px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      text-transform: uppercase
+    }
+
+    .badge-calc {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .7px;
+      padding: 1px 7px;
+      border-radius: 10px;
+      background: var(--gl);
+      color: var(--gd);
+      text-transform: uppercase
+    }
+
+    .iw {
+      position: relative
+    }
+
+    .iw svg.ico {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 13px;
+      height: 13px;
+      stroke: var(--txtmu);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+      z-index: 1
+    }
+
+    input[type=text],
+    input[type=number],
+    input[type=date],
+    select {
+      width: 100%;
+      padding: 9px 12px 9px 34px;
+      border: 1.5px solid var(--bdr);
+      border-radius: 8px;
+      background: var(--gxl);
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      color: var(--txt);
+      outline: none;
+      appearance: none;
+      transition: border-color .18s, box-shadow .18s, background .18s
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--g);
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(26, 122, 58, .09)
+    }
+
+    input[readonly].ro,
+    input.ro {
+      background: #eef6f1;
+      color: var(--g);
+      cursor: default;
+      border-color: #c8dfd1;
+      font-weight: 600
+    }
+
+    input[readonly].ro:focus {
+      box-shadow: none;
+      border-color: #c8dfd1
+    }
+
+    input.autofilled {
+      background: #eef6f1;
+      color: var(--txtm);
+      cursor: default;
+      border-color: #c8dfd1
+    }
+
+    input.autofilled:focus {
+      box-shadow: none
+    }
+
+    input::placeholder {
+      color: var(--txtmu);
+      font-size: 12px
+    }
+
+    .autofilled.flash {
+      animation: flashFill .7s ease forwards
+    }
+
+    .err-msg {
+      font-size: 11.5px;
+      color: var(--err);
+      min-height: 14px
+    }
+
+    /* ── Table inputs ───────────────────────────────────────────── */
+    .ri {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1.5px solid var(--bdr);
+      border-radius: 6px;
+      background: var(--gxl);
+      font-family: 'Outfit', sans-serif;
+      font-size: 12.5px;
+      color: var(--txt);
+      outline: none;
+      transition: border-color .18s, background .18s
+    }
+
+    .ri:focus {
+      border-color: var(--g);
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(26, 122, 58, .08)
+    }
+
+    .ri[readonly] {
+      background: #eef6f1;
+      color: var(--g);
+      font-weight: 600;
+      cursor: default;
+      border-color: #c8dfd1
+    }
+
+    .ri[readonly]:focus {
+      box-shadow: none;
+      border-color: #c8dfd1
+    }
+
+    .rsel {
+      width: 100%;
+      padding: 6px 28px 6px 10px;
+      border: 1.5px solid var(--bdr);
+      border-radius: 6px;
+      background: var(--gxl);
+      font-family: 'Outfit', sans-serif;
+      font-size: 12.5px;
+      color: var(--txt);
+      outline: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b8a78' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      transition: border-color .18s, background .18s
+    }
+
+    .rsel:focus {
+      border-color: var(--g);
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(26, 122, 58, .08)
+    }
+
+    /* ── Data table ─────────────────────────────────────────────── */
+    .tbl-wrap {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid var(--bdr)
+    }
+
+    .dt {
+      width: 100%;
+      border-collapse: collapse
+    }
+
+    .dt thead th {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .9px;
+      text-transform: uppercase;
+      color: var(--g);
+      background: var(--gl);
+      padding: 9px 10px;
+      border-bottom: 2px solid var(--bdr);
+      text-align: left;
+      white-space: nowrap
+    }
+
+    .dt thead th.tc {
+      text-align: center
+    }
+
+    .dt thead th.disabled-col {
+      color: #9ca3af;
+      background: #f9fafb
+    }
+
+    .dt tbody td {
+      padding: 6px 6px;
+      border-bottom: 1px solid #edf2ef;
+      vertical-align: middle
+    }
+
+    .dt tbody tr:last-child td {
+      border-bottom: none
+    }
+
+    .dt tbody tr:hover td {
+      background: #f7fbf8
+    }
+
+    .dt tfoot td {
+      background: var(--gl);
+      font-weight: 700;
+      font-size: 12.5px;
+      color: var(--g);
+      padding: 8px 10px;
+      border-top: 2px solid var(--bdr)
+    }
+
+    .sr-n {
+      text-align: center;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--g)
+    }
+
+    /* disabled cell visual */
+    .cell-disabled input,
+    .cell-disabled select {
+      background: #f3f4f6 !important;
+      color: #9ca3af !important;
+      border-color: #e5e7eb !important;
+      cursor: not-allowed !important;
+      pointer-events: none
+    }
+
+    /* ── Net Avg Acid % banner ──────────────────────────────────── */
+    .result-banner {
+      margin-top: 16px;
+      border-radius: var(--r);
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      border: 2px solid var(--bdr);
+      background: linear-gradient(135deg, var(--gxl) 0%, var(--white) 100%);
+      transition: border-color .3s
+    }
+
+    .result-banner.cat-high {
+      border-color: #f59e0b;
+      background: linear-gradient(135deg, #fffbeb, #fff)
+    }
+
+    .result-banner.cat-normal {
+      border-color: var(--g);
+      background: linear-gradient(135deg, #e8f5ed, #fff)
+    }
+
+    .result-banner.cat-low {
+      border-color: #3b82f6;
+      background: linear-gradient(135deg, #eff6ff, #fff)
+    }
+
+    .result-banner.cat-dry {
+      border-color: #6b7280;
+      background: linear-gradient(135deg, #f3f4f6, #fff)
+    }
+
+    .rb-val {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--g);
+      letter-spacing: -1px;
+      line-height: 1
+    }
+
+    .rb-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--txtmu);
+      margin-bottom: 3px
+    }
+
+    .rb-sub {
+      font-size: 11.5px;
+      color: var(--txtmu);
+      margin-top: 4px
+    }
+
+    .cat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      transition: all .3s
+    }
+
+    .cat-pill.cat-high {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #f59e0b
+    }
+
+    .cat-pill.cat-normal {
+      background: var(--gl);
+      color: var(--gd);
+      border: 1px solid var(--g)
+    }
+
+    .cat-pill.cat-low {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #3b82f6
+    }
+
+    .cat-pill.cat-dry {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #9ca3af
+    }
+
+    .cat-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0
+    }
+
+    .cat-high .cat-dot {
+      background: #f59e0b
+    }
+
+    .cat-normal .cat-dot {
+      background: var(--g)
+    }
+
+    .cat-low .cat-dot {
+      background: #3b82f6
+    }
+
+    .cat-dry .cat-dot {
+      background: #9ca3af
+    }
+
+    .cat-rules {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 14px
+    }
+
+    .crule {
+      border-radius: 8px;
+      padding: 9px 13px;
+      border: 1.5px solid transparent;
+      font-size: 10.5px
+    }
+
+    .crule-title {
+      font-weight: 800;
+      font-size: 11px;
+      margin-bottom: 2px
+    }
+
+    .crule.ch {
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: #92400e
+    }
+
+    .crule.cn {
+      background: var(--gxl);
+      border-color: var(--bdr);
+      color: var(--gd)
+    }
+
+    .crule.cl {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: #1e3a8a
+    }
+
+    .crule.cd {
+      background: #f9fafb;
+      border-color: #e5e7eb;
+      color: #374151
+    }
+
+    /* ── Alerts & Actions ───────────────────────────────────────── */
+    .form-alert {
+      display: none;
+      padding: 11px 15px;
+      border-radius: 9px;
+      font-size: 12.5px;
+      font-weight: 500;
+      margin-bottom: 16px
+    }
+
+    .form-alert.error {
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+      display: block
+    }
+
+    .form-alert.success {
+      background: #d1fae5;
+      border: 1px solid #6ee7b7;
+      color: #065f46;
+      display: block
+    }
+
+    .form-actions {
+      position: sticky;
+      bottom: 0;
+      background: var(--white);
+      border-top: 1px solid var(--bdr);
+      padding: 13px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      z-index: 20;
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, .06)
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700
+    }
+
+    .badge-draft {
+      background: #e0e7ff;
+      color: #3730a3
+    }
+
+    .badge-submitted {
+      background: #d1fae5;
+      color: #065f46
+    }
+
+    .readonly-notice {
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      border-radius: 9px;
+      padding: 10px 15px;
+      font-size: 12.5px;
+      color: #92400e;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: none
+    }
+
+    .as-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 4px
+    }
+
+    .as-dot.saving {
+      background: var(--warn);
+      animation: pulse .8s infinite
+    }
+
+    .as-dot.saved {
+      background: var(--g)
+    }
+
+    /* ── SDD (ERPNext-style searchable dropdown) ────────────────── */
+    .sdd {
+      display: block;
+      width: 100%
+    }
+
+    .sdd-trigger {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px 9px 34px;
+      border: 1.5px solid var(--bdr);
+      border-radius: 8px;
+      background: var(--gxl);
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      color: var(--txt);
+      cursor: pointer;
+      user-select: none;
+      gap: 6px;
+      transition: border-color .18s, background .18s;
+      position: relative
+    }
+
+    .sdd-trigger-ico {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 13px;
+      height: 13px;
+      stroke: var(--txtmu);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none
+    }
+
+    .sdd-trigger:hover,
+    .sdd.open>.sdd-trigger {
+      border-color: var(--g);
+      background: var(--white)
+    }
+
+    .sdd-trigger-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: left
+    }
+
+    .sdd-trigger-text.placeholder {
+      color: var(--txtmu)
+    }
+
+    .sdd-trigger-chevron {
+      width: 12px;
+      height: 12px;
+      stroke: var(--txtmu);
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+      transition: transform .18s
+    }
+
+    .sdd.open>.sdd-trigger .sdd-trigger-chevron {
+      transform: rotate(180deg);
+      stroke: var(--g)
+    }
+
+    .sdd-portal {
+      position: fixed;
+      z-index: 9999;
+      background: #fff;
+      border: 1.5px solid var(--g);
+      border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, .16);
+      min-width: 260px;
+      overflow: hidden;
+      display: none;
+      animation: sddIn .12s ease
+    }
+
+    .sdd-portal.visible {
+      display: block
+    }
+
+    .sdd-search-wrap {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--bdr);
+      position: relative
+    }
+
+    .sdd-search-ico {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 13px;
+      height: 13px;
+      stroke: var(--txtmu);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none
+    }
+
+    .sdd-search {
+      width: 100%;
+      padding: 7px 10px 7px 32px;
+      border: 1.5px solid var(--bdr);
+      border-radius: 7px;
+      background: var(--gxl);
+      font-family: 'Outfit', sans-serif;
+      font-size: 12.5px;
+      color: var(--txt);
+      outline: none;
+      transition: border-color .18s;
+      box-sizing: border-box
+    }
+
+    .sdd-search:focus {
+      border-color: var(--g);
+      background: #fff
+    }
+
+    .sdd-search::placeholder {
+      color: var(--txtmu)
+    }
+
+    .sdd-list {
+      max-height: 240px;
+      overflow-y: auto;
+      padding: 4px 0
+    }
+
+    .sdd-item {
+      padding: 9px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background .1s;
+      display: flex;
+      flex-direction: column;
+      gap: 2px
+    }
+
+    .sdd-item:hover {
+      background: #f0f9f4
+    }
+
+    .sdd-item.selected {
+      background: #e8f5ed;
+      font-weight: 600
+    }
+
+    .sdd-item-main {
+      color: var(--txt);
+      font-weight: 600
+    }
+
+    .sdd-item-sub {
+      font-size: 11px;
+      color: var(--txtmu)
+    }
+
+    .sdd-empty {
+      padding: 18px 14px;
+      font-size: 12.5px;
+      color: var(--txtmu);
+      text-align: center
+    }
+
+    .sdd-loading {
+      padding: 18px 14px;
+      font-size: 12.5px;
+      color: var(--txtmu);
+      text-align: center
+    }
+
+    .sdd-clear {
+      display: none;
+      width: 13px;
+      height: 13px;
+      stroke: var(--txtmu);
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: stroke .15s
+    }
+
+    .sdd-clear:hover {
+      stroke: var(--err)
+    }
+
+    .sdd.has-value .sdd-clear {
+      display: block
+    }
+
+    /* lot error tag */
+    .lot-err-tag {
+      display: none;
+      margin-top: 6px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5
+    }
+
+    .lot-err-tag.show {
+      display: block
+    }
+
+    @media(max-width:900px) {
+      .fg4 {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .cat-rules {
+        grid-template-columns: 1fr 1fr
+      }
+    }
+
+    @media(max-width:600px) {
+
+      .fg2,
+      .fg4 {
+        grid-template-columns: 1fr
+      }
+
+      .form-actions {
+        flex-direction: column;
+        align-items: stretch
+      }
+    }
+  </style>
 @endpush
 
 @section('content')
 
-  <!-- Page Header -->
-  <div class="form-page-header" id="pageHeader">
-    <div>
-        <h2 id="pageTitle">Loading...</h2>
-        <p id="pageSubtitle"></p>
-        <div id="statusBadge"></div>
+  {{-- SDD shared portal --}}
+  <div class="sdd-portal" id="sddPortal">
+    <div class="sdd-search-wrap">
+      <svg class="sdd-search-ico" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      <input class="sdd-search" id="sddPortalSearch" placeholder="Search lots…" oninput="sddPortalFilter(this.value)"
+        onkeydown="sddPortalKeydown(event)">
     </div>
-    <div style="display:flex;gap:10px;" id="headerActions">
-        <a href="{{ route('admin.mes.acidTesting.index') }}" class="btn btn-outline btn-sm">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            Back to List
-        </a>
-    </div>
-</div>
+    <div class="sdd-list" id="sddPortalList"></div>
+  </div>
 
+  {{-- Page header --}}
+  <div class="ph">
+    <div>
+      <h2 id="pageTitle">Loading…</h2>
+      <p id="pageSubtitle"></p>
+      <div id="statusBadge" style="margin-top:6px"></div>
+    </div>
+    <div style="display:flex;gap:8px" id="headerActions">
+      <a href="{{ route('admin.mes.acidTesting.index') }}" class="btn btn-outline btn-sm">
+        <svg viewBox="0 0 24 24">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>Back
+      </a>
+    </div>
+  </div>
+
+  <div id="readonlyNotice" class="readonly-notice">🔒 This record has been submitted and is locked from editing.</div>
   <div id="formAlert" class="form-alert"></div>
 
-  {{-- ═══ SECTION 1 — Primary Details ═══ --}}
-  <div class="form-card">
-    <div class="form-section-head">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      <span>Primary Details</span>
+  {{-- ══════════════════════════════════════════════════════════
+  CARD 1 — Primary Details
+  ══════════════════════════════════════════════════════════ --}}
+  <div class="card">
+    <div class="card-head">
+      <div class="card-head-left">
+        <svg viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+        <span>Primary Details</span>
+      </div>
+      <span id="autosaveStatus" style="font-size:11.5px;color:var(--txtmu);display:none">
+        <span class="as-dot" id="asDot"></span><span id="asText"></span>
+      </span>
     </div>
-    <div class="form-section-body">
-      <div class="form-grid-2">
+    <div class="card-body">
+      <div class="fg4" style="margin-bottom:0">
 
         {{-- DATE --}}
         <div class="field">
-          <label for="date">Date <span class="req">*</span></label>
-          <div class="input-wrap">
-            <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <label>Date <span class="req">*</span></label>
+          <div class="iw">
+            <svg class="ico" viewBox="0 0 24 24">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
             <input type="date" id="date" required>
           </div>
         </div>
 
-        {{-- LOT NO --}}
+        {{-- LOT NO — SDD searchable --}}
         <div class="field">
-          <label for="lot_no">Lot No <span class="req">*</span></label>
-          <div class="input-wrap select-wrap">
-            <svg class="ico" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-            <select id="lot_no" required onchange="onLotChange()">
-              <option value="">Loading lots...</option>
-            </select>
-            <span class="lot-loading" id="lotPrefillSpinner">
-              <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-            </span>
+          <label>Lot No <span class="req">*</span></label>
+          <div class="sdd" id="sdd_lot_no">
+            <div class="sdd-trigger" onclick="toggleSdd('lot_no')" style="min-width:0">
+              <svg class="sdd-trigger-ico" viewBox="0 0 24 24">
+                <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                <polyline points="2 17 12 22 22 17" />
+                <polyline points="2 12 12 17 22 12" />
+              </svg>
+              <span class="sdd-trigger-text placeholder" id="sdd_lot_no_label" data-placeholder="Select a lot…">Select a
+                lot…</span>
+              <svg class="sdd-clear" onclick="clearSdd('lot_no',event)" viewBox="0 0 24 24">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+              <svg class="sdd-trigger-chevron" viewBox="0 0 24 24">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+            <input type="hidden" id="lot_no" onchange="onLotSelected()">
           </div>
-          <div class="error-msg" id="err_lot_no"></div>
+          <div class="lot-err-tag" id="lotErrTag"></div>
+          <div class="err-msg" id="err_lot_no"></div>
         </div>
 
         {{-- VEHICLE --}}
         <div class="field">
-          <label for="vehicle">Vehicle <span class="autofill-tag">Auto-filled</span></label>
-          <div class="input-wrap">
-            <svg class="ico" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-            <input type="text" id="vehicle" class="autofilled" readonly placeholder="Select a lot first...">
+          <label>Vehicle <span class="badge-auto">Auto</span></label>
+          <div class="iw">
+            <svg class="ico" viewBox="0 0 24 24">
+              <rect x="1" y="3" width="15" height="13" />
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+              <circle cx="5.5" cy="18.5" r="2.5" />
+              <circle cx="18.5" cy="18.5" r="2.5" />
+            </svg>
+            <input type="text" id="vehicle" class="autofilled" readonly placeholder="Select a lot first…">
           </div>
         </div>
 
-        {{-- SUPPLIER NAME --}}
+        {{-- SUPPLIER --}}
         <div class="field">
-          <label for="supplier_name">Supplier Name <span class="autofill-tag">Auto-filled</span></label>
-          <div class="input-wrap">
-            <svg class="ico" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <input type="text" id="supplier_name" class="autofilled" readonly placeholder="Select a lot first...">
-            
+          <label>Supplier <span class="badge-auto">Auto</span></label>
+          <div class="iw">
+            <svg class="ico" viewBox="0 0 24 24">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+            </svg>
+            <input type="text" id="supplier_name" class="autofilled" readonly placeholder="Select a lot first…">
           </div>
         </div>
 
         {{-- AVG PALLET WEIGHT --}}
         <div class="field">
-          <label for="avg_pallet_weight">Avg Pallet Weight (KG) <span class="req">*</span></label>
-          <div class="input-wrap">
-            <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <label>Avg Pallet Weight (KG) <span class="req">*</span></label>
+          <div class="iw">
+            <svg class="ico" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
             <input type="number" id="avg_pallet_weight" step="0.01" placeholder="0.00" oninput="calcAvgPalletForeign()">
           </div>
         </div>
 
-        {{-- IN HOUSE WEIGH BRIDGE WEIGHT --}}
+        {{-- IN HOUSE WEIGH BRIDGE --}}
         <div class="field">
-          <label for="inhouse_weight">In House Weigh Bridge Weight <span class="autofill-tag">Auto-filled</span></label>
-          <div class="input-wrap">
-            <svg class="ico" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            <input type="number" id="inhouse_weight" class="autofilled" readonly placeholder="Select a lot first...">
+          <label>In-House Weigh Bridge (KG) <span class="badge-auto">Auto</span></label>
+          <div class="iw">
+            <svg class="ico" viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            <input type="number" id="inhouse_weight" class="autofilled" readonly placeholder="Select a lot first…">
           </div>
         </div>
 
-        {{-- FOREIGN MATERIAL WEIGHT --}}
+        {{-- FOREIGN MATERIAL --}}
         <div class="field">
-          <label for="foreign_material_weight">Foreign Material Weight (KG) <span class="req">*</span></label>
-          <div class="input-wrap">
-            <svg class="ico" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            <input type="number" id="foreign_material_weight" step="0.01" placeholder="0.00" oninput="calcAvgPalletForeign()">
+          <label>Foreign Material Weight (KG) <span class="req">*</span></label>
+          <div class="iw">
+            <svg class="ico" viewBox="0 0 24 24">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+            <input type="number" id="foreign_material_weight" step="0.01" placeholder="0.00"
+              oninput="calcAvgPalletForeign()">
           </div>
         </div>
 
-        {{-- AVG PALLET & FOREIGN WEIGHT (auto-calculated) --}}
+        {{-- AVG PALLET & FOREIGN (auto) --}}
         <div class="field">
-          <label for="avg_pallet_foreign_weight">Average Pallet &amp; Foreign Weight (KG)</label>
-          <div class="input-wrap">
-            <svg class="ico" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <input type="number" id="avg_pallet_foreign_weight" readonly placeholder="Auto-calculated" style="background:#eef6f1;color:var(--green);font-weight:700;">
+          <label>Avg Pallet &amp; Foreign (KG) <span class="badge-calc">Calc</span></label>
+          <div class="iw">
+            <svg class="ico" viewBox="0 0 24 24">
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+            <input type="number" id="avg_pallet_foreign_weight" readonly class="ro" placeholder="Auto-calc">
           </div>
+          <div style="font-size:10px;color:var(--txtmu);margin-top:1px">= (Avg×Pallets + Foreign) ÷ Pallets</div>
         </div>
 
       </div>
     </div>
   </div>
 
-  {{-- ═══ SECTION 2 — Pallet Records ═══ --}}
-  <div class="form-card">
-    <div class="form-section-head">
-      <svg viewBox="0 0 24 24"><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/><path d="M16.5 9.4 7.55 4.24"/></svg>
-      <span>Pallet Records</span>
+  {{-- ══════════════════════════════════════════════════════════
+  CARD 2 — Pallet Weight Records (Section 1)
+  Columns: SR | Pallet No | ULAB Type | Gross Wt | Avg P&F | Net Wt | [acid cols if acid present]
+  ══════════════════════════════════════════════════════════ --}}
+  <div class="card">
+    <div class="card-head">
+      <div class="card-head-left">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14" />
+        </svg>
+        <span>Pallet Weight Records</span>
+      </div>
+      <button class="btn-add" onclick="addRow()" id="btnAddRow">
+        <svg viewBox="0 0 24 24">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Add Row
+      </button>
     </div>
-    <div class="form-section-body" style="padding-bottom:20px;">
-      <div class="pallet-table-wrap">
-        <table class="pallet-table" id="palletTable">
+    <div style="padding:0">
+      <div class="tbl-wrap" style="border-radius:0;border:none;border-bottom:1px solid var(--bdr)">
+        <table class="dt" id="palletTable">
           <thead>
             <tr>
-              <th style="text-align:center;">SR</th>
-              <th>Pallet No</th>
-              <th>Gross Weight (KG)</th>
-              <th>Net Weight (KG)</th>
-              <th>Remarks</th>
-              <th style="width:36px;"></th>
+              <th class="tc" style="width:40px">#</th>
+              <th style="min-width:90px">Pallet No</th>
+              <th style="min-width:170px">ULAB Type</th>
+              <th style="min-width:110px">Gross Wt (KG)</th>
+              <th style="min-width:110px">Avg P&amp;F (KG) <span style="font-size:9px;font-weight:400">Auto</span></th>
+              <th style="min-width:110px">Net Wt (KG) <span style="font-size:9px;font-weight:400">Auto</span></th>
+              <th class="acid-col" style="min-width:100px">Initial Wt (KG)</th>
+              <th class="acid-col" style="min-width:100px">Drained Wt (KG)</th>
+              <th class="acid-col" style="min-width:90px">Wt Diff (KG) <span
+                  style="font-size:9px;font-weight:400">Auto</span></th>
+              <th class="acid-col" style="min-width:90px">Acid % <span style="font-size:9px;font-weight:400">Auto</span>
+              </th>
+              <th style="width:36px"></th>
             </tr>
           </thead>
           <tbody id="palletBody"></tbody>
           <tfoot>
             <tr>
-              <td colspan="2" style="text-align:right;padding-right:14px;">TOTAL (KG)</td>
-              <td><input type="text" id="totalGross" readonly class="row-input" placeholder="0.00" style="font-weight:700;color:var(--green);background:var(--green-light);"></td>
-              <td><input type="text" id="totalNet"   readonly class="row-input" placeholder="0.00" style="font-weight:700;color:var(--green);background:var(--green-light);"></td>
+              <td colspan="3" style="text-align:right;font-size:10.5px;letter-spacing:.7px;color:var(--txtmu)">TOTAL (KG)
+              </td>
+              <td><input type="text" id="totalGross" readonly class="ri" placeholder="0.000"
+                  style="font-weight:800;color:var(--g);background:var(--gl)"></td>
+              <td></td>
+              <td><input type="text" id="totalNet" readonly class="ri" placeholder="0.000"
+                  style="font-weight:800;color:var(--g);background:var(--gl)"></td>
+              <td><input type="text" id="totalInitial" readonly class="ri acid-col" placeholder="0.000"
+                  style="font-weight:800;color:var(--g);background:var(--gl)"></td>
+              <td><input type="text" id="totalDrained" readonly class="ri acid-col" placeholder="0.000"
+                  style="font-weight:800;color:var(--g);background:var(--gl)"></td>
+              <td></td>
               <td></td>
               <td></td>
             </tr>
           </tfoot>
         </table>
       </div>
-      <div class="add-row-wrap">
-        <button class="btn-add" onclick="addPalletRow()">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add New
-        </button>
+
+      {{-- Category reference + Net Avg Acid % banner --}}
+      <div style="padding:16px 20px 20px">
+        <div class="cat-rules">
+          <div class="crule ch">
+            <div class="crule-title">⚡ High Acid</div>
+            <div style="font-size:10px;opacity:.8">Avg Acid % &gt; 30%</div>
+          </div>
+          <div class="crule cn">
+            <div class="crule-title">✓ Normal</div>
+            <div style="font-size:10px;opacity:.8">15% – 30%</div>
+          </div>
+          <div class="crule cl">
+            <div class="crule-title">↓ Low Acid</div>
+            <div style="font-size:10px;opacity:.8">5% – 15%</div>
+          </div>
+          <div class="crule cd">
+            <div class="crule-title">○ Dry / Empty</div>
+            <div style="font-size:10px;opacity:.8">&lt; 5%</div>
+          </div>
+        </div>
+
+        <div class="result-banner" id="resultBanner">
+          <div>
+            <div class="rb-label">Net Average Acid %</div>
+            <div class="rb-val" id="netAvgPct">—</div>
+            <div class="rb-sub">= Total Drained ÷ Total Initial × 100</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <div class="cat-pill" id="catPill" style="display:none">
+              <span class="cat-dot"></span>
+              <span id="catLabel">—</span>
+            </div>
+            <div style="font-size:11px;color:var(--txtmu)" id="catRule"></div>
+          </div>
+        </div>
       </div>
+
     </div>
   </div>
-  {{-- ═══ Hidden fields ═══ --}}
-  <input type="hidden" id="supplier" name="supplier">
-  <input type="hidden" id="invoice_qty" name="invoice_qty">
-  {{-- ═══ STICKY FOOTER ═══ --}}
+
+  {{-- Hidden fields --}}
+  <input type="hidden" id="supplier_id">
+  <input type="hidden" id="invoice_qty_hidden">
+
+  {{-- Sticky footer --}}
   <div class="form-actions" id="formActions">
     <a href="{{ route('admin.mes.acidTesting.index') }}" class="btn btn-outline btn-sm">Cancel</a>
-    <div style="display:flex;gap:10px;align-items:center;">
-      <span id="autosaveStatus" style="font-size:12px;color:var(--text-muted);display:none;"></span>
+    <div style="display:flex;gap:10px;align-items:center">
       <button type="button" class="btn btn-primary btn-sm" id="btnSave" onclick="saveForm()">
-        <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <svg viewBox="0 0 24 24">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z" />
+          <polyline points="17 21 17 13 7 13 7 21" />
+          <polyline points="7 3 7 8 15 8" />
+        </svg>
         <span id="btnSaveLabel">Create Record</span>
       </button>
     </div>
@@ -290,663 +1336,705 @@
 @endsection
 
 @push('scripts')
-<script>
-// ── Import DataService for offline support ────────────────────────
-// import { DataService } from '/pwa/data-service.js';
-// const ds = new DataService('acid_testing');
-// let _localId     = null; // tracks IndexedDB local record id
+  <script>
+    // ── State ─────────────────────────────────────────────────────────
+    const PATH_PARTS = window.location.pathname.split('/').filter(Boolean);
+    const isCreate = PATH_PARTS[PATH_PARTS.length - 1] === 'create';
+    const recordId = isCreate ? null : PATH_PARTS[PATH_PARTS.length - 2];
+    let isSubmitted = false;
+    let autosaveTimer;
+    let rowCount = 0;
+    let currentLotData = null;
 
-const PATH_PARTS = window.location.pathname.split('/').filter(Boolean);
-// URL pattern: /admin/mes/receiving/{id}/edit  OR  /admin/mes/receiving/create
-const isCreate   = PATH_PARTS[PATH_PARTS.length - 1] === 'create';
-const recordId   = isCreate ? null : PATH_PARTS[PATH_PARTS.length - 2];
-let isSubmitted  = false;
-let autosaveTimer;
-console.log("isCreate", isCreate);
-console.log("recordId", recordId);
-const REMARKS_OPTIONS = [
-    { value: 1000024, text: 'USED GEL BATTERY/ABS'   },
-    { value: 1000025, text: 'USED TRACTION BATTERY'   },
-    { value: 1000026, text: 'ULAB - MC BATTERY (DRY)' },
-    { value: 1000028, text: 'ULAB - INDUSTRIAL'       },
-    { value: 5,       text: 'Acid'                    },
-];
+    // SDD state
+    let sddRegistry = {};
+    let sddActiveField = null;
+    let lotItems = [];  // [{lot_no, supplier_name, vehicle_number, ...}]
 
-let currentLotData = null;
-let rowCount = 0;
+    const ACID_PRESENT = 'ACID PRESENT';
+    const ULAB_OPTIONS = [
+      'USED GEL BATTERY/ABS',
+      'USED TRACTION BATTERY',
+      'ULAB - MC BATTERY (DRY)',
+      'ULAB - INDUSTRIAL',
+      ACID_PRESENT,
+    ];
 
-// ── Init ─────────────────────────────────────────────────────────────────────
-// document.addEventListener('DOMContentLoaded', () => {
-//     document.getElementById('date').value = new Date().toISOString().slice(0, 10);
-//     loadLots();
-//     addPalletRow();
-// });
-// ── Init ──────────────────────────────────────────────────────────
-async function init() {
-    // await loadDropdowns();
-    document.getElementById('date').value = new Date().toISOString().slice(0, 10);
-    loadLots();
-    addPalletRow();
-    if (isCreate) {
-      
-        // Set defaults
-        // document.getElementById('receipt_date').value = new Date().toISOString().split('T')[0];
-        document.getElementById('pageTitle').textContent       = 'Create Acid Testing';
-        document.getElementById('pageSubtitle').textContent    = 'Record new raw material Acid Testing log';
-        document.getElementById('breadcrumbTitle').textContent = 'Create Acid Testing';
-        document.getElementById('btnSaveLabel').textContent    = 'Create Record';
-    } else {
+    // ════════════════════════════════════════════════════════════════
+    // INIT
+    // ════════════════════════════════════════════════════════════════
+    async function init() {
+      document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+      await loadAvailableLots();
+
+      if (isCreate) {
+        document.getElementById('pageTitle').textContent = 'Create Acid Test';
+        document.getElementById('pageSubtitle').textContent = 'Record new acid testing log';
+        document.getElementById('breadcrumbTitle').textContent = 'Create';
+        document.getElementById('btnSaveLabel').textContent = 'Create Record';
+        addRow();
+      } else {
         await loadRecord();
+      }
+    }
+    init();
+
+    // ════════════════════════════════════════════════════════════════
+    // SDD ENGINE (ERPNext portal style — exact copy from refining)
+    // ════════════════════════════════════════════════════════════════
+    function sddRegister(fieldId, items, selectedValue = null) {
+      sddRegistry[fieldId] = { items, selected: null };
+      if (selectedValue !== null && selectedValue !== '') {
+        const item = items.find(i => String(i.value) === String(selectedValue));
+        if (item) sddRegistry[fieldId].selected = item;
+      }
+      sddUpdateTrigger(fieldId);
+      const hidden = document.getElementById(fieldId);
+      if (hidden) hidden.value = sddRegistry[fieldId]?.selected?.value ?? '';
     }
 
-    // Show form, hide skeleton
-    // document.getElementById('loadingSkeleton').style.display = 'none';
-    // document.getElementById('formContainer').style.display   = 'block';
-}
+    function sddUpdateTrigger(fieldId) {
+      const reg = sddRegistry[fieldId];
+      if (!reg) return;
+      const wrap = document.getElementById(`sdd_${fieldId}`);
+      const label = document.getElementById(`sdd_${fieldId}_label`);
+      if (!label || !wrap) return;
+      if (reg.selected) {
+        label.textContent = reg.selected.label;
+        label.classList.remove('placeholder');
+        wrap.classList.add('has-value');
+      } else {
+        label.textContent = label.dataset.placeholder || 'Select…';
+        label.classList.add('placeholder');
+        wrap.classList.remove('has-value');
+      }
+      const hidden = document.getElementById(fieldId);
+      if (hidden) hidden.value = reg?.selected?.value ?? '';
+    }
 
-init();
+    function sddSelect(fieldId, value, triggerChange = true) {
+      if (!sddRegistry[fieldId]) return;
+      const item = value ? sddRegistry[fieldId].items.find(i => String(i.value) === String(value)) : null;
+      sddRegistry[fieldId].selected = item || null;
+      sddUpdateTrigger(fieldId);
+      const hidden = document.getElementById(fieldId);
+      if (hidden && triggerChange) hidden.dispatchEvent(new Event('change'));
+      sddClosePortal();
+    }
 
-// ── Load existing record for edit ────────────────────────────────
-async function loadRecord() {
-    const res = await apiFetch(`/acid-testings/${recordId}`);
-    if (!res?.ok) {
-        showAlert('Failed to load record.');
+    function clearSdd(fieldId, e) {
+      if (e) { e.stopPropagation(); e.preventDefault(); }
+      sddSelect(fieldId, '', false);
+      const hidden = document.getElementById(fieldId);
+      if (hidden) hidden.dispatchEvent(new Event('change'));
+    }
+
+    function toggleSdd(fieldId) {
+      if (sddActiveField === fieldId) { sddClosePortal(); return; }
+      sddOpenPortal(fieldId);
+    }
+
+    function sddOpenPortal(fieldId) {
+      const trigger = document.querySelector(`#sdd_${fieldId} .sdd-trigger`);
+      if (!trigger || !sddRegistry[fieldId]) return;
+
+      sddActiveField = fieldId;
+      document.querySelectorAll('.sdd.open').forEach(el => el.classList.remove('open'));
+      document.getElementById(`sdd_${fieldId}`)?.classList.add('open');
+
+      const portal = document.getElementById('sddPortal');
+      const rect = trigger.getBoundingClientRect();
+      const viewW = window.innerWidth;
+      const viewH = window.innerHeight;
+
+      portal.style.top = portal.style.bottom = portal.style.left = portal.style.right = '';
+      portal.style.width = Math.max(rect.width, 280) + 'px';
+
+      let left = rect.left;
+      const portalW = Math.max(rect.width, 280);
+      if (left + portalW > viewW - 8) left = Math.max(8, viewW - portalW - 8);
+      portal.style.left = left + 'px';
+
+      const spaceBelow = viewH - rect.bottom;
+      if (spaceBelow >= 200 || spaceBelow >= rect.top) {
+        portal.style.top = (rect.bottom + 4) + 'px';
+      } else {
+        portal.style.bottom = (viewH - rect.top + 4) + 'px';
+      }
+
+      sddPortalRender('');
+      portal.classList.add('visible');
+      const search = document.getElementById('sddPortalSearch');
+      if (search) { search.value = ''; setTimeout(() => search.focus(), 40); }
+    }
+
+    function sddClosePortal() {
+      document.getElementById('sddPortal')?.classList.remove('visible');
+      document.querySelectorAll('.sdd.open').forEach(el => el.classList.remove('open'));
+      sddActiveField = null;
+    }
+
+    function sddPortalRender(query) {
+      if (!sddActiveField || !sddRegistry[sddActiveField]) return;
+      const q = query.toLowerCase().trim();
+      const items = sddRegistry[sddActiveField].items;
+      const filtered = q ? items.filter(i =>
+        i.label.toLowerCase().includes(q) || (i.sub ?? '').toLowerCase().includes(q)
+      ) : items;
+      const current = sddRegistry[sddActiveField].selected?.value ?? '';
+      const list = document.getElementById('sddPortalList');
+      if (!list) return;
+
+      if (!filtered.length) {
+        list.innerHTML = '<div class="sdd-empty">No lots available</div>';
         return;
+      }
+      list.innerHTML = filtered.map(item => {
+        const sel = String(item.value) === String(current);
+        return `<div class="sdd-item${sel ? ' selected' : ''}" onclick="sddSelect('${sddActiveField}','${item.value}')">
+              <div class="sdd-item-main">${item.label}</div>
+              ${item.sub ? `<div class="sdd-item-sub">${item.sub}</div>` : ''}
+            </div>`;
+      }).join('');
     }
 
-    const { data } = await res.json();
-    isSubmitted = data.status >= 1;
-    console.log("data", data);
+    function sddPortalFilter(q) { sddPortalRender(q); }
+    function sddPortalKeydown(e) { if (e.key === 'Escape') sddClosePortal(); }
 
-    // Fill form fields safely
-    document.getElementById('date').value                      = data.test_date?.split('T')[0] ?? '';
-    document.getElementById('lot_no').value                    = data.lot_number ?? '';
-    document.getElementById('vehicle').value                   = data.vehicle_number ?? '';
-    document.getElementById('supplier_name').value            = data.supplier?.supplier_name ?? '';
-    document.getElementById('supplier').value              = data.supplier_id ?? data.supplier?.id ?? '';
-    document.getElementById('avg_pallet_weight').value        = data.avg_pallet_weight ?? '';
-    document.getElementById('inhouse_weight').value           = data.received_qty ?? '';
-    document.getElementById('foreign_material_weight').value  = data.foreign_material_weight ?? '';
-    document.getElementById('avg_pallet_foreign_weight').value= data.avg_pallet_and_foreign_weight ?? '';
-
-    // Clear existing pallet rows
-    document.getElementById('palletBody').innerHTML = '';
-
-    // Load pallet rows if present
-    if (Array.isArray(data.details)) {
-        data.details.forEach(row => {
-            // Create a new row (should assign a proper data-row-index inside)
-            addPalletRow();
-
-            // Get the last added row index dynamically
-            const rows = document.querySelectorAll('#palletBody tr');
-            const lastRow = rows[rows.length - 1];
-            const idx = lastRow.dataset.rowIndex;
-
-            // Fill row fields
-            document.getElementById(`pallet_no_${idx}`).value      = row.pallet_no ?? '';
-            document.getElementById(`gross_${idx}`).value          = row.gross_weight ?? '';
-            document.getElementById(`net_${idx}`).value            = row.net_weight ?? '';
-            document.getElementById(`acid_initial_${idx}`).value   = row.initial_weight ?? '';
-            document.getElementById(`acid_drained_${idx}`).value   = row.drained_weight ?? '';
-
-            // Set REMARKS dropdown value by matching text
-            const remarkOption = REMARKS_OPTIONS.find(r => r.text === row.ulab_type);
-            if (remarkOption) {
-                document.getElementById(`remarks_${idx}`).value = remarkOption.value;
-            } else {
-                // fallback if not found
-                document.getElementById(`remarks_${idx}`).value = '';
-            }
-        });
-
-        // Recalculate averages
-        calcAvgPalletForeign();
-    }
-
-    // Update page header
-    document.getElementById('pageTitle').textContent    = 'Edit Acid Testing';
-    document.getElementById('pageSubtitle').textContent = 'Update acid testing details';
-    document.getElementById('breadcrumbTitle').textContent = 'Edit Acid Testing';
-    document.getElementById('btnSaveLabel').textContent = 'Save Draft';
-
-    // Status badge and read-only mode
-    const statusBadge = document.getElementById('statusBadge');
-    if (isSubmitted) {
-        statusBadge.innerHTML = '<div class="status-badge submitted">Status: Submitted</div>';
-        setReadonly(true);
-    } else {
-        statusBadge.innerHTML = '<div class="status-badge draft">Status: Draft</div>';
-
-        // Add Submit button dynamically if not submitted
-        const actionsDiv = document.getElementById('headerActions');
-        const submitBtn  = document.createElement('button');
-        submitBtn.className = 'btn btn-outline btn-sm';
-        submitBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Submit Record`;
-        submitBtn.onclick   = submitRecord;
-        actionsDiv.prepend(submitBtn);
-
-        // Setup autosave
-        setupAutosave();
-    }
-}
-// ── GET /api/receivings — populate lot dropdown ───────────────────────────────
-async function loadLots() {
-    const sel = document.getElementById('lot_no');
-    sel.innerHTML = '<option value="">Loading lots…</option>';
-    sel.disabled  = true;
-
-    const res = await apiFetch('/receivings/approved-lots');
-
-    if (!res || !res.ok) {
-        sel.innerHTML = '<option value="">No lots found</option>';
-        sel.disabled  = false;
-        return;
-    }
-
-    const json = await res.json();
-    // Handles: plain array, { data: [] }, or paginated { data: { data: [] } }
-    const lots = Array.isArray(json)
-        ? json
-        : (json.data?.data ?? json.data ?? []);
-
-    sel.innerHTML = lots.length
-        ? '<option value="">Select a lot…</option>'
-        : '<option value="">No lots available</option>';
-
-    lots.forEach(item => {
-        const opt = document.createElement('option');
-        opt.value       = item.lot_no;
-        opt.textContent = item.lot_no;
-        sel.appendChild(opt);
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.sdd') && !e.target.closest('#sddPortal')) sddClosePortal();
     });
+    document.addEventListener('scroll', () => {
+      if (sddActiveField) {
+        const trigger = document.querySelector(`#sdd_${sddActiveField} .sdd-trigger`);
+        if (trigger) {
+          const rect = trigger.getBoundingClientRect();
+          const portal = document.getElementById('sddPortal');
+          portal.style.top = (rect.bottom + 4) + 'px';
+          portal.style.left = rect.left + 'px';
+        }
+      }
+    }, true);
 
-    sel.disabled = false;
-}
+    // ════════════════════════════════════════════════════════════════
+    // LOAD AVAILABLE LOTS → populate SDD
+    // ════════════════════════════════════════════════════════════════
+    async function loadAvailableLots() {
+      const list = document.getElementById('sddPortalList');
+      if (list) list.innerHTML = '<div class="sdd-loading">Loading lots…</div>';
 
-// ── GET /api/receivings/lot/{lotNo} — autofill fields ────────────────────────
-async function onLotChange() {
-    const lotNo     = document.getElementById('lot_no').value;
-    const autoFields = ['vehicle', 'supplier_name', 'inhouse_weight', 'supplier', 'invoice_qty'];
-
-    currentLotData = null;
-    autoFields.forEach(f => {
-        const el       = document.getElementById(f);
-        el.value       = '';
-        el.placeholder = lotNo ? 'Loading…' : 'Select a lot first…';
-    });
-
-    if (!lotNo) return;
-
-    const spinner = document.getElementById('lotPrefillSpinner');
-    spinner.classList.add('active');
-    document.getElementById('lot_no').disabled = true;
-
-    const res = await apiFetch(`/receivings/lot/${encodeURIComponent(lotNo)}`);
-
-    if (!res || !res.ok) {
-        autoFields.forEach(f => {
-            document.getElementById(f).placeholder = 'Failed to load — try again';
-        });
-        spinner.classList.remove('active');
-        document.getElementById('lot_no').disabled = false;
+      const res = await apiFetch('/acid-testings/available-lots');
+      if (!res?.ok) {
+        sddRegister('lot_no', [], null);
         return;
+      }
+      const json = await res.json();
+      lotItems = json.data ?? [];
+
+      const items = lotItems.map(l => ({
+        value: l.lot_no,
+        label: l.lot_no,
+        sub: `${l.supplier_name} · ${l.receipt_date ?? ''} · Rcvd: ${l.received_qty ?? ''} KG`,
+      }));
+
+      sddRegister('lot_no', items, null);
     }
 
-    const json = await res.json();
-    const data = json.data ?? json;
-    currentLotData = data;
-    console.log("data",data);
-    // ⚠️ Adjust keys below to match your actual API response field names
-    const fieldMap = {
-        vehicle       : data.vehicle_no                  ?? data.vehicle_number  ?? '',
-        supplier_name : data.supplier?.supplier_name     ?? data.supplier_name   ?? '',
-        inhouse_weight: data.received_qty ?? data.received_qty  ?? '',
-        supplier: data.supplier_id ?? data.supplier_id   ?? '',
-        invoice_qty: data.invoice_qty ?? data.invoice_qty   ?? '',
-    };
+    // When lot selected from SDD dropdown
+    function onLotSelected() {
+      const lotNo = document.getElementById('lot_no').value;
+      const tag = document.getElementById('lotErrTag');
+      tag.className = 'lot-err-tag';
 
-    autoFields.forEach(f => {
-        const el = document.getElementById(f);
-        el.value       = fieldMap[f];
-        el.placeholder = '';
+      if (!lotNo) {
+        clearLotAutofill();
+        currentLotData = null;
+        return;
+      }
+
+      const lot = lotItems.find(l => l.lot_no === lotNo);
+      if (!lot) { clearLotAutofill(); return; }
+
+      currentLotData = lot;
+
+      // Autofill fields
+      const fields = {
+        vehicle: lot.vehicle_number ?? '',
+        supplier_name: lot.supplier_name ?? '',
+        inhouse_weight: lot.received_qty ?? '',
+        supplier_id: lot.supplier_id ?? '',
+        invoice_qty_hidden: lot.invoice_qty ?? '',
+      };
+      ['vehicle', 'supplier_name', 'inhouse_weight'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = fields[id];
         el.classList.remove('flash');
-        void el.offsetWidth; // force reflow to restart animation
+        void el.offsetWidth;
         el.classList.add('flash');
-    });
+      });
+      document.getElementById('supplier_id').value = lot.supplier_id ?? '';
+      document.getElementById('invoice_qty_hidden').value = lot.invoice_qty ?? '';
 
-    calcAvgPalletForeign();
+      calcAvgPalletForeign();
+      triggerAutosave();
+    }
 
-    spinner.classList.remove('active');
-    document.getElementById('lot_no').disabled = false;
-    console.log("supplier",document.getElementById("supplier").value);
-    console.log("invoice_qty",document.getElementById("invoice_qty").value);
-}
+    function clearLotAutofill() {
+      ['vehicle', 'supplier_name', 'inhouse_weight'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.value = ''; el.placeholder = 'Select a lot first…'; }
+      });
+      document.getElementById('supplier_id').value = '';
+      document.getElementById('invoice_qty_hidden').value = '';
+    }
 
-// ── Calculations ─────────────────────────────────────────────────────────────
-function calcAvgPalletForeign() {
-    const avg     = parseFloat(document.getElementById('avg_pallet_weight').value)       || 0;
-    const foreign = parseFloat(document.getElementById('foreign_material_weight').value) || 0;
-    const result  = avg + foreign;
-    document.getElementById('avg_pallet_foreign_weight').value = result > 0 ? result.toFixed(2) : '';
-    // Re-derive all net weights when this changes
-    document.querySelectorAll('#palletBody tr').forEach(tr => calcNetWeight(tr.dataset.rowIndex));
-}
+    // ════════════════════════════════════════════════════════════════
+    // LOAD RECORD (edit mode)
+    // ════════════════════════════════════════════════════════════════
+    async function loadRecord() {
+      const res = await apiFetch(`/acid-testings/${recordId}`);
+      if (!res?.ok) { showAlert('Failed to load record.'); return; }
 
-function calcNetWeight(idx) {
-    const gross = parseFloat(document.getElementById(`gross_${idx}`)?.value)              || 0;
-    const avgPF = parseFloat(document.getElementById('avg_pallet_foreign_weight')?.value) || 0;
-    const net   = gross - avgPF;
-    const netEl = document.getElementById(`net_${idx}`);
-    if (netEl) netEl.value = net > 0 ? net.toFixed(2) : '0.00';
-}
+      const { data } = await res.json();
+      isSubmitted = (int => int >= 1)(parseInt(data.status ?? 0));
 
-function calcWeightDiff(idx) {
-    const initial = parseFloat(document.getElementById(`acid_initial_${idx}`)?.value) || 0;
-    const drained = parseFloat(document.getElementById(`acid_drained_${idx}`)?.value) || 0;
-    const diffEl  = document.getElementById(`acid_diff_${idx}`);
-    if (diffEl) diffEl.value = (initial - drained).toFixed(2);
-}
+      document.getElementById('date').value = data.test_date?.slice(0, 10) ?? '';
+      document.getElementById('supplier_name').value = data.supplier?.supplier_name ?? '';
+      document.getElementById('supplier_id').value = data.supplier_id ?? '';
+      document.getElementById('vehicle').value = data.vehicle_number ?? '';
+      document.getElementById('avg_pallet_weight').value = data.avg_pallet_weight ?? '';
+      document.getElementById('inhouse_weight').value = data.received_qty ?? '';
+      document.getElementById('foreign_material_weight').value = data.foreign_material_weight ?? '';
+      document.getElementById('avg_pallet_foreign_weight').value = data.avg_pallet_and_foreign_weight ?? '';
+      document.getElementById('invoice_qty_hidden').value = data.invoice_qty ?? '';
 
-function recalcTotals() {
-    let gross = 0, net = 0;
-    document.querySelectorAll('#palletBody tr').forEach(tr => {
-        const idx = tr.dataset.rowIndex;
-        gross += parseFloat(document.getElementById(`gross_${idx}`)?.value) || 0;
-        net   += parseFloat(document.getElementById(`net_${idx}`)?.value)   || 0;
-    });
-    document.getElementById('totalGross').value = gross.toFixed(2);
-    document.getElementById('totalNet').value   = net.toFixed(2);
-}
+      // Lot SDD — add to items if not present, then select
+      if (data.lot_number) {
+        if (!lotItems.find(l => l.lot_no === data.lot_number)) {
+          const extra = {
+            lot_no: data.lot_number,
+            supplier_name: data.supplier?.supplier_name ?? '',
+            vehicle_number: data.vehicle_number ?? '',
+            received_qty: data.received_qty,
+            invoice_qty: data.invoice_qty,
+            supplier_id: data.supplier_id,
+          };
+          lotItems.push(extra);
+        }
+        const items = lotItems.map(l => ({
+          value: l.lot_no,
+          label: l.lot_no,
+          sub: `${l.supplier_name} · Rcvd: ${l.received_qty ?? ''} KG`,
+        }));
+        sddRegister('lot_no', items, data.lot_number);
+      }
 
-// ── Pallet rows ───────────────────────────────────────────────────────────────
-function addPalletRow() {
-    rowCount++;
-    const tbody = document.getElementById('palletBody');
-    const tr    = document.createElement('tr');
-    tr.id               = `prow-${rowCount}`;
-    tr.dataset.rowIndex = rowCount;
+      document.getElementById('palletBody').innerHTML = '';
+      rowCount = 0;
 
-    tr.innerHTML = `
-        <td class="sr-cell">${rowCount}</td>
-        <td><input type="text" class="row-input" id="pallet_no_${rowCount}" placeholder="P-001"></td>
-        <td><input type="number" class="row-input" id="gross_${rowCount}" placeholder="0.00" step="0.01"
-             oninput="calcNetWeight(${rowCount});recalcTotals()"></td>
-        <td><input type="number" class="row-input" id="net_${rowCount}" placeholder="0.00"
-             readonly style="background:#eef6f1;color:var(--green);font-weight:600;"></td>
-        <td>
-            <div class="select-cell-wrap">
-                <select class="row-select" id="remarks_${rowCount}" onchange="onRemarksChange(${rowCount})">
-                    <option value="">Select…</option>
-                    ${REMARKS_OPTIONS.map(n => `<option value="${n.value}">${n.text}</option>`).join('')}
-                </select>
-            </div>
-            <div class="acid-fields" id="acid_fields_${rowCount}">
-                <div>
-                    <div class="acid-field-label">Initial Weight</div>
-                    <input type="number" class="row-input" id="acid_initial_${rowCount}" placeholder="0.00" step="0.01" oninput="calcWeightDiff(${rowCount})">
-                </div>
-                <div>
-                    <div class="acid-field-label">Drained Weight</div>
-                    <input type="number" class="row-input" id="acid_drained_${rowCount}" placeholder="0.00" step="0.01" oninput="calcWeightDiff(${rowCount})">
-                </div>
-                <div>
-                    <div class="acid-field-label">Weight Difference</div>
-                    <input type="number" class="row-input" id="acid_diff_${rowCount}" placeholder="0.00" readonly style="background:#eef6f1;color:var(--green);font-weight:600;">
-                </div>
-                <div>
-                    <div class="acid-field-label">Acid Content %</div>
-                    <input type="number" class="row-input" id="acid_content_${rowCount}" placeholder="0.00" step="0.01">
-                </div>
-            </div>
-        </td>
-        <td>${rowCount > 1 ? `
-            <button class="delete-btn" onclick="removeRow(${rowCount})" title="Remove">
-                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-            </button>` : ''}</td>
-    `;
-
-    tbody.appendChild(tr);
-    tr.style.opacity   = '0';
-    tr.style.transform = 'translateY(-6px)';
-    requestAnimationFrame(() => {
-        tr.style.transition = 'opacity 0.25s,transform 0.25s';
-        tr.style.opacity    = '1';
-        tr.style.transform  = 'translateY(0)';
-    });
-}
-
-function onRemarksChange(idx) {
-    const val        = document.getElementById(`remarks_${idx}`).value;
-    const acidFields = document.getElementById(`acid_fields_${idx}`);
-    if (String(val) === '5') {
-        acidFields.classList.add('visible');
-    } else {
-        acidFields.classList.remove('visible');
-        ['acid_initial','acid_drained','acid_diff','acid_content'].forEach(f => {
-            const el = document.getElementById(`${f}_${idx}`);
-            if (el) el.value = '';
+      (data.details ?? []).forEach(row => {
+        addRow({
+          pallet_no: row.pallet_no,
+          ulab_type: row.ulab_type,
+          gross_weight: row.gross_weight,
+          initial_weight: row.initial_weight,
+          drained_weight: row.drained_weight,
         });
+      });
+      if (!data.details?.length) addRow();
+
+      recalcTotals();
+
+      document.getElementById('pageTitle').textContent = 'Edit Acid Test';
+      document.getElementById('pageSubtitle').textContent = `Lot: ${data.lot_number}`;
+      document.getElementById('breadcrumbTitle').textContent = 'Edit';
+      document.getElementById('btnSaveLabel').textContent = 'Save Changes';
+
+      const badge = document.getElementById('statusBadge');
+      if (isSubmitted) {
+        badge.innerHTML = '<span class="badge-status badge-submitted">● Submitted</span>';
+        setReadonly(true);
+        // Show print button
+        const actDiv = document.getElementById('headerActions');
+        const pb = document.createElement('a');
+        pb.className = 'btn btn-outline btn-sm';
+        pb.target = '_blank';
+        pb.href = `{{ url('/admin/mes/acidTesting') }}/${recordId}/print`;
+        pb.innerHTML = `<svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print Report`;
+        actDiv.prepend(pb);
+      } else {
+        badge.innerHTML = '<span class="badge-status badge-draft">Draft</span>';
+        const actDiv = document.getElementById('headerActions');
+        const sb = document.createElement('button');
+        sb.className = 'btn btn-outline btn-sm';
+        sb.innerHTML = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Submit`;
+        sb.onclick = submitRecord;
+        actDiv.prepend(sb);
+        setupAutosave();
+      }
     }
-}
 
-function removeRow(idx) {
-    const tr = document.getElementById(`prow-${idx}`);
-    if (tr) {
-        tr.style.transition = 'opacity 0.2s';
-        tr.style.opacity    = '0';
-        setTimeout(() => { tr.remove(); renumberRows(); recalcTotals(); }, 200);
+    // ════════════════════════════════════════════════════════════════
+    // CALCULATIONS
+    // ════════════════════════════════════════════════════════════════
+    function calcAvgPalletForeign() {
+      const avg = parseFloat(document.getElementById('avg_pallet_weight').value) || 0;
+      const foreign = parseFloat(document.getElementById('foreign_material_weight').value) || 0;
+      const pallets = Math.max(document.querySelectorAll('#palletBody tr').length, 1);
+      const result = avg + (foreign / pallets);
+      document.getElementById('avg_pallet_foreign_weight').value = result > 0 ? result.toFixed(3) : '';
+      document.querySelectorAll('#palletBody tr').forEach(tr => calcRow(tr.dataset.idx));
+      recalcTotals();
     }
-}
 
-function renumberRows() {
-    document.querySelectorAll('#palletBody tr').forEach((tr, i) => {
-        const srCell = tr.querySelector('.sr-cell');
-        if (srCell) srCell.textContent = i + 1;
-    });
-}
+    function calcRow(idx) {
+      const gross = parseFloat(document.getElementById(`gross_${idx}`)?.value) || 0;
+      const avgPF = parseFloat(document.getElementById('avg_pallet_foreign_weight')?.value) || 0;
+      const net = gross > 0 ? Math.max(0, gross - avgPF) : 0;
+      const netEl = document.getElementById(`net_${idx}`);
+      const avgPFEl = document.getElementById(`avgpf_${idx}`);
+      if (netEl) netEl.value = gross > 0 ? net.toFixed(3) : '';
+      if (avgPFEl) avgPFEl.value = avgPF.toFixed(3);
 
-// // ── Save ─────────────────────────────────────────────────────────────────────
-// function saveRecord() {
-//     const btn = document.querySelector('.form-actions .btn-primary');
-//     btn.disabled  = true;
-//     btn.innerHTML = `<svg viewBox="0 0 24 24" style="animation:spin 0.8s linear infinite;width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Saving…`;
+      // Acid columns
+      const initial = parseFloat(document.getElementById(`initial_${idx}`)?.value) || 0;
+      const drained = parseFloat(document.getElementById(`drained_${idx}`)?.value) || 0;
+      const diff = initial > 0 ? Math.max(0, initial - drained) : 0;
+      const pct = initial > 0 ? (drained / initial) * 100 : 0;
+      const diffEl = document.getElementById(`diff_${idx}`);
+      const pctEl = document.getElementById(`acid_pct_${idx}`);
+      if (diffEl) diffEl.value = initial > 0 ? diff.toFixed(3) : '';
+      if (pctEl) pctEl.value = initial > 0 ? pct.toFixed(2) : '';
 
-//     // TODO: wire up to apiFetch('/acid-testings', { method: 'POST', body: JSON.stringify(payload) })
-//     setTimeout(() => {
-//         btn.disabled  = false;
-//         btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Create Record`;
-//         showAlert('✓ Acid test record created successfully!', 'success');
-//     }, 1400);
-// }
+      recalcTotals();
+      triggerAutosave();
+    }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-// function showAlert(msg, type = 'success') {
-//     const el      = document.getElementById('formAlert');
-//     el.className  = `form-alert ${type}`;
-//     el.textContent = msg;
-//     el.style.display = 'block';
-//     setTimeout(() => { el.style.display = 'none'; }, 4000);
-// }
-function showAlert(msg, type = 'error') {
-    const el = document.getElementById('formAlert');
-    el.className = `form-alert ${type}`;
-    el.textContent = msg;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+    function recalcTotals() {
+      let tGross = 0, tNet = 0, tInit = 0, tDrained = 0;
+      document.querySelectorAll('#palletBody tr').forEach(tr => {
+        const idx = tr.dataset.idx;
+        tGross += parseFloat(document.getElementById(`gross_${idx}`)?.value) || 0;
+        tNet += parseFloat(document.getElementById(`net_${idx}`)?.value) || 0;
+        tInit += parseFloat(document.getElementById(`initial_${idx}`)?.value) || 0;
+        tDrained += parseFloat(document.getElementById(`drained_${idx}`)?.value) || 0;
+      });
+      document.getElementById('totalGross').value = tGross > 0 ? tGross.toFixed(3) : '';
+      document.getElementById('totalNet').value = tNet > 0 ? tNet.toFixed(3) : '';
+      document.getElementById('totalInitial').value = tInit > 0 ? tInit.toFixed(3) : '';
+      document.getElementById('totalDrained').value = tDrained > 0 ? tDrained.toFixed(3) : '';
 
-function clearAlert() {
-    const el = document.getElementById('formAlert');
-    el.className = 'form-alert';
-    el.textContent = '';
-}
-// ── Build payload matching POST /api/acid-testings validation ─────────────────
-function buildPayload() {
-    const details = [];
-    let valid = true;
-    const errors = [];
-    const rows = document.querySelectorAll('#palletBody tr');
-    console.log("Rows found:", rows.length);
-    document.querySelectorAll('#palletBody tr').forEach((tr, i) => {
-        const idx        = tr.dataset.rowIndex;
-        const palletNo   = document.getElementById(`pallet_no_${idx}`)?.value?.trim();
-        const gross      = parseFloat(document.getElementById(`gross_${idx}`)?.value)         || 0;
-        const net        = parseFloat(document.getElementById(`net_${idx}`)?.value)           || 0;
-        const remarks    = document.getElementById(`remarks_${idx}`)?.value;
-        const initial    = parseFloat(document.getElementById(`acid_initial_${idx}`)?.value)  || 0;
-        const drained    = parseFloat(document.getElementById(`acid_drained_${idx}`)?.value)  || 0;
+      const netPct = tInit > 0 ? (tDrained / tInit) * 100 : null;
+      updateResultBanner(netPct);
+    }
 
-        // Row-level validation
-        if (!palletNo)  { errors.push(`Row ${i + 1}: Pallet No is required.`);   valid = false; }
-        if (gross <= 0) { errors.push(`Row ${i + 1}: Gross weight must be > 0.`); valid = false; }
-        if (!remarks)   { errors.push(`Row ${i + 1}: Remarks / ULAB type is required.`); valid = false; }
+    function updateResultBanner(pct) {
+      const banner = document.getElementById('resultBanner');
+      const valEl = document.getElementById('netAvgPct');
+      const pill = document.getElementById('catPill');
+      const label = document.getElementById('catLabel');
+      const ruleEl = document.getElementById('catRule');
 
-        // Find the text label for the selected remarks option
-        const remarksLabel = REMARKS_OPTIONS.find(r => String(r.value) === String(remarks))?.text ?? remarks;
+      if (pct === null) {
+        valEl.textContent = '—'; pill.style.display = 'none';
+        banner.className = 'result-banner'; ruleEl.textContent = '';
+        return;
+      }
+
+      valEl.textContent = pct.toFixed(2) + '%';
+      pill.style.display = 'inline-flex';
+
+      let cat, catText, rule;
+      if (pct > 30) { cat = 'cat-high'; catText = 'High Acid'; rule = 'Avg Acid % > 30%'; }
+      else if (pct >= 15) { cat = 'cat-normal'; catText = 'Normal'; rule = '15% ≤ Avg Acid % ≤ 30%'; }
+      else if (pct >= 5) { cat = 'cat-low'; catText = 'Low Acid'; rule = '5% ≤ Avg Acid % < 15%'; }
+      else { cat = 'cat-dry'; catText = 'Dry / Empty'; rule = 'Avg Acid % < 5%'; }
+
+      banner.className = `result-banner ${cat}`;
+      pill.className = `cat-pill ${cat}`;
+      label.textContent = catText;
+      ruleEl.textContent = rule;
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // ROWS
+    // ════════════════════════════════════════════════════════════════
+    function addRow(data = {}) {
+      rowCount++;
+      const idx = rowCount;
+      const tbody = document.getElementById('palletBody');
+      const tr = document.createElement('tr');
+      tr.id = `prow-${idx}`;
+      tr.dataset.idx = idx;
+
+      const ulabOpts = ULAB_OPTIONS.map(u =>
+        `<option value="${u}"${(data.ulab_type ?? '') === u ? ' selected' : ''}>${u}</option>`
+      ).join('');
+
+      const isAcid = (data.ulab_type ?? '') === ACID_PRESENT;
+      const cellDis = isAcid ? '' : 'cell-disabled';
+      const avgPFVal = parseFloat(document.getElementById('avg_pallet_foreign_weight').value || 0).toFixed(3);
+
+      tr.innerHTML = `
+          <td class="sr-n">${idx}</td>
+          <td><input type="text" class="ri" id="pallet_no_${idx}" value="${data.pallet_no ?? ''}" placeholder="WP-${String(idx).padStart(2, '0')}"></td>
+          <td>
+            <select class="rsel" id="ulab_${idx}" onchange="onUlabChange(${idx})">
+              ${ulabOpts}
+            </select>
+          </td>
+          <td><input type="number" class="ri" id="gross_${idx}" step="0.001" placeholder="0.000" value="${data.gross_weight ?? ''}" oninput="calcRow(${idx})"></td>
+          <td><input type="number" class="ri" id="avgpf_${idx}" readonly value="${avgPFVal}"></td>
+          <td><input type="number" class="ri" id="net_${idx}" readonly></td>
+          <td class="${cellDis}" id="cell_initial_${idx}">
+            <input type="number" class="ri" id="initial_${idx}" step="0.001" placeholder="0.000"
+              value="${data.initial_weight ?? ''}"
+              ${isAcid ? '' : 'readonly tabindex="-1"'}
+              oninput="calcRow(${idx})">
+          </td>
+          <td class="${cellDis}" id="cell_drained_${idx}">
+            <input type="number" class="ri" id="drained_${idx}" step="0.001" placeholder="0.000"
+              value="${data.drained_weight ?? ''}"
+              ${isAcid ? '' : 'readonly tabindex="-1"'}
+              oninput="calcRow(${idx})">
+          </td>
+          <td class="${cellDis}" id="cell_diff_${idx}">
+            <input type="number" class="ri" id="diff_${idx}" readonly>
+          </td>
+          <td class="${cellDis}" id="cell_pct_${idx}">
+            <input type="number" class="ri" id="acid_pct_${idx}" readonly>
+          </td>
+          <td style="text-align:center">
+            ${idx > 1 ? `<button class="del-btn" onclick="removeRow(${idx})" title="Remove">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>` : ''}
+          </td>`;
+
+      tbody.appendChild(tr);
+      tr.style.opacity = '0'; tr.style.transform = 'translateY(-4px)';
+      requestAnimationFrame(() => {
+        tr.style.transition = 'opacity .22s,transform .22s';
+        tr.style.opacity = '1'; tr.style.transform = 'translateY(0)';
+      });
+
+      calcRow(idx);
+      calcAvgPalletForeign();
+    }
+
+    function onUlabChange(idx) {
+      const ulab = document.getElementById(`ulab_${idx}`).value;
+      const isAcid = ulab === ACID_PRESENT;
+
+      ['initial', 'drained', 'diff', 'pct'].forEach(key => {
+        const cell = document.getElementById(`cell_${key === 'pct' ? 'pct' : key}_${idx}`);
+        const inp = document.getElementById(key === 'pct' ? `acid_pct_${idx}` : `${key}_${idx}`);
+        if (!cell || !inp) return;
+        if (isAcid) {
+          cell.classList.remove('cell-disabled');
+          if (key === 'initial' || key === 'drained') {
+            inp.removeAttribute('readonly');
+            inp.removeAttribute('tabindex');
+          }
+        } else {
+          cell.classList.add('cell-disabled');
+          if (key === 'initial' || key === 'drained') {
+            inp.setAttribute('readonly', '');
+            inp.setAttribute('tabindex', '-1');
+          }
+          inp.value = '';
+        }
+      });
+
+      calcRow(idx);
+      triggerAutosave();
+    }
+
+    function removeRow(idx) {
+      const tr = document.getElementById(`prow-${idx}`);
+      if (!tr) return;
+      tr.style.transition = 'opacity .18s'; tr.style.opacity = '0';
+      setTimeout(() => {
+        tr.remove();
+        renumberRows();
+        calcAvgPalletForeign();
+        recalcTotals();
+      }, 200);
+    }
+
+    function renumberRows() {
+      document.querySelectorAll('#palletBody tr').forEach((tr, i) => {
+        tr.querySelector('.sr-n').textContent = i + 1;
+      });
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // BUILD PAYLOAD
+    // ════════════════════════════════════════════════════════════════
+    function buildPayload() {
+      const lotNo = document.getElementById('lot_no').value;
+      if (!lotNo) {
+        showAlert('Please select a Lot No before saving.');
+        document.getElementById('sdd_lot_no')?.querySelector('.sdd-trigger')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return null;
+      }
+
+      const details = [];
+      let valid = true;
+      const errs = [];
+
+      document.querySelectorAll('#palletBody tr').forEach((tr, i) => {
+        const idx = tr.dataset.idx;
+        const palletNo = document.getElementById(`pallet_no_${idx}`)?.value?.trim();
+        const ulab = document.getElementById(`ulab_${idx}`)?.value;
+        const gross = parseFloat(document.getElementById(`gross_${idx}`)?.value) || 0;
+        const net = parseFloat(document.getElementById(`net_${idx}`)?.value) || 0;
+        const isAcid = ulab === ACID_PRESENT;
+        const initial = isAcid ? (parseFloat(document.getElementById(`initial_${idx}`)?.value) || 0) : 0;
+        const drained = isAcid ? (parseFloat(document.getElementById(`drained_${idx}`)?.value) || 0) : 0;
+
+        if (!palletNo) { errs.push(`Row ${i + 1}: Pallet No required.`); valid = false; }
+        if (!ulab) { errs.push(`Row ${i + 1}: ULAB Type required.`); valid = false; }
+        if (gross <= 0) { errs.push(`Row ${i + 1}: Gross Weight must be > 0.`); valid = false; }
 
         details.push({
-            pallet_no      : parseInt(palletNo) || (i + 1),
-            gross_weight   : gross,
-            net_weight     : net,
-            ulab_type      : remarks,   // controller stores text e.g. "ULAB - INDUSTRIAL"
-            initial_weight : initial,
-            drained_weight : drained,
-            remarks        : remarks,
+          pallet_no: palletNo || (i + 1),
+          ulab_type: ulab,
+          gross_weight: gross,
+          net_weight: net,
+          initial_weight: isAcid ? initial : null,
+          drained_weight: isAcid ? drained : null,
+          remarks: ulab,
         });
-    });
+      });
 
-    if (!valid) {
-        showAlert(errors.join('\n'), 'error');
-        return null;
-    }
+      if (!valid) { showAlert(errs.join('\n')); return null; }
 
-
-    return {
-        test_date                    : document.getElementById('date').value,
-        lot_number                   : document.getElementById('lot_no').value,
-        supplier_id                  : document.getElementById('supplier').value,
-        vehicle_number               : document.getElementById('vehicle').value,
-        avg_pallet_weight            : parseFloat(document.getElementById('avg_pallet_weight').value)       || 0,
-        foreign_material_weight      : parseFloat(document.getElementById('foreign_material_weight').value) || 0,
-        invoice_qty                  : parseFloat(document.getElementById('invoice_qty').value)       || 0,
-        received_qty                 : parseFloat(document.getElementById('inhouse_weight').value)       || 0,
+      return {
+        test_date: document.getElementById('date').value,
+        lot_number: lotNo,
+        supplier_id: document.getElementById('supplier_id').value,
+        vehicle_number: document.getElementById('vehicle').value,
+        avg_pallet_weight: parseFloat(document.getElementById('avg_pallet_weight').value) || 0,
+        foreign_material_weight: parseFloat(document.getElementById('foreign_material_weight').value) || 0,
+        invoice_qty: parseFloat(document.getElementById('invoice_qty_hidden').value) || 0,
+        received_qty: parseFloat(document.getElementById('inhouse_weight').value) || 0,
         avg_pallet_and_foreign_weight: parseFloat(document.getElementById('avg_pallet_foreign_weight').value) || 0,
         details,
-    };
-}
+      };
+    }
 
+    // ════════════════════════════════════════════════════════════════
+    // SAVE / SUBMIT
+    // ════════════════════════════════════════════════════════════════
+    async function saveForm(silent = false) {
+      const payload = buildPayload();
+      if (!payload) return;
 
-// ── Save  →  POST /api/acid-testings ─────────────────────────────────────────
-// ── Save (create or update) ───────────────────────────────────────
-async function saveForm(silent = false) {
-    // clearAlert();
-    // clearFieldErrors();
-    const payload = buildPayload();
-    const btn = document.getElementById('btnSave');
-    btn.disabled = true;
+      const btn = document.getElementById('btnSave');
+      if (!silent) {
+        btn.disabled = true;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" style="animation:spin .7s linear infinite;width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Saving…`;
+      }
 
-    const method   = isCreate ? 'POST' : 'PUT';
-    const endpoint = isCreate ? '/acid-testings' : `/acid-testings/${recordId}`;
+      const method = isCreate ? 'POST' : 'PUT';
+      const endpoint = isCreate ? '/acid-testings' : `/acid-testings/${recordId}`;
 
-    const res = await apiFetch(endpoint, {
-        method,
-        body: JSON.stringify(payload),
-    });
+      const res = await apiFetch(endpoint, { method, body: JSON.stringify(payload) });
+      if (!silent) {
+        btn.disabled = false;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> <span id="btnSaveLabel">${isCreate ? 'Create Record' : 'Save Changes'}</span>`;
+      }
 
-    btn.disabled = false;
+      if (!res) return;
+      const data = await res.json();
 
-    if (!res) return;
-
-    const data = await res.json();
-
-    if (res.ok && data.status === 'ok') {
+      if (res.ok && data.status === 'ok') {
         if (!silent) {
-            if (isCreate) {
-                // Redirect to edit page of newly created record
-                window.location.href = `{{ url('/admin/mes/acidTesting') }}/${data.data.id}/edit`;
-            } else {
-                showAlert('Record saved successfully.', 'success');
-            }
+          if (isCreate) {
+            window.location.href = `{{ url('/admin/mes/acidTesting') }}/${data.data.id}/edit`;
+          } else {
+            showAlert('Saved successfully.', 'success');
+          }
         } else {
-            // Autosave — just update status text
-            const status = document.getElementById('autosaveStatus');
-            status.style.display = 'inline';
-            status.textContent = 'Autosaved at ' + new Date().toLocaleTimeString();
-            setTimeout(() => status.style.display = 'none', 5000);
+          setDot('saved', 'Autosaved ' + new Date().toLocaleTimeString());
+          setTimeout(() => document.getElementById('autosaveStatus').style.display = 'none', 4000);
         }
-    } else if (res.status === 422) {
-        showFieldErrors(data.errors ?? {});
-        if (!silent) showAlert(data.message ?? 'Please fix the errors below.');
-    } else {
+      } else if (res.status === 422) {
+        if (!silent) showAlert(data.message ?? 'Fix the errors below.');
+      } else {
         if (!silent) showAlert(data.message ?? 'Something went wrong.');
+      }
     }
-}
-// ── Save — now uses DataService (offline-aware) ───────────────────
-// async function saveForm(silent = false) {
-//     clearAlert();
-//     clearFieldErrors();
 
-//     const btn = document.getElementById('btnSave');
-//     btn.disabled = true;
+    async function submitRecord() {
+      if (!confirm('Submit this record? It will be locked from further edits.')) return;
+      await saveForm(true);
+      const res = await apiFetch(`/acid-testings/${recordId}/status`, {
+        method: 'PATCH', body: JSON.stringify({ status: 1 }),
+      });
+      if (res?.ok) {
+        showAlert('Submitted successfully.', 'success');
+        setTimeout(() => window.location.href = '{{ route("admin.mes.acidTesting.index") }}', 1500);
+      } else {
+        const d = await res?.json();
+        showAlert(d?.message ?? 'Submit failed.');
+      }
+    }
 
-//     const result = await ds.save(
-//         buildPayload(),
-//         _localId,                    // local IndexedDB id (null on first save)
-//         isCreate ? null : recordId   // server id (null when creating)
-//     );
+    // ════════════════════════════════════════════════════════════════
+    // AUTOSAVE
+    // ════════════════════════════════════════════════════════════════
+    function setupAutosave() {
+      ['date', 'avg_pallet_weight', 'foreign_material_weight'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', triggerAutosave);
+      });
+    }
 
-//     btn.disabled = false;
+    function triggerAutosave() {
+      if (isCreate || isSubmitted) return;
+      setDot('saving', 'Saving…');
+      document.getElementById('autosaveStatus').style.display = 'inline';
+      clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(() => saveForm(true), 2200);
+    }
 
-//     if (result.success) {
-//         // Remember local_id for subsequent saves in this session
-//         _localId = result.local_id;
+    function setDot(state, text) {
+      const dot = document.getElementById('asDot');
+      const txt = document.getElementById('asText');
+      if (dot) dot.className = `as-dot ${state}`;
+      if (txt) txt.textContent = text;
+    }
 
-//         if (result.synced) {
-//             // ── Online: saved to server ───────────────────────────
-//             if (!silent) {
-//                 if (isCreate) {
-//                     window.location.href = `/admin/mes/acidTesting/${result.server_id}/edit`;
-//                 } else {
-//                     showAlert('Record saved successfully.', 'success');
-//                 }
-//             } else {
-//                 const status = document.getElementById('autosaveStatus');
-//                 status.style.display = 'inline';
-//                 status.textContent = 'Autosaved at ' + new Date().toLocaleTimeString();
-//                 setTimeout(() => status.style.display = 'none', 5000);
-//             }
-
-//         } else {
-//             // ── Offline: saved to IndexedDB ───────────────────────
-//             if (!silent) {
-//                 showAlert(
-//                     '📱 Saved offline — will sync automatically when reconnected.',
-//                     'success'
-//                 );
-//             } else {
-//                 const status = document.getElementById('autosaveStatus');
-//                 status.style.display = 'inline';
-//                 status.textContent = '📱 Saved offline';
-//                 setTimeout(() => status.style.display = 'none', 5000);
-//             }
-//         }
-
-//     } else if (result.validation_error) {
-//         // ── Server returned 422 validation errors ─────────────────
-//         showFieldErrors(result.errors ?? {});
-//         if (!silent) showAlert(result.message ?? 'Please fix the errors below.');
-
-//     } else {
-//         if (!silent) showAlert('Something went wrong. Please try again.');
-//     }
-// }
-
-// // Expose saveForm globally so the onclick in the blade HTML can call it
-// window.saveForm = saveForm;
-// window.onLotChange = onLotChange;
-
-function showFieldErrors(errors) {
-    Object.entries(errors).forEach(([field, messages]) => {
-        const errEl = document.getElementById('err_' + field);
-        const input = document.getElementById(field);
-        if (errEl) errEl.textContent = Array.isArray(messages) ? messages[0] : messages;
-        if (input) input.classList.add('is-invalid');
-    });
-}
-function setReadonly(readonly) {
-    const fields = ['date','lot_no','vehicle','supplier_name','avg_pallet_weight','inhouse_weight','inhouse_weight','foreign_material_weight','avg_pallet_foreign_weight'];
-    fields.forEach(id => {
+    // ════════════════════════════════════════════════════════════════
+    // UTILITY
+    // ════════════════════════════════════════════════════════════════
+    function setReadonly(on) {
+      document.querySelectorAll('#palletBody input,#palletBody select').forEach(el => {
+        if (on) el.setAttribute('disabled', '');
+        else el.removeAttribute('disabled');
+      });
+      ['date', 'avg_pallet_weight', 'foreign_material_weight'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
-        if (readonly) { el.setAttribute('disabled', true); el.setAttribute('readonly', true); }
-        else          { el.removeAttribute('disabled'); el.removeAttribute('readonly'); }
-    });
-    document.getElementById('formActions').style.display = readonly ? 'none' : 'flex';
-}
-async function submitRecord() {
-    if (!confirm('Submit this record? It will be locked from further edits.')) return;
-
-    // Save first, then submit
-    await saveForm(true);
-
-    const res = await apiFetch(`/acid-testings/${recordId}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: 1 }),
-    });
-
-    if (res?.ok) {
-        showAlert('Record submitted successfully.', 'success');
-        setTimeout(() => window.location.href = '{{ route('admin.mes.acidTesting.index') }}', 1500);
-    } else {
-        const d = await res.json();
-        showAlert(d.message ?? 'Submit failed.');
+        if (on) el.setAttribute('disabled', ''); else el.removeAttribute('disabled');
+      });
+      document.querySelectorAll('.sdd-trigger,.sdd-search').forEach(el => {
+        if (on) { el.style.pointerEvents = 'none'; el.style.opacity = '.6'; }
+        else { el.style.pointerEvents = ''; el.style.opacity = ''; }
+      });
+      document.getElementById('formActions').style.display = on ? 'none' : 'flex';
+      const addBtn = document.getElementById('btnAddRow');
+      if (addBtn) addBtn.style.display = on ? 'none' : '';
+      if (on) document.getElementById('readonlyNotice').style.display = 'block';
     }
-}
-function setupAutosave() {
-    const fields = ['receipt_date','lot_no','vehicle_number','supplier_id','material_id','invoice_qty','received_qty','unit','remarks'];
-    fields.forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.addEventListener('change', scheduleAutosave);
-        if (['text','number'].includes(el.type) || el.tagName === 'TEXTAREA') {
-            el.addEventListener('keyup', scheduleAutosave);
-        }
-    });
-}
 
-function scheduleAutosave() {
-    const status = document.getElementById('autosaveStatus');
-    status.style.display = 'inline';
-    status.style.color   = 'var(--text-muted)';
-    status.textContent   = 'Saving...';
-    clearTimeout(autosaveTimer);
-    autosaveTimer = setTimeout(() => saveForm(true), 3000);
-}
-// async function saveRecord() {
-//     const payload = buildPayload();
-//     if (!payload) return; // validation failed, error already shown
-
-//     const btn = document.querySelector('.form-actions .btn-primary');
-//     btn.disabled  = true;
-//     btn.innerHTML = `
-//         <svg viewBox="0 0 24 24" style="animation:spin 0.8s linear infinite;width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
-//             <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-//         </svg> Saving…`;
-
-//     const res = await apiFetch('/acid-testings', {
-//         method : 'POST',
-//         body   : JSON.stringify(payload),
-//     });
-
-//     // apiFetch returns null on 401 (auto-redirects to login)
-//     if (!res) return;
-
-//     const json = await res.json();
-
-//     if (res.ok && json.status === 'ok') {
-//         showAlert('✓ ' + (json.message ?? 'Acid test saved successfully!'), 'success');
-//         // Redirect to index after short delay
-//         setTimeout(() => {
-//             window.location.href = '{{ route("admin.mes.acidTesting.index") }}';
-//         }, 1200);
-//         return;
-//     }
-
-//     // Handle Laravel validation errors (422)
-//     if (res.status === 422 && json.errors) {
-//         const messages = Object.values(json.errors).flat().join('\n');
-//         showAlert(messages, 'error');
-//     } else {
-//         showAlert(json.message ?? 'Failed to save. Please try again.', 'error');
-//     }
-
-//     btn.disabled  = false;
-//     btn.innerHTML = `
-//         <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
-//             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/>
-//             <polyline points="17 21 17 13 7 13 7 21"/>
-//             <polyline points="7 3 7 8 15 8"/>
-//         </svg> Create Record`;
-// }
-</script>
+    function showAlert(msg, type = 'error') {
+      const el = document.getElementById('formAlert');
+      el.className = `form-alert ${type}`;
+      el.textContent = msg;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (type === 'success') setTimeout(() => { el.className = 'form-alert'; el.textContent = ''; }, 4000);
+    }
+  </script>
 @endpush

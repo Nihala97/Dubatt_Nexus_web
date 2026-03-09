@@ -14,14 +14,14 @@ return new class extends Migration
         Schema::create('acid_test_percentage_details', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('acid_test_id');
-            $table->integer('pallet_no');
+            $table->string('pallet_no');
             $table->decimal('gross_weight', 10, 3);
             $table->decimal('net_weight', 10, 3);
             $table->string('ulab_type', 50);
-            $table->decimal('initial_weight', 10, 3);
-            $table->decimal('drained_weight', 10, 3);
-            $table->decimal('weight_difference', 10, 3);
-            $table->decimal('avg_acid_pct', 5, 2);
+            $table->decimal('initial_weight', 10, 3)->nullable();
+            $table->decimal('drained_weight', 10, 3)->nullable();
+            $table->decimal('weight_difference', 10, 3)->nullable();
+            $table->decimal('avg_acid_pct', 5, 2)->nullable();
             $table->string('remarks')->nullable();
 
             $table->integer('status')->default(0);

@@ -113,24 +113,41 @@ Route::middleware('auth:sanctum')->group(function () {
      });
      
      // ── Acid Testing ──────────────────────────────────────────────────
+     // ── Acid Testing ──────────────────────────────────────────────
+     // IMPORTANT: all static/named routes BEFORE the /{id} wildcard
      Route::prefix('acid-testings')->middleware('module:acid-testing')->group(function () {
-          Route::get('/',                  [AcidTestingController::class, 'index']);
-          Route::get('/prefill/{lotNo}',   [AcidTestingController::class, 'prefill']);
-          Route::get('/lot/{lotNo}',       [AcidTestingController::class, 'getByLot']);
-          Route::get('/{id}',              [AcidTestingController::class, 'show']);
-     
-          Route::post('/',                 [AcidTestingController::class, 'store'])
+          Route::get('/', [AcidTestingController::class, 'index']);
+          Route::get('/stock-conditions', [AcidTestingController::class, 'stockConditions']);
+          Route::get('/available-lots', [AcidTestingController::class, 'availableLots']);
+          Route::get('/lot-check/{lotNo}', [AcidTestingController::class, 'lotCheck']);
+          Route::get('/{id}', [AcidTestingController::class, 'show']);
+          Route::post('/', [AcidTestingController::class, 'store'])
                ->middleware('module:acid-testing,can_create');
-     
-          Route::put('/{id}',              [AcidTestingController::class, 'update'])
+          Route::put('/{id}', [AcidTestingController::class, 'update'])
                ->middleware('module:acid-testing,can_edit');
-     
-          Route::patch('/{id}/status',     [AcidTestingController::class, 'updateStatus'])
+          Route::patch('/{id}/status', [AcidTestingController::class, 'updateStatus'])
                ->middleware('module:acid-testing,can_edit');
-     
-          Route::delete('/{id}',           [AcidTestingController::class, 'destroy'])
+          Route::delete('/{id}', [AcidTestingController::class, 'destroy'])
                ->middleware('module:acid-testing,can_delete');
      });
+     // Route::prefix('acid-testings')->middleware('module:acid-testing')->group(function () {
+     //      Route::get('/',                  [AcidTestingController::class, 'index']);
+     //      Route::get('/prefill/{lotNo}',   [AcidTestingController::class, 'prefill']);
+     //      Route::get('/lot/{lotNo}',       [AcidTestingController::class, 'getByLot']);
+     //      Route::get('/{id}',              [AcidTestingController::class, 'show']);
+     
+     //      Route::post('/',                 [AcidTestingController::class, 'store'])
+     //           ->middleware('module:acid-testing,can_create');
+     
+     //      Route::put('/{id}',              [AcidTestingController::class, 'update'])
+     //           ->middleware('module:acid-testing,can_edit');
+     
+     //      Route::patch('/{id}/status',     [AcidTestingController::class, 'updateStatus'])
+     //           ->middleware('module:acid-testing,can_edit');
+     
+     //      Route::delete('/{id}',           [AcidTestingController::class, 'destroy'])
+     //           ->middleware('module:acid-testing,can_delete');
+     // });
 
      Route::prefix('bbsu-batches')->middleware('module:bbsu')->group(function () {
 
