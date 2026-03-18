@@ -16,6 +16,7 @@ class Material extends Model
         'category',
         'section',
         'unit',
+        'available_qty',
         'status',
         'is_active',
         'created_by',
@@ -23,6 +24,7 @@ class Material extends Model
     ];
 
     protected $casts = [
+        'available_qty' => 'decimal:3',
         'is_active' => 'boolean',
     ];
 

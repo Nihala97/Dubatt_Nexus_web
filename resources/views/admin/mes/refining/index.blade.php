@@ -608,8 +608,8 @@
 
         $stats = [
             'total' => RefiningBatch::where('is_active', true)->count(),
-            'draft' => RefiningBatch::where('is_active', true)->where('status', 'draft')->count(),
-            'submitted' => RefiningBatch::where('is_active', true)->where('status', 'submitted')->count(),
+            'draft' => RefiningBatch::where('is_active', true)->where('status', 0)->count(),
+            'submitted' => RefiningBatch::where('is_active', true)->where('status', '>=', 1)->count(),
             'this_month' => RefiningBatch::where('is_active', true)->whereMonth('date', now()->month)->count(),
         ];
     @endphp
@@ -698,8 +698,8 @@
                         <label>Status</label>
                         <select name="status">
                             <option value="">All</option>
-                            <option value="draft" {{ $status == 'draft' ? 'selected' : '' }}>Draft</option>
-                            <option value="submitted" {{ $status == 'submitted' ? 'selected' : '' }}>Submitted</option>
+                            <option value="0" {{ $status == '0' ? 'selected' : '' }}>Draft</option>
+                            <option value="1" {{ $status == '1' ? 'selected' : '' }}>Submitted</option>
                         </select>
                     </div>
                     <div class="filter-group">
@@ -728,12 +728,12 @@
         <a href="{{ route('admin.mes.refining.index') }}" class="tab {{ !$status ? 'active' : '' }}">
             All <span class="tab-count">{{ $stats['total'] }}</span>
         </a>
-        <a href="{{ route('admin.mes.refining.index', ['status' => 'draft']) }}"
-            class="tab {{ $status == 'draft' ? 'active' : '' }}">
+        <a href="{{ route('admin.mes.refining.index', ['status' => '0']) }}"
+            class="tab {{ $status == '0' ? 'active' : '' }}">
             Draft <span class="tab-count">{{ $stats['draft'] }}</span>
         </a>
-        <a href="{{ route('admin.mes.refining.index', ['status' => 'submitted']) }}"
-            class="tab {{ $status == 'submitted' ? 'active' : '' }}">
+        <a href="{{ route('admin.mes.refining.index', ['status' => '1']) }}"
+            class="tab {{ $status == '1' ? 'active' : '' }}">
             Submitted <span class="tab-count">{{ $stats['submitted'] }}</span>
         </a>
     </div>
@@ -781,9 +781,13 @@
                         <td>{{ $b->material?->name ?? '—' }}</td>
                         <td>{{ $b->date?->format('d M Y') ?? '—' }}</td>
                         <td>{{ $b->lpg_consumption ? number_format($b->lpg_consumption, 3) . ' m³' : '—' }}</td>
-                        <td>{{ $b->electricity_consumption ? number_format($b->electricity_consumption, 3) . ' kWh' : '—' }}</td>
+                        <td>{{ $b->electricity_consumption ? number_format($b->electricity_consumption, 3) . ' kWh' : '—' }}
+                        </td>
                         <td>
-                            <span class="badge badge-{{ $b->status }}">{{ ucfirst($b->status) }}</span>
+                            @php
+                                $statusStr = $b->status >= 1 ? 'submitted' : 'draft';
+                            @endphp
+                            <span class="badge badge-{{ $statusStr }}">{{ ucfirst($statusStr) }}</span>
                         </td>
                         <td style="text-align:center">
                             <div style="display:inline-flex;gap:6px">
@@ -793,7 +797,7 @@
                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                                     </svg>
                                 </a>
-                                @if($b->status === 'draft')
+                                @if($b->status == 0)
                                     <button class="act-btn del" title="Delete"
                                         onclick="deleteBatch({{ $b->id }}, '{{ $b->batch_no }}')">
                                         <svg viewBox="0 0 24 24">

@@ -40,6 +40,86 @@
             color: var(--txt)
         }
 
+        .sdd { display:block; width:100%; position:relative; }
+        .sdd-trigger {
+            width:100%; display:flex; align-items:center; justify-content:space-between;
+            padding:7px 10px 7px 32px;
+            border:1.5px solid var(--bdr); border-radius:6px;
+            background:var(--gxl);
+            font-family:'Outfit',sans-serif; font-size:12.5px; color:var(--txt);
+            cursor:pointer; user-select:none; gap:6px; min-height:36px;
+            transition:border-color .18s, background .18s;
+        }
+        .sdd-trigger:hover,
+        .sdd.open > .sdd-trigger {
+            border-color:var(--g); background:var(--white);
+        }
+        .sdd-trigger-text {
+            flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left;
+        }
+        .sdd-trigger-text.placeholder { color:var(--txtmu); }
+        .sdd-trigger-chevron {
+            width:12px; height:12px; stroke:var(--txtmu); fill:none;
+            stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round;
+            flex-shrink:0; transition:transform .18s;
+        }
+        .sdd.open > .sdd-trigger .sdd-trigger-chevron { transform:rotate(180deg); stroke:var(--g); }
+        .sdd-clear {
+            display:none; width:12px; height:12px;
+            stroke:var(--txtmu); fill:none; stroke-width:2.5;
+            stroke-linecap:round; stroke-linejoin:round;
+            flex-shrink:0; cursor:pointer; transition:stroke .15s;
+        }
+        .sdd-clear:hover { stroke:#dc2626; }
+        .sdd.open > .sdd-trigger .sdd-clear,
+        .sdd-trigger:hover .sdd-clear { display:block; }
+        
+        /* Portal — fixed, appears above everything */
+        .sdd-portal {
+            position:fixed; z-index:9999;
+            background:#fff; border:1.5px solid var(--g);
+            border-radius:10px; box-shadow:0 6px 24px rgba(0,0,0,.16);
+            min-width:220px; overflow:hidden;
+            display:none; animation:sddIn .12s ease;
+        }
+        .sdd-portal.visible { display:block; }
+        @keyframes sddIn {
+            from { opacity:0; transform:translateY(-4px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .sdd-search-wrap {
+            padding:8px 10px; border-bottom:1px solid var(--bdr); position:relative;
+        }
+        .sdd-search-ico {
+            position:absolute; left:18px; top:50%; transform:translateY(-50%);
+            width:13px; height:13px; stroke:var(--txtmu); fill:none;
+            stroke-width:2; stroke-linecap:round; stroke-linejoin:round; pointer-events:none;
+        }
+        .sdd-search {
+            width:100%; padding:7px 10px 7px 32px;
+            border:1.5px solid var(--bdr); border-radius:7px;
+            background:var(--gxl); font-family:'Outfit',sans-serif;
+            font-size:12.5px; color:var(--txt); outline:none;
+            transition:border-color .18s; box-sizing:border-box;
+        }
+        .sdd-search:focus { border-color:var(--g); background:#fff; }
+        .sdd-search::placeholder { color:var(--txtmu); }
+        .sdd-list { max-height:220px; overflow-y:auto; padding:4px 0; }
+        .sdd-item {
+            padding:8px 14px; font-size:12.5px; cursor:pointer;
+            transition:background .1s; display:flex; align-items:center;
+            gap:9px; color:var(--txt);
+        }
+        .sdd-item:hover { background:#f0f9f4; color:var(--g); }
+        .sdd-item.selected { background:#e8f5ed; color:var(--g); font-weight:600; }
+        .sdd-item-check {
+            width:14px; height:14px; flex-shrink:0;
+            stroke:transparent; fill:none; stroke-width:2.5;
+            stroke-linecap:round; stroke-linejoin:round;
+        }
+        .sdd-item.selected .sdd-item-check { stroke:var(--g); }
+        .sdd-empty { padding:18px 14px; font-size:12px; color:var(--txtmu); text-align:center; }
+
         /* ── Page header ── */
         .ph {
             display: flex;
@@ -912,6 +992,19 @@
 
 @section('content')
 
+    <div class="sdd-portal" id="sddPortal">
+        <div class="sdd-search-wrap">
+            <svg class="sdd-search-ico" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input class="sdd-search" id="sddPortalSearch" placeholder="Search…"
+                autocomplete="off"
+                oninput="sddPortalFilter(this.value)"
+                onkeydown="sddPortalKeydown(event)">
+        </div>
+        <div class="sdd-list" id="sddPortalList"></div>
+    </div>
     {{-- ── Page header ── --}}
     <div class="ph">
         <div>
@@ -943,9 +1036,9 @@
                         <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
                     </svg>
                     <div>
-                        <div class="modal-title" id="bbsuModalTitle">Select BBSU Batch</div>
-                        <div class="modal-subtitle" id="bbsuModalSubtitle">Choose the BBSU batch to source this material
-                            from</div>
+                        <div class="modal-title" id="bbsuModalTitle">Available Stock</div>
+                        <div class="modal-subtitle" id="bbsuModalSubtitle">Select the quantity to assign from available
+                            stock</div>
                     </div>
                 </div>
                 <button class="modal-close" onclick="closeBbsuModal()" title="Close">✕</button>
@@ -965,7 +1058,7 @@
                             <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
                             <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
                         </svg>
-                        <p style="margin-top:8px">Loading available BBSU batches…</p>
+                        <p style="margin-top:8px">Loading available stock…</p>
                     </div>
                     <div class="lot-empty" id="bbsuLotEmpty" style="display:none">
                         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#c8dfd1" stroke-width="1.5"
@@ -974,7 +1067,7 @@
                             <line x1="12" y1="8" x2="12" y2="12" />
                             <line x1="12" y1="16" x2="12.01" y2="16" />
                         </svg>
-                        No submitted BBSU batches found for this material with available quantity.
+                        No available stock found for this material.
                     </div>
                     <div class="tbl-wrap" id="bbsuLotTableScroll" style="display:none">
                         <table class="lot-table">
@@ -1100,9 +1193,9 @@
                             d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" />
                     </svg>
                     <div>
-                        <div class="modal-title" id="fluxModalTitle">Select BBSU Batch</div>
-                        <div class="modal-subtitle" id="fluxModalSubtitle">Enter the quantity to assign from each BBSU batch
-                        </div>
+                        <div class="modal-title" id="fluxModalTitle">Available Stock</div>
+                        <div class="modal-subtitle" id="fluxModalSubtitle">Select the quantity to assign from available
+                            stock</div>
                     </div>
                 </div>
                 <button class="modal-close" onclick="closeFluxModal()" title="Close">✕</button>
@@ -1122,7 +1215,7 @@
                             <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
                             <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
                         </svg>
-                        <p style="margin-top:8px">Loading available BBSU batches…</p>
+                        <p style="margin-top:8px">Loading available stock…</p>
                     </div>
                     <div class="lot-empty" id="fluxLotEmpty" style="display:none">
                         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#c8dfd1" stroke-width="1.5"
@@ -1131,7 +1224,7 @@
                             <line x1="12" y1="8" x2="12" y2="12" />
                             <line x1="12" y1="16" x2="12.01" y2="16" />
                         </svg>
-                        No submitted BBSU batches found for this material with available quantity.
+                        No available stock found for this material.
                     </div>
                     <div class="tbl-wrap" id="fluxLotTableScroll" style="display:none">
                         <table class="lot-table">
@@ -1238,7 +1331,7 @@
                             <circle cx="12" cy="12" r="10" />
                             <polyline points="12 6 12 12 16 14" />
                         </svg>
-                        <input type="datetime-local" id="start_time">
+                        <input type="time" id="start_time">
                     </div>
                 </div>
 
@@ -1249,7 +1342,7 @@
                             <circle cx="12" cy="12" r="10" />
                             <polyline points="12 6 12 12 16 14" />
                         </svg>
-                        <input type="datetime-local" id="end_time">
+                        <input type="time" id="end_time">
                     </div>
                 </div>
 
@@ -1529,15 +1622,14 @@
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                         <div class="field">
                             <label>Material</label>
-                            <div class="iw sw">
-                                <svg class="ico" viewBox="0 0 24 24">
-                                    <path
-                                        d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0" />
-                                </svg>
-                                <select id="output_material" onchange="onOutputMaterialChange();triggerAutosave()">
-                                    <option value="">Select material…</option>
-                                    {{-- Populated by JS from materials table --}}
-                                </select>
+                            <div class="sdd" id="sdd_output_material">
+                                <div class="sdd-trigger" onclick="toggleSdd('output_material')">
+                                    <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);width:13px;height:13px;stroke:var(--txtmu);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none" viewBox="0 0 24 24"><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0"/></svg>
+                                    <span class="sdd-trigger-text placeholder" id="sdd_output_material_label" data-placeholder="Select material…">Select material…</span>
+                                    <svg class="sdd-clear" onclick="clearSdd('output_material',event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                                </div>
+                                <input type="hidden" id="output_material">
                             </div>
                         </div>
                         <div class="field">
@@ -1613,9 +1705,9 @@
                     <polyline points="17 21 17 13 7 13 7 21" />
                     <polyline points="7 3 7 8 15 8" />
                 </svg>
-                <span id="btnSaveLabel">Save</span>
+                <span id="btnSaveLabel">Create Batch</span>
             </button>
-            <button type="button" class="btn btn-outline btn-sm" id="btnSubmit" onclick="submitRecord()"
+            <button type="button" class="btn btn-outline btn-sm" id="btnSubmit" onclick="submitBatch()"
                 style="display:none">
                 <svg viewBox="0 0 24 24">
                     <polyline points="20 6 9 17 4 12" />
@@ -1656,7 +1748,6 @@
                 const res = await apiFetch('/smelting-batches/generate-batch-no');
                 if (res?.ok) {
                     const d = await res.json();
-                    console.log(d);
                     document.getElementById('batch_no').value = d.batch_no;
                 }
                 document.getElementById('pageTitle').textContent = 'Create Smelting Batch';
@@ -1714,15 +1805,15 @@
                 const firingOpts = FIRING_OPTIONS.map(f =>
                     `<option value="${f}">${f || 'Select…'}</option>`).join('');
                 tr.innerHTML = `
-                  <td style="font-size:12px;font-weight:600;padding-left:10px;white-space:nowrap">${name}</td>
-                  <td><button class="proc-btn proc-start" onclick="setProcessTime(${idx},'start')">START</button></td>
-                  <td style="padding:4px 4px"><input type="time" class="ri" id="proc_start_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
-                  <td><button class="proc-btn proc-end" onclick="setProcessTime(${idx},'end')">END</button></td>
-                  <td style="padding:4px 4px"><input type="time" class="ri" id="proc_end_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
-                  <td><input type="text" class="ri ro" id="proc_total_${idx}" readonly placeholder="0 min" style="min-width:70px;font-weight:700;color:var(--g);background:var(--gxl)"></td>
-                  <td style="position:relative" class="sc">
-                    <select class="rs" id="proc_firing_${idx}" onchange="triggerAutosave()" style="min-width:100px">${firingOpts}</select>
-                  </td>`;
+          <td style="font-size:12px;font-weight:600;padding-left:10px;white-space:nowrap">${name}</td>
+          <td><button class="proc-btn proc-start" onclick="setProcessTime(${idx},'start')">START</button></td>
+          <td style="padding:4px 4px"><input type="time" class="ri" id="proc_start_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
+          <td><button class="proc-btn proc-end" onclick="setProcessTime(${idx},'end')">END</button></td>
+          <td style="padding:4px 4px"><input type="time" class="ri" id="proc_end_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
+          <td><input type="text" class="ri ro" id="proc_total_${idx}" readonly placeholder="0 min" style="min-width:70px;font-weight:700;color:var(--g);background:var(--gxl)"></td>
+          <td style="position:relative" class="sc">
+            <select class="rs" id="proc_firing_${idx}" onchange="triggerAutosave()" style="min-width:100px">${firingOpts}</select>
+          </td>`;
                 tbody.appendChild(tr);
             });
         }
@@ -1776,32 +1867,32 @@
             tr.dataset.bbsuBatchNo = data.bbsu_batch_no || '';
             tr.dataset.bbsuAvailableQty = data.bbsu_available_qty || '';
             tr.innerHTML = `
-                <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-                <td style="position:relative" class="sc">
-                  <select class="rs" id="rm_id_${i}" name="raw_materials[${i}][raw_material_id]"
-                    onchange="onRawMaterialChange(${i});triggerAutosave()"
-                    style="min-width:130px">${getItemOptions(data.raw_material_id)}</select>
-                </td>
-                <td>
-                  <input type="number" class="ri" id="rm_qty_${i}" name="raw_materials[${i}][raw_material_qty]"
-                    value="${data.raw_material_qty ?? ''}" step="0.001" placeholder="0.000"
-                    oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"
-                    onclick="onRawQtyClick(${i})"
-                    onfocus="onRawQtyFocus(${i})"
-                    style="min-width:90px;cursor:pointer"
-                    title="Click to assign from BBSU batch">
-                  <input type="hidden" id="rm_bbsu_id_${i}" name="raw_materials[${i}][bbsu_batch_id]" value="${data.bbsu_batch_id ?? ''}">
-                  <input type="hidden" id="rm_bbsu_no_${i}" name="raw_materials[${i}][bbsu_batch_no]" value="${data.bbsu_batch_no ?? ''}">
-                </td>
-                <td><input type="number" class="ri" id="rm_yield_${i}" name="raw_materials[${i}][raw_material_yield_pct]"
-                  value="${data.raw_material_yield_pct ?? ''}" step="0.01" placeholder="0.00"
-                  oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"></td>
-                <td><input type="number" class="ri ro" id="rm_exp_${i}"
-                  value="${data.expected_output_qty ?? ''}" readonly placeholder="0.000"
-                  style="background:#eef6f1;color:var(--g);font-weight:600"></td>
-                <td><button class="del-btn" onclick="removeRow('rrow-${i}',recalcRawTotals)" title="Remove">
-                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                </button></td>`;
+        <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+        <td style="position:relative" class="sc">
+          <select class="rs" id="rm_id_${i}" name="raw_materials[${i}][raw_material_id]"
+            onchange="onRawMaterialChange(${i});triggerAutosave()"
+            style="min-width:130px">${getItemOptions(data.raw_material_id)}</select>
+        </td>
+        <td>
+          <input type="number" class="ri" id="rm_qty_${i}" name="raw_materials[${i}][raw_material_qty]"
+            value="${data.raw_material_qty ?? ''}" step="0.001" placeholder="0.000"
+            oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"
+            onclick="onRawQtyClick(${i})"
+            onfocus="onRawQtyFocus(${i})"
+            style="min-width:90px;cursor:pointer"
+            title="Click to assign from BBSU batch">
+          <input type="hidden" id="rm_bbsu_id_${i}" name="raw_materials[${i}][bbsu_batch_id]" value="${data.bbsu_batch_id ?? ''}">
+          <input type="hidden" id="rm_bbsu_no_${i}" name="raw_materials[${i}][bbsu_batch_no]" value="${data.bbsu_batch_no ?? ''}">
+        </td>
+        <td><input type="number" class="ri" id="rm_yield_${i}" name="raw_materials[${i}][raw_material_yield_pct]"
+          value="${data.raw_material_yield_pct ?? ''}" step="0.01" placeholder="0.00"
+          oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"></td>
+        <td><input type="number" class="ri ro" id="rm_exp_${i}"
+          value="${data.expected_output_qty ?? ''}" readonly placeholder="0.000"
+          style="background:#eef6f1;color:var(--g);font-weight:600"></td>
+        <td><button class="del-btn" onclick="removeRow('rrow-${i}',recalcRawTotals)" title="Remove">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
         }
@@ -1866,25 +1957,25 @@
             tr.dataset.rowIndex = i;
             tr.dataset.fluxBbsuSelections = data.flux_bbsu_selections ? JSON.stringify(data.flux_bbsu_selections) : '';
             tr.innerHTML = `
-                <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-                <td style="position:relative" class="sc">
-                  <select class="rs" id="fl_id_${i}" onchange="onFluxMaterialChange(${i});triggerAutosave()"
-                    style="min-width:130px">${getItemOptions(data.chemical_id)}</select>
-                </td>
-                <td>
-                  <input type="number" class="ri" id="fl_qty_${i}"
-                    value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
-                    oninput="recalcFluxTotals();triggerAutosave()"
-                    onclick="onFluxQtyClick(${i})"
-                    onfocus="onFluxQtyFocus(${i})"
-                    style="min-width:90px;cursor:pointer"
-                    title="Click to assign from BBSU batch">
-                  <input type="hidden" id="fl_bbsu_id_${i}" value="${data.fl_bbsu_batch_id ?? ''}">
-                  <input type="hidden" id="fl_bbsu_no_${i}" value="${data.fl_bbsu_batch_no ?? ''}">
-                </td>
-                <td><button class="del-btn" onclick="removeRow('frow-${i}',recalcFluxTotals)" title="Remove">
-                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                </button></td>`;
+        <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+        <td style="position:relative" class="sc">
+          <select class="rs" id="fl_id_${i}" onchange="onFluxMaterialChange(${i});triggerAutosave()"
+            style="min-width:130px">${getItemOptions(data.chemical_id)}</select>
+        </td>
+        <td>
+          <input type="number" class="ri" id="fl_qty_${i}"
+            value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
+            oninput="recalcFluxTotals();triggerAutosave()"
+            onclick="onFluxQtyClick(${i})"
+            onfocus="onFluxQtyFocus(${i})"
+            style="min-width:90px;cursor:pointer"
+            title="Click to assign from BBSU batch">
+          <input type="hidden" id="fl_bbsu_id_${i}" value="${data.fl_bbsu_batch_id ?? ''}">
+          <input type="hidden" id="fl_bbsu_no_${i}" value="${data.fl_bbsu_batch_no ?? ''}">
+        </td>
+        <td><button class="del-btn" onclick="removeRow('frow-${i}',recalcFluxTotals)" title="Remove">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
         }
@@ -1935,15 +2026,15 @@
             tr.id = `trow-${i}`;
             tr.dataset.rowIndex = i;
             tr.innerHTML = `
-                <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-                <td><input type="time" class="ri" id="temp_time_${i}" value="${data.record_time ?? ''}" oninput="triggerAutosave()"></td>
-                <td><input type="number" class="ri" id="temp_inside_${i}" value="${data.inside_temp_before_charging ?? ''}" step="0.01" placeholder="°C" oninput="triggerAutosave()"></td>
-                <td><input type="text" class="ri" id="temp_pgc_${i}" value="${data.process_gas_chamber_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
-                <td><input type="text" class="ri" id="temp_shell_${i}" value="${data.shell_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
-                <td><input type="text" class="ri" id="temp_bag_${i}" value="${data.bag_house_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
-                <td><button class="del-btn" onclick="removeRow('trow-${i}',null)" title="Remove">
-                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                </button></td>`;
+        <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+        <td><input type="time" class="ri" id="temp_time_${i}" value="${data.record_time ?? ''}" oninput="triggerAutosave()"></td>
+        <td><input type="number" class="ri" id="temp_inside_${i}" value="${data.inside_temp_before_charging ?? ''}" step="0.01" placeholder="°C" oninput="triggerAutosave()"></td>
+        <td><input type="text" class="ri" id="temp_pgc_${i}" value="${data.process_gas_chamber_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
+        <td><input type="text" class="ri" id="temp_shell_${i}" value="${data.shell_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
+        <td><input type="text" class="ri" id="temp_bag_${i}" value="${data.bag_house_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
+        <td><button class="del-btn" onclick="removeRow('trow-${i}',null)" title="Remove">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
         }
@@ -2100,12 +2191,8 @@
             });
 
             const dateVal = document.getElementById('date').value;
-
-            const stRaw = document.getElementById('start_time').value;
-            const etRaw = document.getElementById('end_time').value;
-
-            const stVal = stRaw ? stRaw.split('T')[1] : null;
-            const etVal = etRaw ? etRaw.split('T')[1] : null;
+            const stVal = document.getElementById('start_time').value;
+            const etVal = document.getElementById('end_time').value;
 
             return {
                 batch_no: document.getElementById('batch_no').value,
@@ -2169,38 +2256,19 @@
         }
 
         // ── Submit ───────────────────────────────────────────────────────────
-        // async function submitBatch() {
-        //     if (!confirm('Submit this batch? It will be locked from further edits.')) return;
-        //     await saveForm(true);
-        //     const res = await apiFetch(`/smelting-batches/${recordId}/submit`, { method: 'POST', body: '{}' });
-        //     if (res?.ok) {
-        //         showAlert('Batch submitted and locked.', 'success');
-        //         setTimeout(() => window.location.href = '{{ route("admin.mes.smelting.index") }}', 1400);
-        //     } else {
-        //         const d = await res?.json();
-        //         showAlert(d?.message ?? 'Submit failed.');
-        //     }
-        // }
-
-        async function submitRecord() {
-            if (!confirm('Submit this record? It will be locked from further edits.')) return;
-
-            // Save first, then submit
+        async function submitBatch() {
+            if (!confirm('Submit this batch? It will be locked from further edits.')) return;
             await saveForm(true);
-
-            const res = await apiFetch(`/smelting-batches/${recordId}/status`, {
-                method: 'PATCH',
-                body: JSON.stringify({ status: 1 }),
-            });
-
+            const res = await apiFetch(`/smelting-batches/${recordId}/submit`, { method: 'POST', body: '{}' });
             if (res?.ok) {
-                showAlert('Record submitted successfully.', 'success');
-                setTimeout(() => window.location.href = '{{ route('admin.mes.smelting.index') }}', 1500);
+                showAlert('Batch submitted and locked.', 'success');
+                setTimeout(() => window.location.href = '{{ route("admin.mes.smelting.index") }}', 1400);
             } else {
-                const d = await res.json();
-                showAlert(d.message ?? 'Submit failed.');
+                const d = await res?.json();
+                showAlert(d?.message ?? 'Submit failed.');
             }
         }
+
         // ── Autosave ─────────────────────────────────────────────────────────
         function setupAutosave() {
             const watch = ['date', 'rotary_no', 'start_time', 'end_time', 'lpg_consumption', 'o2_consumption',
@@ -2269,7 +2337,7 @@
         // User enters block SL NO + weight rows; total → output_qty field
         // ════════════════════════════════════════════════════════════════
         let outputBlockRows = [];   // [{qty}] persisted across modal opens
-        const OUTPUT_MAX_ROWS = 1; // screenshot shows 11 fixed rows
+        const OUTPUT_MAX_ROWS = 11; // screenshot shows 11 fixed rows
 
         function onOutputMaterialChange() {
             // When material changes, clear blocks
@@ -2310,18 +2378,18 @@
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid var(--bdr)';
                 tr.innerHTML = `
-                  <td style="padding:5px 14px;font-size:12.5px;font-weight:700;color:var(--g);text-align:right;
-                             background:var(--gxl);width:80px;border-right:1px solid var(--bdr)">${i + 1}</td>
-                  <td style="padding:4px 10px">
-                    <input type="number" step="0.001" min="0" placeholder="0.000"
-                      value="${qty}"
-                      style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:6px;
-                             font-family:'Outfit',sans-serif;font-size:13px;text-align:right;
-                             background:var(--white);outline:none;transition:border-color .15s"
-                      oninput="onOutputQtyInput(this, ${i})"
-                      onfocus="this.style.borderColor='var(--g)'"
-                      onblur="this.style.borderColor='var(--bdr)'">
-                  </td>`;
+          <td style="padding:5px 14px;font-size:12.5px;font-weight:700;color:var(--g);text-align:right;
+                     background:var(--gxl);width:80px;border-right:1px solid var(--bdr)">${i + 1}</td>
+          <td style="padding:4px 10px">
+            <input type="number" step="0.001" min="0" placeholder="0.000"
+              value="${qty}"
+              style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:6px;
+                     font-family:'Outfit',sans-serif;font-size:13px;text-align:right;
+                     background:var(--white);outline:none;transition:border-color .15s"
+              oninput="onOutputQtyInput(this, ${i})"
+              onfocus="this.style.borderColor='var(--g)'"
+              onblur="this.style.borderColor='var(--bdr)'">
+          </td>`;
                 tbody.appendChild(tr);
             }
             recalcOutputTotal();
@@ -2397,8 +2465,8 @@
             bbsuActiveRowIndex = rowIndex;
 
             const materialName = document.getElementById(`rm_id_${rowIndex}`)?.selectedOptions[0]?.text ?? 'Material';
-            document.getElementById('bbsuModalTitle').textContent = 'Select BBSU Batch — ' + materialName;
-            document.getElementById('bbsuModalSubtitle').textContent = 'Enter the quantity to assign from each BBSU batch. Total will be applied to the QTY field.';
+            document.getElementById('bbsuModalTitle').textContent = 'Available Stock — ' + materialName;
+            document.getElementById('bbsuModalSubtitle').textContent = 'Current available stock for this material. Enter the quantity to assign.';
             document.getElementById('bbsuConfirmBtn').disabled = true;
 
             document.getElementById('bbsuLotModal').classList.add('open');
@@ -2453,17 +2521,17 @@
                 tr.dataset.availableQty = lot.available_qty;
 
                 tr.innerHTML = `
-                  <td><span class="lot-bbsu-tag">${lot.batch_no}</span></td>
-                  <td style="font-size:12.5px;font-weight:600">${lot.material_name}</td>
-                  <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
-                  <td><span class="avail-pill ${availClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
-                  <td>
-                    <input type="number" class="assign-input" id="bbs_assign_${lot.bbsu_batch_id}"
-                      placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
-                      ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
-                      oninput="onAssignQtyInput(${lot.bbsu_batch_id}, ${lot.available_qty})"
-                      onclick="event.stopPropagation()">
-                  </td>`;
+          <td><span class="lot-bbsu-tag">${lot.batch_no}</span></td>
+          <td style="font-size:12.5px;font-weight:600">${lot.material_name}</td>
+          <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
+          <td><span class="avail-pill ${availClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
+          <td>
+            <input type="number" class="assign-input" id="bbs_assign_${lot.bbsu_batch_id}"
+              placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
+              ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
+              oninput="onAssignQtyInput(${lot.bbsu_batch_id}, ${lot.available_qty})"
+              onclick="event.stopPropagation()">
+          </td>`;
 
                 // clicking the row focuses the assign input
                 tr.addEventListener('click', (e) => {
@@ -2576,8 +2644,8 @@
             fluxActiveRowIndex = rowIndex;
 
             const materialName = document.getElementById(`fl_id_${rowIndex}`)?.selectedOptions[0]?.text ?? 'Chemical';
-            document.getElementById('fluxModalTitle').textContent = 'Select BBSU Batch — ' + materialName;
-            document.getElementById('fluxModalSubtitle').textContent = 'Enter the quantity to assign from each BBSU batch. Total will be applied to the QTY field.';
+            document.getElementById('fluxModalTitle').textContent = 'Available Stock — ' + materialName;
+            document.getElementById('fluxModalSubtitle').textContent = 'Current available stock for this material. Enter the quantity to assign.';
             document.getElementById('fluxConfirmBtn').disabled = true;
 
             document.getElementById('fluxLotModal').classList.add('open');
@@ -2631,17 +2699,17 @@
                 tr.dataset.availableQty = lot.available_qty;
 
                 tr.innerHTML = `
-                  <td><span class="lot-bbsu-tag">${lot.batch_no}</span></td>
-                  <td style="font-size:12.5px;font-weight:600">${lot.material_name}</td>
-                  <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
-                  <td><span class="avail-pill ${availClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
-                  <td>
-                    <input type="number" class="assign-input" id="flux_assign_${lot.bbsu_batch_id}"
-                      placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
-                      ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
-                      oninput="onFluxAssignInput(${lot.bbsu_batch_id}, ${lot.available_qty})"
-                      onclick="event.stopPropagation()">
-                  </td>`;
+          <td><span class="lot-bbsu-tag">${lot.batch_no}</span></td>
+          <td style="font-size:12.5px;font-weight:600">${lot.material_name}</td>
+          <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
+          <td><span class="avail-pill ${availClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
+          <td>
+            <input type="number" class="assign-input" id="flux_assign_${lot.bbsu_batch_id}"
+              placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
+              ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
+              oninput="onFluxAssignInput(${lot.bbsu_batch_id}, ${lot.available_qty})"
+              onclick="event.stopPropagation()">
+          </td>`;
 
                 tr.addEventListener('click', (e) => {
                     if (e.target.tagName === 'INPUT') return;

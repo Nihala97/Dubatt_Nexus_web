@@ -9,6 +9,9 @@ use App\Models\SmeltingFluxChemical;
 use App\Models\SmeltingProcessDetail;
 use App\Models\SmeltingTemperatureRecord;
 use App\Models\SmeltingOutputBlock;
+use App\Models\Material;
+use App\Models\StockLedger;
+use App\Services\InventoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +19,13 @@ use Illuminate\Support\Facades\Log;
 
 class SmeltingBatchController extends Controller
 {
+    protected $inventoryService;
+
+    public function __construct(InventoryService $inventoryService)
+    {
+        $this->inventoryService = $inventoryService;
+    }
+
     // ══════════════════════════════════════════════════════════════════
     // INDEX  GET /api/smelting-batches
     // ══════════════════════════════════════════════════════════════════
@@ -46,8 +56,8 @@ class SmeltingBatchController extends Controller
         // Stats for index page cards
         $stats = [
             'total' => SmeltingBatch::where('is_active', true)->count(),
-            'draft' => SmeltingBatch::where('is_active', true)->where('status', 'draft')->count(),
-            'submitted' => SmeltingBatch::where('is_active', true)->where('status', 'submitted')->count(),
+            'draft' => SmeltingBatch::where('is_active', true)->where('status', 0)->count(),
+            'submitted' => SmeltingBatch::where('is_active', true)->where('status', '>=', 1)->count(),
             'this_month' => SmeltingBatch::where('is_active', true)->whereMonth('date', now()->month)->count(),
         ];
 
@@ -164,10 +174,10 @@ class SmeltingBatchController extends Controller
                 'rotary_no' => $request->rotary_no ?? $batch->rotary_no,
                 'date' => $request->date ?? $batch->date,
                 'start_time' => $request->filled('start_time')
-                    ? ($request->date ?? $batch->date->format('Y-m-d')) . ' ' . $request->start_time . ':00'
+                    ? ($request->date ?? \Carbon\Carbon::parse($batch->date)->format('Y-m-d')) . ' ' . $request->start_time . ':00'
                     : $batch->start_time,
                 'end_time' => $request->filled('end_time')
-                    ? ($request->date ?? $batch->date->format('Y-m-d')) . ' ' . $request->end_time . ':00'
+                    ? ($request->date ?? \Carbon\Carbon::parse($batch->date)->format('Y-m-d')) . ' ' . $request->end_time . ':00'
                     : $batch->end_time,
                 'lpg_consumption' => $request->lpg_consumption ?? $batch->lpg_consumption,
                 'o2_consumption' => $request->o2_consumption ?? $batch->o2_consumption,
@@ -263,13 +273,15 @@ class SmeltingBatchController extends Controller
     // ══════════════════════════════════════════════════════════════════
     public function submit($id): JsonResponse
     {
-        $batch = SmeltingBatch::findOrFail($id);
+        $batch = SmeltingBatch::with(['rawMaterials', 'fluxChemicals'])->findOrFail($id);
 
-        if ($batch->status === 1) {
+        if ($batch->status == 1) {
             return response()->json(['status' => 'error', 'message' => 'Already submitted.'], 422);
         }
 
         $batch->update(['status' => 1, 'updated_by' => auth()->id()]);
+
+        $this->processSmeltingInventory($batch);
 
         return response()->json(['status' => 'ok', 'message' => 'Batch submitted and locked.']);
     }
@@ -279,26 +291,88 @@ class SmeltingBatchController extends Controller
             'status' => 'required|integer|in:0,1,2,3,4',
         ]);
 
-        $receiving = SmeltingBatch::findOrFail($id);
+        $batch = SmeltingBatch::with(['rawMaterials', 'fluxChemicals'])->findOrFail($id);
+        $oldStatus = $batch->status;
 
         // Prevent cancelling if already in downstream process
-        if ($request->status == 4 && $receiving->status >= 2) {
+        if ($request->status == 4 && $batch->status >= 2) {
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'Cannot cancel — lot is already in downstream processing.',
             ], 422);
         }
 
-        $receiving->update([
-            'status'     => $request->status,
+        $batch->update([
+            'status' => $request->status,
             'updated_by' => auth()->id(),
         ]);
 
+        if ($request->status == 1 && $oldStatus != 1) {
+            $this->processSmeltingInventory($batch);
+        } elseif ($request->status != 1 && $oldStatus == 1) {
+            $this->inventoryService->revertTransaction('Smelting', $batch->id, auth()->id());
+        }
+
         return response()->json([
-            'status'  => 'ok',
+            'status' => 'ok',
             'message' => 'Status updated successfully.',
-            'data'    => ['status' => $receiving->status],
+            'data' => ['status' => $batch->status],
         ]);
+    }
+
+    private function processSmeltingInventory($batch)
+    {
+        // 1. OUT: Raw Materials
+        foreach ($batch->rawMaterials as $rm) {
+            if ($rm->raw_material_id) {
+                $this->inventoryService->stockOut(
+                    $rm->raw_material_id,
+                    $rm->raw_material_qty,
+                    'Smelting',
+                    $batch->id,
+                    $batch->batch_no,
+                    auth()->id()
+                );
+            }
+        }
+
+        // 2. OUT: Flux Chemicals
+        foreach ($batch->fluxChemicals as $chem) {
+            if ($chem->chemical_id) {
+                $this->inventoryService->stockOut(
+                    $chem->chemical_id,
+                    $chem->qty,
+                    'Smelting',
+                    $batch->id,
+                    $batch->batch_no,
+                    auth()->id()
+                );
+            }
+        }
+
+        // 3. IN: Output production
+        if ($batch->output_qty > 0 && $batch->output_material) {
+            // output_material could be ID or String. If ID, search it, else create
+            $material = null;
+            if (is_numeric($batch->output_material)) {
+                $material = Material::find($batch->output_material);
+            }
+            if (!$material) {
+                $material = Material::firstOrCreate(
+                    ['material_name' => $batch->output_material],
+                    ['material_code' => strtoupper(str_replace(' ', '_', $batch->output_material)) . '-SMT-OUT', 'status' => 1, 'is_active' => 1]
+                );
+            }
+
+            $this->inventoryService->stockIn(
+                $material->id,
+                $batch->output_qty,
+                'Smelting',
+                $batch->id,
+                $batch->batch_no,
+                auth()->id()
+            );
+        }
     }
     // ══════════════════════════════════════════════════════════════════
     // DESTROY  DELETE /api/smelting-batches/{id}
@@ -471,86 +545,73 @@ class SmeltingBatchController extends Controller
     // ══════════════════════════════════════════════════════════════════
     // BBSU LOTS FOR MATERIAL  GET /api/smelting-batches/bbsu-lots/{materialId}
     //
-    // Returns all submitted BBSU batches where the given material_id
-    // is the output_material. For each batch it computes:
-    //   output_qty        — total output qty recorded in that BBSU batch
-    //   already_used_qty  — sum of raw_material_qty already assigned to
-    //                       ANY smelting batch from this BBSU batch
-    //   available_qty     — output_qty - already_used_qty
-    //
-    // The optional ?exclude_smelting_id=X param excludes the current
-    // smelting batch from the "already used" calculation so that when
-    // editing a draft the user sees the full picture.
+    // UPDATED: Now reads from stock_ledgers + materials.available_qty
+    // instead of scanning bbsu_batches directly.
+    // The route URL and method name are unchanged so existing clients
+    // continue to work without any frontend change.
+    // Response shape is the same — popup shows available_qty and lets
+    // user type an assign qty, then press OK.
     // ══════════════════════════════════════════════════════════════════
     public function getBbsuLots(Request $request, int $materialId): JsonResponse
     {
-        $excludeSmeltingId = $request->get('exclude_smelting_id');
+        $material = \App\Models\Material::find($materialId);
 
-        // All submitted BBSU batches whose output_material matches
-        $bbsuBatches = DB::table('bbsu_batches as bb')
-            ->join('bbsu_output_materials as bom', 'bom.bbsu_batch_id', '=', 'bb.id')
-            ->join('materials as mat', 'mat.id', '=', 'bom.output_material_id') // adjust column name if different
-            ->where('bom.output_material_id', $materialId)
-            ->where('bb.status', 'submitted')
-            ->where('bb.is_active', true)
-            ->select(
-                'bb.id',
-                'bb.batch_no',
-                'bom.output_material_id as output_material',
-                DB::raw('SUM(bom.qty) as output_qty'),
-                'mat.material_name as material_name',
-                'mat.unit as material_unit'
-            )
-            ->groupBy('bb.id', 'bb.batch_no', 'bom.output_material_id', 'mat.material_name', 'mat.unit')
-            ->orderByDesc('bb.created_at')
-            ->get();
-
-        if ($bbsuBatches->isEmpty()) {
+        if (!$material) {
             return response()->json([
                 'status' => 'ok',
                 'data' => [],
-                'message' => 'No BBSU batches found for this material.',
+                'message' => 'Material not found.',
             ]);
         }
 
-        $bbsuIds = $bbsuBatches->pluck('id')->toArray();
+        $availableQty = (float) $material->available_qty;
 
-        // How much has already been consumed from each BBSU batch
-        // across ALL smelting batches (optionally excluding current draft)
-        $usedQuery = DB::table('smelting_raw_materials as srm')
-            ->join('smelting_batches as sb', 'sb.id', '=', 'srm.smelting_batch_id')
-            ->whereIn('srm.bbsu_batch_id', $bbsuIds)
-            ->where('sb.is_active', true)
-            ->where('srm.is_active', true);
+        // Recent IN ledger rows — shows the user where current stock came from
+        $ledger = StockLedger::where('material_id', $materialId)
+            ->where('is_active', true)
+            ->where('in_qty', '>', 0)
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get(['process_type', 'doc_no', 'in_qty', 'balance_qty', 'created_at'])
+            ->map(fn($r) => [
+                'source' => $r->process_type,
+                'doc_no' => $r->doc_no,
+                'in_qty' => (float) $r->in_qty,
+                'created_at' => optional($r->created_at)->format('d-m-Y H:i'),
+            ]);
 
-        if ($excludeSmeltingId) {
-            $usedQuery->where('srm.smelting_batch_id', '!=', $excludeSmeltingId);
+        if ($availableQty <= 0) {
+            return response()->json([
+                'status' => 'ok',
+                'data' => [],
+                'available_qty' => 0,
+                'ledger' => $ledger,
+                'message' => 'No available stock for this material.',
+            ]);
         }
 
-        $usedMap = $usedQuery
-            ->groupBy('srm.bbsu_batch_id')
-            ->select('srm.bbsu_batch_id', DB::raw('SUM(srm.raw_material_qty) as used_qty'))
-            ->pluck('used_qty', 'bbsu_batch_id');
-
-        // Build result
-        $result = $bbsuBatches->map(function ($b) use ($usedMap) {
-            $outputQty = (float) $b->output_qty;
-            $usedQty = (float) ($usedMap[$b->id] ?? 0);
-            $availableQty = max(0, $outputQty - $usedQty);
-
-            return [
-                'bbsu_batch_id' => $b->id,
-                'batch_no' => $b->batch_no,
-                'material_id' => $b->output_material,
-                'material_name' => $b->material_name,
-                'material_unit' => $b->material_unit ?? 'KG',
-                'output_qty' => round($outputQty, 3),
-                'already_used_qty' => round($usedQty, 3),
-                'available_qty' => round($availableQty, 3),
-            ];
-        })->filter(fn($b) => $b['available_qty'] > 0 || true) // show all, even 0 available
-            ->values();
-
-        return response()->json(['status' => 'ok', 'data' => $result]);
+        return response()->json([
+            'status' => 'ok',
+            'available_qty' => $availableQty,
+            'material' => [
+                'id' => $material->id,
+                'name' => $material->material_name ?? $material->name ?? 'Unknown',
+                'unit' => $material->unit ?? 'KG',
+            ],
+            'ledger' => $ledger,
+            // Keep legacy 'data' key so any existing frontend code still works
+            'data' => [
+                [
+                    'bbsu_batch_id' => $material->id,
+                    'batch_no' => 'STOCK-' . $material->id,
+                    'material_id' => $material->id,
+                    'material_name' => $material->material_name ?? $material->name ?? 'Unknown',
+                    'material_unit' => $material->unit ?? 'KG',
+                    'output_qty' => $availableQty,
+                    'already_used_qty' => 0,
+                    'available_qty' => $availableQty,
+                ],
+            ],
+        ]);
     }
 }

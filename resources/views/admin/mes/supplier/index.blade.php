@@ -88,10 +88,14 @@
 @section('content')
 
 @php
-    $q = \App\Models\Supplier::where('is_active', true);
+    // Status filter: frontend sends 'active'/'inactive', DB stores is_active = 1/0
+    $q = \App\Models\Supplier::query();
 
-    if (request('status'))
-        $q->where('status', request('status'));
+    if (request('status') === 'active')
+        $q->where('is_active', 1);
+    elseif (request('status') === 'inactive')
+        $q->where('is_active', 0);
+
     if (request('search'))
         $q->where(function($sq) {
             $sq->where('supplier_name', 'like', '%'.request('search').'%')
@@ -100,12 +104,13 @@
                ->orWhere('contact_number', 'like', '%'.request('search').'%');
         });
 
-    $list_items  = $q->orderByDesc('created_at')->paginate(20)->withQueryString();
-    $base        = \App\Models\Supplier::where('is_active', true);
-    $totalAll    = (clone $base)->count();
-    $activeCnt   = (clone $base)->where('status', 'active')->count();
-    $inactiveCnt = (clone $base)->where('status', 'inactive')->count();
-    $thisMonthCnt= (clone $base)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
+    $list_items  = $q->orderByDesc('supplier_code')->paginate(50)->withQueryString();
+
+    // Counts based on is_active (numeric 1/0)
+    $totalAll    = \App\Models\Supplier::count();
+    $activeCnt   = \App\Models\Supplier::where('is_active', 1)->count();
+    $inactiveCnt = \App\Models\Supplier::where('is_active', 0)->count();
+    $thisMonthCnt= \App\Models\Supplier::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
 @endphp
 
 <div class="page-header">
@@ -219,11 +224,7 @@
         </thead>
         <tbody>
             @forelse($list_items as $item)
-                    @php
-                        $isSubmitted = (int) $item->status >= 1;
-                        $statusLabel = $isSubmitted ? 'active' : 'inactive';
-                    @endphp
-                <tr id="row-{{ $item->id }}">
+                <tr>
                     <td>
                         <div class="item-name">{{ $item->supplier_code }}</div>
                     </td>
@@ -237,9 +238,8 @@
                     <td>{{ $item->contact_number ?: '—' }}</td>
                     <td>{{ $item->supplier_email ?: '—' }}</td>
                     <td>
-                        <span class="status-badge {{ $statusLabel }}">
-                            {{ $isSubmitted ? 'Active' : 'Inactive' }}
-                        </span>
+                        @php $statusLabel = $item->is_active ? 'active' : 'inactive'; @endphp
+                        <span class="status-badge {{ $statusLabel }}">{{ ucfirst($statusLabel) }}</span>
                     </td>
                     <td>{{ optional($item->createdBy)->name ?? '—' }}</td>
                     <td>
@@ -248,7 +248,7 @@
                                class="action-btn" title="View / Edit">
                                 <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             </a>
-                            <!-- <form method="POST"
+                            <form method="POST"
                                   action="{{ route('admin.mes.supplier.destroy', $item->id) }}"
                                   onsubmit="return confirm('Delete supplier {{ addslashes($item->supplier_name) }}?')"
                                   style="display:contents">
@@ -256,20 +256,7 @@
                                 <button type="submit" class="action-btn danger" title="Delete">
                                     <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                                 </button>
-                            </form> -->
-                            <button 
-                                id="del-{{ $item->id }}"
-                                class="action-btn danger" 
-                                onclick="deleteBatch({{ $item->id }}, '{{ $item->supplier_name }}', '/supplier/{{ $item->id }}')"
-                                title="Delete">
-                                
-                                <svg viewBox="0 0 24 24">
-                                    <polyline points="3 6 5 6 21 6"/>
-                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                                    <path d="M10 11v6M14 11v6"/>
-                                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                                </svg>
-                            </button>
+                            </form>
                         </div>
                     </td>
                 </tr>
@@ -281,7 +268,7 @@
                             <h3>No suppliers found</h3>
                             <p>{{ request('search') || $activeFilters ? 'Try adjusting your filters.' : 'Add your first supplier to get started.' }}</p>
                             @if(!request('search') && !$activeFilters)
-                                <a href="{{ route('admin.mes.suppliers.create') }}" class="btn btn-primary">
+                                <a href="{{ route('admin.mes.supplier.create') }}" class="btn btn-primary">
                                     <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                     New Supplier
                                 </a>
@@ -303,8 +290,26 @@
                     @else
                         <a href="{{ $list_items->previousPageUrl() }}" class="page-btn"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></a>
                     @endif
-                    @foreach($list_items->getUrlRange(1, $list_items->lastPage()) as $page => $url)
-                        <a href="{{ $url }}" class="page-btn {{ $page == $list_items->currentPage() ? 'active' : '' }}">{{ $page }}</a>
+                    @php
+                        $cp   = $list_items->currentPage();
+                        $lp   = $list_items->lastPage();
+                        $w    = 2; // pages to show each side of current
+                        $show = [];
+                        for ($p = 1; $p <= $lp; $p++) {
+                            if ($p === 1 || $p === $lp || ($p >= $cp - $w && $p <= $cp + $w)) {
+                                $show[] = $p;
+                            }
+                        }
+                        $show = array_unique($show);
+                        sort($show);
+                    @endphp
+                    @php $prevPage = null; @endphp
+                    @foreach($show as $page)
+                        @if($prevPage !== null && $page - $prevPage > 1)
+                            <span class="page-btn" style="border:none;background:none;cursor:default;letter-spacing:1px;color:var(--text-muted)">…</span>
+                        @endif
+                        <a href="{{ $list_items->url($page) }}" class="page-btn {{ $page == $list_items->currentPage() ? 'active' : '' }}">{{ $page }}</a>
+                        @php $prevPage = $page; @endphp
                     @endforeach
                     @if($list_items->hasMorePages())
                         <a href="{{ $list_items->nextPageUrl() }}" class="page-btn"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></a>

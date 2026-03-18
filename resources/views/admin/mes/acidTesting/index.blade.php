@@ -661,10 +661,15 @@
 @section('content')
 
     @php
-        $q = \App\Models\AcidTesting::with(['supplier', 'createdBy', 'details']);
+        $q = \App\Models\AcidTesting::with(['supplier', 'createdBy', 'details'])->where('is_active', true);
 
-        if (request('status') !== null && request('status') !== '')
-            $q->where('status', request('status'));
+        if (request('status') !== null && request('status') !== '') {
+            if (request('status') == '1') {
+                $q->where('status', '>=', 1);
+            } else {
+                $q->where('status', request('status'));
+            }
+        }
         if (request('supplier_id'))
             $q->where('supplier_id', request('supplier_id'));
         if (request('date_from'))
@@ -680,10 +685,10 @@
 
         $list_items = $q->orderByDesc('test_date')->orderByDesc('created_at')->paginate(20)->withQueryString();
 
-        $atBase = \App\Models\AcidTesting::query();
+        $atBase = \App\Models\AcidTesting::where('is_active', true);
         $totalAll = (clone $atBase)->count();
         $draftCnt = (clone $atBase)->where('status', 0)->count();
-        $submittedCnt = (clone $atBase)->where('status', 1)->count();
+        $submittedCnt = (clone $atBase)->where('status', '>=', 1)->count();
         $thisMonthCnt = (clone $atBase)->whereMonth('test_date', now()->month)->whereYear('test_date', now()->year)->count();
 
         $suppliers = \App\Models\Supplier::orderBy('supplier_name')->get(['id', 'supplier_name']);
@@ -963,19 +968,17 @@
 
                                 {{-- DELETE (draft only) --}}
                                 @if(!$isSubmitted)
-                                <button 
-                                    id="del-{{ $test->id }}"
-                                    class="action-btn danger" 
-                                    onclick="deleteBatch({{ $test->id }}, '{{ $test->lot_number }}', '/acid-testings/{{ $test->id }}')"
-                                    title="Delete">
-                                    {{ $test->status }}
-                                    <svg viewBox="0 0 24 24">
-                                        <polyline points="3 6 5 6 21 6"/>
-                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                                        <path d="M10 11v6M14 11v6"/>
-                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                                    </svg>
-                                </button>
+                                    <button id="del-{{ $test->id }}" class="action-btn danger"
+                                        onclick="deleteBatch({{ $test->id }}, '{{ $test->lot_number }}', '/acid-testings/{{ $test->id }}')"
+                                        title="Delete">
+                                        {{ $test->status }}
+                                        <svg viewBox="0 0 24 24">
+                                            <polyline points="3 6 5 6 21 6" />
+                                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                            <path d="M10 11v6M14 11v6" />
+                                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                        </svg>
+                                    </button>
                                 @endif
 
                             </div>
@@ -1071,15 +1074,15 @@
 @endsection
 
 @push('scripts')
-    <script>
-        function toggleFilter() {
-            document.getElementById('filterBody').classList.toggle('open');
-            document.getElementById('filterChevron').classList.toggle('open');
-        }
-        let searchTimer;
-        function debounceSearch(input) {
-            clearTimeout(searchTimer);
-            searchTimer = setTimeout(() => document.getElementById('filterForm').submit(), 500);
-        }
-    </script>
+<script>
+    function toggleFilter() {
+        document.getElementById('filterBody').classList.toggle('open');
+        document.getElementById('filterChevron').classList.toggle('open');
+    }
+    let searchTimer;
+    function debounceSearch(input) {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => document.getElementById('filterForm').submit(), 500);
+    }
+</script>
 @endpushS

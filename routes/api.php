@@ -212,6 +212,7 @@ Route::middleware('auth:sanctum')->group(function () {
      Route::prefix('material')->group(function () {
           Route::get('/',        [MaterialBatchController::class, 'index']);
           Route::post('/',       [MaterialBatchController::class, 'store']);
+          Route::get('/{id}/stock', [\App\Http\Controllers\Api\MaterialController::class, 'getStock']);
           Route::put('/{id}',    [MaterialBatchController::class, 'update']);
           Route::delete('/{id}', [MaterialBatchController::class, 'destroy']);
      });

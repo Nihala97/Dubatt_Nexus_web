@@ -12,6 +12,87 @@
 
 @push('styles')
 <style>
+    .sdd { display:block; width:100%; position:relative; }
+    .sdd-trigger {
+        width:100%; display:flex; align-items:center; justify-content:space-between;
+        padding:11px 14px 11px 40px;
+        border:1.5px solid var(--border); border-radius:9px;
+        background:var(--green-xlight);
+        font-family:'Outfit',sans-serif; font-size:14px; color:var(--text);
+        cursor:pointer; user-select:none; gap:6px;
+        transition:border-color .2s, background .2s, box-shadow .2s;
+        min-height:44px;
+    }
+    .sdd-trigger:hover,
+    .sdd.open > .sdd-trigger {
+        border-color:var(--green); background:var(--white);
+        box-shadow:0 0 0 4px rgba(26,122,58,0.08);
+    }
+    .sdd-trigger-text {
+        flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left;
+    }
+    .sdd-trigger-text.placeholder { color:var(--text-muted); }
+    .sdd-trigger-chevron {
+        width:14px; height:14px; stroke:var(--text-muted); fill:none;
+        stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round;
+        flex-shrink:0; transition:transform .18s;
+    }
+    .sdd.open > .sdd-trigger .sdd-trigger-chevron { transform:rotate(180deg); stroke:var(--green); }
+    .sdd-clear {
+        display:none; width:13px; height:13px;
+        stroke:var(--text-muted); fill:none; stroke-width:2.5;
+        stroke-linecap:round; stroke-linejoin:round;
+        flex-shrink:0; cursor:pointer; transition:stroke .15s;
+    }
+    .sdd-clear:hover { stroke:#dc2626; }
+    .sdd.open > .sdd-trigger .sdd-clear,
+    .sdd-trigger:hover .sdd-clear { display:block; }
+    
+    /* Portal panel — fixed positioned, appended to body */
+    .sdd-portal {
+        position:fixed; z-index:9999;
+        background:#fff; border:1.5px solid var(--green);
+        border-radius:10px; box-shadow:0 6px 24px rgba(0,0,0,.16);
+        min-width:220px; overflow:hidden;
+        display:none; animation:sddIn .12s ease;
+    }
+    .sdd-portal.visible { display:block; }
+    @keyframes sddIn {
+        from { opacity:0; transform:translateY(-4px); }
+        to   { opacity:1; transform:translateY(0); }
+    }
+    .sdd-search-wrap {
+        padding:8px 10px; border-bottom:1px solid var(--border); position:relative;
+    }
+    .sdd-search-ico {
+        position:absolute; left:18px; top:50%; transform:translateY(-50%);
+        width:13px; height:13px; stroke:var(--text-muted); fill:none;
+        stroke-width:2; stroke-linecap:round; stroke-linejoin:round; pointer-events:none;
+    }
+    .sdd-search {
+        width:100%; padding:7px 10px 7px 32px;
+        border:1.5px solid var(--border); border-radius:7px;
+        background:var(--green-xlight); font-family:'Outfit',sans-serif;
+        font-size:13px; color:var(--text); outline:none;
+        transition:border-color .18s; box-sizing:border-box;
+    }
+    .sdd-search:focus { border-color:var(--green); background:#fff; }
+    .sdd-search::placeholder { color:var(--text-muted); }
+    .sdd-list { max-height:220px; overflow-y:auto; padding:4px 0; }
+    .sdd-item {
+        padding:8px 14px; font-size:13px; cursor:pointer;
+        transition:background .1s; display:flex; align-items:center;
+        gap:9px; color:var(--text); white-space:nowrap;
+    }
+    .sdd-item:hover { background:#f0f9f4; color:var(--green); }
+    .sdd-item.selected { background:#e8f5ed; color:var(--green); font-weight:600; }
+    .sdd-item-check {
+        width:16px; height:16px; flex-shrink:0;
+        stroke:transparent; fill:none; stroke-width:2.5;
+        stroke-linecap:round; stroke-linejoin:round;
+    }
+    .sdd-item.selected .sdd-item-check { stroke:var(--green); }
+    .sdd-empty { padding:18px 14px; font-size:12.5px; color:var(--text-muted); text-align:center; }
     .form-page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
     .form-page-header h2 { font-size:clamp(18px,2.5vw,24px); font-weight:700; color:var(--text); margin-bottom:3px; }
     .form-page-header p { font-size:13px; color:var(--text-muted); }
@@ -87,6 +168,20 @@
 
 @section('content')
 
+<div class="sdd-portal" id="sddPortal">
+    <div class="sdd-search-wrap">
+        <svg class="sdd-search-ico" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input class="sdd-search" id="sddPortalSearch" placeholder="Search…"
+               autocomplete="off"
+               oninput="sddPortalFilter(this.value)"
+               onkeydown="sddPortalKeydown(event)">
+    </div>
+    <div class="sdd-list" id="sddPortalList"></div>
+</div>
+
 {{-- Page title/header rendered by JS after data loads --}}
 <div class="form-page-header" id="pageHeader">
     <div>
@@ -148,22 +243,28 @@
 
                     <div class="field full">
                         <label for="supplier_id">Supplier <span class="req">*</span></label>
-                        <div class="input-wrap select-wrap">
-                            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            <select id="supplier_id" name="supplier_id" required>
-                                <option value="">Select a supplier...</option>
-                            </select>
+                        <div class="sdd" id="sdd_supplier_id">
+                            <div class="sdd-trigger" onclick="toggleSdd('supplier_id')">
+                                <svg style="position:absolute;left:13px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--text-muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                <span class="sdd-trigger-text placeholder" id="sdd_supplier_id_label" data-placeholder="Select a supplier...">Select a supplier...</span>
+                                <svg class="sdd-clear" onclick="clearSdd('supplier_id',event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                            </div>
+                            <input type="hidden" id="supplier_id" name="supplier_id">
                         </div>
                         <div class="error-msg" id="err_supplier_id"></div>
                     </div>
 
                     <div class="field full">
                         <label for="material_id">Material <span class="req">*</span></label>
-                        <div class="input-wrap select-wrap">
-                            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-                            <select id="material_id" name="material_id" required>
-                                <option value="">Select material...</option>
-                            </select>
+                        <div class="sdd" id="sdd_material_id">
+                            <div class="sdd-trigger" onclick="toggleSdd('material_id')">
+                                <svg style="position:absolute;left:13px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--text-muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                                <span class="sdd-trigger-text placeholder" id="sdd_material_id_label" data-placeholder="Select material...">Select material...</span>
+                                <svg class="sdd-clear" onclick="clearSdd('material_id',event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                            </div>
+                            <input type="hidden" id="material_id" name="material_id">
                         </div>
                         <div class="error-msg" id="err_material_id"></div>
                     </div>
@@ -241,42 +342,164 @@
 
 @push('scripts')
 <script>
-// <script type="module">
-
-// // ── Import DataService for offline support ────────────────────────
-// import { DataService } from '/pwa/data-service.js';
-// const ds = new DataService('receiving');
-// let _localId     = null; // tracks IndexedDB local record id
-
 // ── Determine if this is create or edit ───────────────────────────
 const PATH_PARTS = window.location.pathname.split('/').filter(Boolean);
-// URL pattern: /admin/mes/receiving/{id}/edit  OR  /admin/mes/receiving/create
 const isCreate   = PATH_PARTS[PATH_PARTS.length - 1] === 'create';
 const recordId   = isCreate ? null : PATH_PARTS[PATH_PARTS.length - 2];
-
+ 
 let isSubmitted  = false;
 let autosaveTimer;
-
-
-// ── Helpers ───────────────────────────────────────────────────────
+ 
+// ════════════════════════════════════════════════════════════════════
+// SDD ENGINE (Searchable Dropdown — portal/fixed positioning)
+// Identical pattern to refining blade.
+// ════════════════════════════════════════════════════════════════════
+const sddRegistry = {};
+let sddActiveField = null;
+ 
+function sddRegister(fieldId, items, selectedValue = null) {
+    sddRegistry[fieldId] = { items, selected: null };
+    if (selectedValue) sddSelect(fieldId, String(selectedValue), false);
+    else sddUpdateTrigger(fieldId);
+}
+ 
+function sddUpdateTrigger(fieldId) {
+    const reg   = sddRegistry[fieldId];
+    const label = document.getElementById(`sdd_${fieldId}_label`);
+    const hidden = document.getElementById(fieldId);
+    if (!label) return;
+    if (reg?.selected) {
+        label.textContent = reg.selected.label;
+        label.classList.remove('placeholder');
+    } else {
+        label.textContent = label.dataset.placeholder || 'Select…';
+        label.classList.add('placeholder');
+    }
+    if (hidden) hidden.value = reg?.selected?.value ?? '';
+}
+ 
+function sddSelect(fieldId, value, triggerChange = true) {
+    if (!sddRegistry[fieldId]) return;
+    const item = value
+        ? sddRegistry[fieldId].items.find(i => String(i.value) === String(value))
+        : null;
+    sddRegistry[fieldId].selected = item || null;
+    sddUpdateTrigger(fieldId);
+    const hidden = document.getElementById(fieldId);
+    if (hidden && triggerChange) hidden.dispatchEvent(new Event('change'));
+    sddClosePortal();
+}
+ 
+function clearSdd(fieldId, e) {
+    if (e) { e.stopPropagation(); e.preventDefault(); }
+    sddSelect(fieldId, '', false);
+    const hidden = document.getElementById(fieldId);
+    if (hidden) hidden.dispatchEvent(new Event('change'));
+}
+ 
+function toggleSdd(fieldId) {
+    if (sddActiveField === fieldId) { sddClosePortal(); return; }
+    sddOpenPortal(fieldId);
+}
+ 
+function sddOpenPortal(fieldId) {
+    const trigger = document.querySelector(`#sdd_${fieldId} .sdd-trigger`);
+    if (!trigger || !sddRegistry[fieldId]) return;
+    sddActiveField = fieldId;
+    document.querySelectorAll('.sdd.open').forEach(el => el.classList.remove('open'));
+    document.getElementById(`sdd_${fieldId}`)?.classList.add('open');
+ 
+    const portal  = document.getElementById('sddPortal');
+    const rect    = trigger.getBoundingClientRect();
+    const viewW   = window.innerWidth;
+    const viewH   = window.innerHeight;
+    const portalW = Math.max(rect.width, 280);
+ 
+    portal.style.width = portalW + 'px';
+    let left = rect.left;
+    if (left + portalW > viewW - 8) left = Math.max(8, viewW - portalW - 8);
+    portal.style.left = left + 'px';
+ 
+    const spaceBelow = viewH - rect.bottom;
+    const spaceAbove = rect.top;
+    if (spaceBelow >= 200 || spaceBelow >= spaceAbove) {
+        portal.style.top    = (rect.bottom + 4) + 'px';
+        portal.style.bottom = '';
+    } else {
+        portal.style.bottom = (viewH - rect.top + 4) + 'px';
+        portal.style.top    = '';
+    }
+ 
+    sddPortalRender('');
+    portal.classList.add('visible');
+    const search = document.getElementById('sddPortalSearch');
+    if (search) { search.value = ''; setTimeout(() => search.focus(), 40); }
+}
+ 
+function sddClosePortal() {
+    document.getElementById('sddPortal')?.classList.remove('visible');
+    document.querySelectorAll('.sdd.open').forEach(el => el.classList.remove('open'));
+    sddActiveField = null;
+}
+ 
+function sddPortalRender(query) {
+    if (!sddActiveField || !sddRegistry[sddActiveField]) return;
+    const q       = query.toLowerCase().trim();
+    const items   = sddRegistry[sddActiveField].items;
+    const filtered = q ? items.filter(i => i.label.toLowerCase().includes(q)) : items;
+    const current  = sddRegistry[sddActiveField].selected?.value ?? '';
+    const list     = document.getElementById('sddPortalList');
+    if (!list) return;
+ 
+    if (!filtered.length) {
+        list.innerHTML = '<div class="sdd-empty">No results found</div>';
+        return;
+    }
+    list.innerHTML = filtered.map(item => {
+        const sel = String(item.value) === String(current);
+        return `<div class="sdd-item${sel ? ' selected' : ''}" onclick="sddSelect('${sddActiveField}','${item.value}')">
+            <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>${item.label}</span>
+        </div>`;
+    }).join('');
+}
+ 
+function sddPortalFilter(query) { sddPortalRender(query); }
+function sddPortalKeydown(e) { if (e.key === 'Escape') sddClosePortal(); }
+ 
+// Close on outside click / scroll reposition
+document.addEventListener('click', e => {
+    if (!e.target.closest('.sdd') && !e.target.closest('#sddPortal')) sddClosePortal();
+});
+document.addEventListener('scroll', () => {
+    if (sddActiveField) {
+        const trigger = document.querySelector(`#sdd_${sddActiveField} .sdd-trigger`);
+        if (trigger) {
+            const rect   = trigger.getBoundingClientRect();
+            const portal = document.getElementById('sddPortal');
+            portal.style.top  = (rect.bottom + 4) + 'px';
+            portal.style.left = rect.left + 'px';
+        }
+    }
+}, true);
+ 
+// ════════════════════════════════════════════════════════════════════
+// HELPERS (unchanged from original)
+// ════════════════════════════════════════════════════════════════════
 function showAlert(msg, type = 'error') {
     const el = document.getElementById('formAlert');
     el.className = `form-alert ${type}`;
     el.textContent = msg;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
 function clearAlert() {
     const el = document.getElementById('formAlert');
-    el.className = 'form-alert';
-    el.textContent = '';
+    el.className = 'form-alert'; el.textContent = '';
 }
-
 function clearFieldErrors() {
     document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
     document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
 }
-
 function showFieldErrors(errors) {
     Object.entries(errors).forEach(([field, messages]) => {
         const errEl = document.getElementById('err_' + field);
@@ -285,7 +508,8 @@ function showFieldErrors(errors) {
         if (input) input.classList.add('is-invalid');
     });
 }
-
+ 
+// getFormData reads from hidden inputs — IDs are unchanged, so this works as-is
 function getFormData() {
     return {
         receipt_date:   document.getElementById('receipt_date').value,
@@ -299,73 +523,83 @@ function getFormData() {
         remarks:        document.getElementById('remarks').value,
     };
 }
-
+ 
 function setReadonly(readonly) {
-    const fields = ['receipt_date','lot_no','vehicle_number','supplier_id','material_id','invoice_qty','received_qty','unit','remarks'];
+    const fields = ['receipt_date','lot_no','vehicle_number','invoice_qty','received_qty','unit','remarks'];
     fields.forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         if (readonly) { el.setAttribute('disabled', true); el.setAttribute('readonly', true); }
         else          { el.removeAttribute('disabled'); el.removeAttribute('readonly'); }
     });
+    // Also disable SDD triggers when readonly
+    ['supplier_id','material_id'].forEach(id => {
+        const trigger = document.querySelector(`#sdd_${id} .sdd-trigger`);
+        if (trigger) {
+            trigger.style.pointerEvents = readonly ? 'none' : '';
+            trigger.style.opacity       = readonly ? '0.6'  : '';
+        }
+    });
     document.getElementById('formActions').style.display = readonly ? 'none' : 'flex';
 }
-
-// ── Load dropdowns ────────────────────────────────────────────────
+ 
+// ════════════════════════════════════════════════════════════════════
+// LOAD DROPDOWNS — now using sddRegister instead of <option> injection
+// ════════════════════════════════════════════════════════════════════
 async function loadDropdowns() {
     const [sRes, mRes] = await Promise.all([
         apiFetch('/suppliers?per_page=200'),
         apiFetch('/materials?per_page=200'),
     ]);
-
+ 
     if (sRes?.ok) {
         const data = await sRes.json();
-        const sel  = document.getElementById('supplier_id');
-        (data.data.data || []).forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.id;
-            opt.textContent = `${s.supplier_name} (${s.supplier_code})`;
-            sel.appendChild(opt);
-        });
+        const suppliers = (data.data.data || data.data || []);
+        const items = suppliers.map(s => ({
+            value: String(s.id),
+            label: `${s.supplier_name} (${s.supplier_code})`,
+        }));
+        sddRegister('supplier_id', items);
     }
-
+ 
     if (mRes?.ok) {
         const data = await mRes.json();
-        const sel  = document.getElementById('material_id');
-        (data.data.data || []).forEach(m => {
-            const opt = document.createElement('option');
-            opt.value = m.id;
-            opt.textContent = `${m.material_name} (${m.material_code})`;
-            sel.appendChild(opt);
-        });
+        const materials = (data.data.data || data.data || []);
+        const items = materials.map(m => ({
+            value: String(m.id),
+            label: `${m.material_name} (${m.material_code})`,
+        }));
+        sddRegister('material_id', items);
     }
 }
-
-// ── Load existing record for edit ────────────────────────────────
+ 
+// ════════════════════════════════════════════════════════════════════
+// LOAD RECORD (edit mode) — uses sddSelect to pre-select values
+// ════════════════════════════════════════════════════════════════════
 async function loadRecord() {
     const res = await apiFetch(`/receivings/${recordId}`);
     if (!res?.ok) { showAlert('Failed to load record.'); return; }
-
+ 
     const { data } = await res.json();
     isSubmitted = data.status >= 1;
-
-    // Fill form fields
+ 
     document.getElementById('receipt_date').value   = data.receipt_date?.split('T')[0] ?? '';
     document.getElementById('lot_no').value         = data.lot_no ?? '';
     document.getElementById('vehicle_number').value = data.vehicle_number ?? '';
-    document.getElementById('supplier_id').value    = data.supplier_id ?? '';
-    document.getElementById('material_id').value    = data.material_id ?? '';
     document.getElementById('invoice_qty').value    = data.invoice_qty ?? '';
     document.getElementById('received_qty').value   = data.received_qty ?? '';
     document.getElementById('unit').value           = data.unit ?? 'MT';
     document.getElementById('remarks').value        = data.remarks ?? '';
-
-    // Update page header
+ 
+    // ── Use sddSelect to pre-fill the searchable dropdowns ──
+    if (data.supplier_id) sddSelect('supplier_id', String(data.supplier_id), false);
+    if (data.material_id) sddSelect('material_id', String(data.material_id), false);
+ 
     document.getElementById('pageTitle').textContent    = 'Edit Receiving';
     document.getElementById('pageSubtitle').textContent = 'Update receiving details';
     document.getElementById('breadcrumbTitle').textContent = 'Edit Receiving';
     document.getElementById('btnSaveLabel').textContent = 'Save Draft';
-
+ 
     if (isSubmitted) {
         document.getElementById('statusBadge').innerHTML =
             '<div class="status-badge submitted">Status: Submitted</div>';
@@ -373,115 +607,38 @@ async function loadRecord() {
     } else {
         document.getElementById('statusBadge').innerHTML =
             '<div class="status-badge draft">Status: Draft</div>';
-
-        // Add Submit button to header
         const actionsDiv = document.getElementById('headerActions');
         const submitBtn  = document.createElement('button');
         submitBtn.className   = 'btn btn-outline btn-sm';
         submitBtn.innerHTML   = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Submit Record`;
         submitBtn.onclick     = submitRecord;
         actionsDiv.prepend(submitBtn);
-
-        // Setup autosave
         setupAutosave();
     }
 }
-
-// // ── Save — now uses DataService (offline-aware) ───────────────────
-// async function saveForm(silent = false) {
-//     clearAlert();
-//     clearFieldErrors();
-
-//     const btn = document.getElementById('btnSave');
-//     btn.disabled = true;
-
-//     const result = await ds.save(
-//         getFormData(),
-//         _localId,                    // local IndexedDB id (null on first save)
-//         isCreate ? null : recordId   // server id (null when creating)
-//     );
-
-//     btn.disabled = false;
-
-//     if (result.success) {
-//         // Remember local_id for subsequent saves in this session
-//         _localId = result.local_id;
-
-//         if (result.synced) {
-//             // ── Online: saved to server ───────────────────────────
-//             if (!silent) {
-//                 if (isCreate) {
-//                     window.location.href = `/admin/mes/receiving/${result.server_id}/edit`;
-//                 } else {
-//                     showAlert('Record saved successfully.', 'success');
-//                 }
-//             } else {
-//                 const status = document.getElementById('autosaveStatus');
-//                 status.style.display = 'inline';
-//                 status.textContent = 'Autosaved at ' + new Date().toLocaleTimeString();
-//                 setTimeout(() => status.style.display = 'none', 5000);
-//             }
-
-//         } else {
-//             // ── Offline: saved to IndexedDB ───────────────────────
-//             if (!silent) {
-//                 showAlert(
-//                     '📱 Saved offline — will sync automatically when reconnected.',
-//                     'success'
-//                 );
-//             } else {
-//                 const status = document.getElementById('autosaveStatus');
-//                 status.style.display = 'inline';
-//                 status.textContent = '📱 Saved offline';
-//                 setTimeout(() => status.style.display = 'none', 5000);
-//             }
-//         }
-
-//     } else if (result.validation_error) {
-//         // ── Server returned 422 validation errors ─────────────────
-//         showFieldErrors(result.errors ?? {});
-//         if (!silent) showAlert(result.message ?? 'Please fix the errors below.');
-
-//     } else {
-//         if (!silent) showAlert('Something went wrong. Please try again.');
-//     }
-// }
-
-// // Expose saveForm globally so the onclick in the blade HTML can call it
-// window.saveForm = saveForm;
-
-// ── Save (create or update) ───────────────────────────────────────
+ 
+// ════════════════════════════════════════════════════════════════════
+// SAVE / SUBMIT / AUTOSAVE — unchanged from original
+// ════════════════════════════════════════════════════════════════════
 async function saveForm(silent = false) {
     clearAlert();
     clearFieldErrors();
-
     const btn = document.getElementById('btnSave');
     btn.disabled = true;
-
     const method   = isCreate ? 'POST' : 'PUT';
     const endpoint = isCreate ? '/receivings' : `/receivings/${recordId}`;
-
-    const res = await apiFetch(endpoint, {
-        method,
-        body: JSON.stringify(getFormData()),
-    });
-
+    const res = await apiFetch(endpoint, { method, body: JSON.stringify(getFormData()) });
     btn.disabled = false;
-
     if (!res) return;
-
     const data = await res.json();
-
     if (res.ok && data.status === 'ok') {
         if (!silent) {
             if (isCreate) {
-                // Redirect to edit page of newly created record
                 window.location.href = `{{ url('/admin/mes/receiving') }}/${data.data.id}/edit`;
             } else {
                 showAlert('Record saved successfully.', 'success');
             }
         } else {
-            // Autosave — just update status text
             const status = document.getElementById('autosaveStatus');
             status.style.display = 'inline';
             status.textContent = 'Autosaved at ' + new Date().toLocaleTimeString();
@@ -494,19 +651,14 @@ async function saveForm(silent = false) {
         if (!silent) showAlert(data.message ?? 'Something went wrong.');
     }
 }
-
-// ── Submit record ─────────────────────────────────────────────────
+ 
 async function submitRecord() {
     if (!confirm('Submit this record? It will be locked from further edits.')) return;
-
-    // Save first, then submit
     await saveForm(true);
-
     const res = await apiFetch(`/receivings/${recordId}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status: 1 }),
     });
-
     if (res?.ok) {
         showAlert('Record submitted successfully.', 'success');
         setTimeout(() => window.location.href = '{{ route('admin.mes.receiving.index') }}', 1500);
@@ -515,10 +667,10 @@ async function submitRecord() {
         showAlert(d.message ?? 'Submit failed.');
     }
 }
-
-// ── Autosave ──────────────────────────────────────────────────────
+ 
 function setupAutosave() {
-    const fields = ['receipt_date','lot_no','vehicle_number','supplier_id','material_id','invoice_qty','received_qty','unit','remarks'];
+    const fields = ['receipt_date','lot_no','vehicle_number','supplier_id','material_id',
+                    'invoice_qty','received_qty','unit','remarks'];
     fields.forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -528,7 +680,7 @@ function setupAutosave() {
         }
     });
 }
-
+ 
 function scheduleAutosave() {
     const status = document.getElementById('autosaveStatus');
     status.style.display = 'inline';
@@ -537,13 +689,14 @@ function scheduleAutosave() {
     clearTimeout(autosaveTimer);
     autosaveTimer = setTimeout(() => saveForm(true), 3000);
 }
-
-// ── Init ──────────────────────────────────────────────────────────
+ 
+// ════════════════════════════════════════════════════════════════════
+// INIT — unchanged except loadDropdowns now uses sddRegister
+// ════════════════════════════════════════════════════════════════════
 async function init() {
     await loadDropdowns();
-
+ 
     if (isCreate) {
-        // Set defaults
         document.getElementById('receipt_date').value = new Date().toISOString().split('T')[0];
         document.getElementById('pageTitle').textContent       = 'Create Receiving';
         document.getElementById('pageSubtitle').textContent    = 'Record new raw material receiving log';
@@ -552,12 +705,11 @@ async function init() {
     } else {
         await loadRecord();
     }
-
-    // Show form, hide skeleton
+ 
     document.getElementById('loadingSkeleton').style.display = 'none';
     document.getElementById('formContainer').style.display   = 'block';
 }
-
+ 
 init();
 </script>
 @endpush

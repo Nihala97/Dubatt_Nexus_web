@@ -727,8 +727,8 @@
         // Stat counts (always unfiltered totals)
         $smeltingQ = \App\Models\SmeltingBatch::where('is_active', true);
         $totalAll = (clone $smeltingQ)->count();
-        $draftCnt = (clone $smeltingQ)->where('status', 'draft')->count();
-        $submittedCnt = (clone $smeltingQ)->where('status', 'submitted')->count();
+        $draftCnt = (clone $smeltingQ)->where('status', 0)->count();
+        $submittedCnt = (clone $smeltingQ)->where('status', '>=', 1)->count();
         $thisMonthCnt = (clone $smeltingQ)->whereMonth('date', now()->month)->whereYear('date', now()->year)->count();
     @endphp
 
@@ -809,8 +809,8 @@
                         <label>Status</label>
                         <select name="status">
                             <option value="">All Status</option>
-                            <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Draft</option>
-                            <option value="submitted" {{ request('status') === 'submitted' ? 'selected' : '' }}>Submitted
+                            <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Draft</option>
+                            <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Submitted
                             </option>
                         </select>
                     </div>
@@ -845,12 +845,12 @@
                 class="tab {{ in_array($activeTab, ['all', '']) ? 'active' : '' }}">
                 All <span class="tab-count">{{ $totalAll }}</span>
             </a>
-            <a href="{{ route('admin.mes.smelting.index', ['status' => 'draft']) }}"
-                class="tab {{ $activeTab === 'draft' ? 'active' : '' }}">
+            <a href="{{ route('admin.mes.smelting.index', ['status' => '0']) }}"
+                class="tab {{ $activeTab === '0' ? 'active' : '' }}">
                 Draft <span class="tab-count">{{ $draftCnt }}</span>
             </a>
-            <a href="{{ route('admin.mes.smelting.index', ['status' => 'submitted']) }}"
-                class="tab {{ $activeTab === 'submitted' ? 'active' : '' }}">
+            <a href="{{ route('admin.mes.smelting.index', ['status' => '1']) }}"
+                class="tab {{ $activeTab === '1' ? 'active' : '' }}">
                 Submitted <span class="tab-count">{{ $submittedCnt }}</span>
             </a>
         </div>
@@ -910,16 +910,19 @@
                             @endif
                         </td>
                         <td>
-                            <span class="status-badge {{ $batch->status }}">
-                                {{ ucfirst($batch->status) }}
+                            @php
+                                $statusStr = $batch->status >= 1 ? 'submitted' : 'draft';
+                            @endphp
+                            <span class="status-badge {{ $statusStr }}">
+                                {{ ucfirst($statusStr) }}
                             </span>
                         </td>
                         <td>{{ optional($batch->createdBy)->name ?? $batch->created_by ?? '—' }}</td>
                         <td>
                             <div class="actions-cell">
                                 <a href="{{ route('admin.mes.smelting.edit', $batch->id) }}" class="action-btn"
-                                    title="{{ $batch->status === 'submitted' ? 'View' : 'Edit' }}">
-                                    @if($batch->status === 'submitted')
+                                    title="{{ $batch->status >= 1 ? 'View' : 'Edit' }}">
+                                    @if($batch->status >= 1)
                                         <svg viewBox="0 0 24 24">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                                             <circle cx="12" cy="12" r="3" />
@@ -931,7 +934,7 @@
                                         </svg>
                                     @endif
                                 </a>
-                                @if($batch->status !== 'submitted')
+                                @if($batch->status == 0)
                                     <form method="POST" action="{{ route('admin.mes.smelting.destroy', $batch->id) }}"
                                         onsubmit="return confirm('Delete batch {{ $batch->batch_no }}?')" style="display:contents">
                                         @csrf @method('DELETE')

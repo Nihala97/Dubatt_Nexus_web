@@ -89,4 +89,18 @@ class MaterialController extends Controller
         $material->delete();
         return response()->json(['status' => 'ok', 'message' => 'Material deleted.']);
     }
+
+    public function getStock($id)
+    {
+        $material = Material::findOrFail($id);
+        return response()->json([
+            'status' => 'ok',
+            'data' => [
+                'material_id' => $material->id,
+                'material_name' => $material->material_name,
+                'unit' => $material->unit,
+                'available_qty' => $material->available_qty,
+            ]
+        ]);
+    }
 }

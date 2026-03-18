@@ -661,10 +661,15 @@
 @section('content')
 
     @php
-        $q = \App\Models\receiving::with(['createdBy']);
+        $q = \App\Models\receiving::with(['createdBy'])->where('is_active', true);
 
-        if (request('status') !== null && request('status') !== '')
-            $q->where('status', request('status'));
+        if (request('status') !== null && request('status') !== '') {
+            if (request('status') == '1') {
+                $q->where('status', '>=', 1);
+            } else {
+                $q->where('status', request('status'));
+            }
+        }
         if (request('supplier_id'))
             $q->where('supplier_id', request('supplier_id'));
         if (request('date_from'))
@@ -680,10 +685,10 @@
 
         $list_items = $q->orderByDesc('receipt_date')->orderByDesc('created_at')->paginate(20)->withQueryString();
 
-        $atBase = \App\Models\receiving::query();
+        $atBase = \App\Models\receiving::where('is_active', true);
         $totalAll = (clone $atBase)->count();
         $draftCnt = (clone $atBase)->where('status', 0)->count();
-        $submittedCnt = (clone $atBase)->where('status', 1)->count();
+        $submittedCnt = (clone $atBase)->where('status', '>=', 1)->count();
         $thisMonthCnt = (clone $atBase)->whereMonth('receipt_date', now()->month)->whereYear('receipt_date', now()->year)->count();
 
         $suppliers = \App\Models\Supplier::orderBy('supplier_name')->get(['id', 'supplier_name']);
@@ -893,7 +898,7 @@
                             <strong style="color:var(--text)">{{ $test->lot_no ?? '—' }}</strong>
                         </td>
                         <td>{{ $test->vehicle_number ?? '—' }}</td>
-                        
+
                         <td>
                             <div style="font-weight:600;color:var(--text)">{{ $test->supplier->supplier_name ?? '—' }}</div>
                         </td>
@@ -943,23 +948,20 @@
                                     </a>
                                 @endif
 
-                                
+
 
                                 {{-- DELETE (draft only) --}}
                                 @if($test->status == '0')
-                                <button 
-                                    id="del-{{ $test->id }}"
-                                    class="action-btn danger" 
-                                    onclick="deleteBatch({{ $test->id }}, '{{ $test->lot_no }}')"
-                                    title="Delete">
-                                    {{ $test->status }}
-                                    <svg viewBox="0 0 24 24">
-                                        <polyline points="3 6 5 6 21 6"/>
-                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                                        <path d="M10 11v6M14 11v6"/>
-                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                                    </svg>
-                                </button>
+                                    <button id="del-{{ $test->id }}" class="action-btn danger"
+                                        onclick="deleteBatch({{ $test->id }}, '{{ $test->lot_no }}')" title="Delete">
+                                        {{ $test->status }}
+                                        <svg viewBox="0 0 24 24">
+                                            <polyline points="3 6 5 6 21 6" />
+                                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                            <path d="M10 11v6M14 11v6" />
+                                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                        </svg>
+                                    </button>
                                 @endif
                             </div>
                         </td>
@@ -1054,58 +1056,58 @@
 @endsection
 
 @push('scripts')
-    <script>
-        function toggleFilter() {
-            document.getElementById('filterBody').classList.toggle('open');
-            document.getElementById('filterChevron').classList.toggle('open');
-        }
-        let searchTimer;
-        function debounceSearch(input) {
-            clearTimeout(searchTimer);
-            searchTimer = setTimeout(() => document.getElementById('filterForm').submit(), 500);
-        }
-    
-        async function deleteBatch(id, batchNo) {
+<script>
+    function toggleFilter() {
+        document.getElementById('filterBody').classList.toggle('open');
+        document.getElementById('filterChevron').classList.toggle('open');
+    }
+    let searchTimer;
+    function debounceSearch(input) {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => document.getElementById('filterForm').submit(), 500);
+    }
 
-            if (!await showConfirm(`Delete batch ${batchNo}? This cannot be undone.`)) return;
+    async function deleteBatch(id, batchNo) {
 
-            const btn = document.getElementById(`del-${id}`);
-            btn.disabled = true;
+        if (!await showConfirm(`Delete batch ${batchNo}? This cannot be undone.`)) return;
 
-            const res = await apiFetch(`/receivings/${id}`, { method: 'DELETE' });
-            const data = await res.json();
+        const btn = document.getElementById(`del-${id}`);
+        btn.disabled = true;
 
-            if (res.ok && data.status === 'ok') {
+        const res = await apiFetch(`/receivings/${id}`, { method: 'DELETE' });
+        const data = await res.json();
 
-                showToast('Batch deleted successfully.', 'success');
+        if (res.ok && data.status === 'ok') {
 
-                const row = document.getElementById(`row-${id}`);
+            showToast('Batch deleted successfully.', 'success');
 
-                if (row) {
-                    row.style.transition = 'opacity .25s, transform .25s';
-                    row.style.opacity = '0';
-                    row.style.transform = 'translateX(-20px)';
+            const row = document.getElementById(`row-${id}`);
 
-                    setTimeout(() => row.remove(), 250);
-                }
+            if (row) {
+                row.style.transition = 'opacity .25s, transform .25s';
+                row.style.opacity = '0';
+                row.style.transform = 'translateX(-20px)';
 
-            } else {
-                showToast(data.message ?? 'Failed to delete.', 'error');
-                btn.disabled = false;
+                setTimeout(() => row.remove(), 250);
             }
+
+        } else {
+            showToast(data.message ?? 'Failed to delete.', 'error');
+            btn.disabled = false;
         }
-        function showToast(message, type = 'success') {
-            const existing = document.getElementById('_toast');
-            if (existing) existing.remove();
+    }
+    function showToast(message, type = 'success') {
+        const existing = document.getElementById('_toast');
+        if (existing) existing.remove();
 
-            const bg    = type === 'success' ? '#166534' : '#991b1b';
-            const icon  = type === 'success'
-                ? `<polyline points="20 6 9 17 4 12"/>`
-                : `<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>`;
+        const bg = type === 'success' ? '#166534' : '#991b1b';
+        const icon = type === 'success'
+            ? `<polyline points="20 6 9 17 4 12"/>`
+            : `<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>`;
 
-            const toast = document.createElement('div');
-            toast.id = '_toast';
-            toast.style.cssText = `
+        const toast = document.createElement('div');
+        toast.id = '_toast';
+        toast.style.cssText = `
                 position:fixed; bottom:24px; right:24px;
                 background:${bg}; color:#fff;
                 padding:12px 20px; border-radius:10px;
@@ -1115,27 +1117,27 @@
                 display:flex; align-items:center; gap:8px;
                 animation:_toastIn .2s ease;
             `;
-            toast.innerHTML = `
+        toast.innerHTML = `
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     style="width:16px;height:16px;flex-shrink:0">${icon}</svg>
                 <span>${message}</span>
             `;
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.animation = '_toastOut .2s ease forwards';
-                setTimeout(() => toast.remove(), 200);
-            }, 3500);
-        }
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.animation = '_toastOut .2s ease forwards';
+            setTimeout(() => toast.remove(), 200);
+        }, 3500);
+    }
 
-        /* ─────────────────────────────────────────────
-        showConfirm(message) → Promise<boolean>
-        ───────────────────────────────────────────── */
-        function showConfirm(message) {
-            return new Promise(resolve => {
-                const overlay = document.createElement('div');
-                overlay.id = '_confirmOverlay';
-                overlay.style.cssText = `
+    /* ─────────────────────────────────────────────
+    showConfirm(message) → Promise<boolean>
+    ───────────────────────────────────────────── */
+    function showConfirm(message) {
+        return new Promise(resolve => {
+            const overlay = document.createElement('div');
+            overlay.id = '_confirmOverlay';
+            overlay.style.cssText = `
                     position:fixed; inset:0;
                     background:rgba(0,0,0,.45);
                     z-index:10001;
@@ -1143,7 +1145,7 @@
                     animation:_fadeIn .15s ease;
                 `;
 
-                overlay.innerHTML = `
+            overlay.innerHTML = `
                     <div style="
                         background:var(--white, #fff);
                         border:1px solid var(--border, #e5e7eb);
@@ -1202,44 +1204,44 @@
                     </div>
                 `;
 
-                document.body.appendChild(overlay);
+            document.body.appendChild(overlay);
 
-                // Hover effects
-                const cancelBtn = overlay.querySelector('#_confirmCancel');
-                const okBtn     = overlay.querySelector('#_confirmOk');
+            // Hover effects
+            const cancelBtn = overlay.querySelector('#_confirmCancel');
+            const okBtn = overlay.querySelector('#_confirmOk');
 
-                cancelBtn.onmouseenter = () => { cancelBtn.style.borderColor = 'var(--green)'; cancelBtn.style.color = 'var(--green)'; };
-                cancelBtn.onmouseleave = () => { cancelBtn.style.borderColor = 'var(--border,#e5e7eb)'; cancelBtn.style.color = 'var(--text,#111)'; };
-                okBtn.onmouseenter     = () => { okBtn.style.background = '#dc2626'; };
-                okBtn.onmouseleave     = () => { okBtn.style.background = '#ef4444'; };
+            cancelBtn.onmouseenter = () => { cancelBtn.style.borderColor = 'var(--green)'; cancelBtn.style.color = 'var(--green)'; };
+            cancelBtn.onmouseleave = () => { cancelBtn.style.borderColor = 'var(--border,#e5e7eb)'; cancelBtn.style.color = 'var(--text,#111)'; };
+            okBtn.onmouseenter = () => { okBtn.style.background = '#dc2626'; };
+            okBtn.onmouseleave = () => { okBtn.style.background = '#ef4444'; };
 
-                function close(result) {
-                    overlay.style.animation = '_fadeOut .15s ease forwards';
-                    setTimeout(() => { overlay.remove(); resolve(result); }, 150);
-                }
+            function close(result) {
+                overlay.style.animation = '_fadeOut .15s ease forwards';
+                setTimeout(() => { overlay.remove(); resolve(result); }, 150);
+            }
 
-                okBtn.onclick     = () => close(true);
-                cancelBtn.onclick = () => close(false);
-                overlay.onclick   = e => { if (e.target === overlay) close(false); };
+            okBtn.onclick = () => close(true);
+            cancelBtn.onclick = () => close(false);
+            overlay.onclick = e => { if (e.target === overlay) close(false); };
 
-                document.addEventListener('keydown', function esc(e) {
-                    if (e.key === 'Escape') { close(false); document.removeEventListener('keydown', esc); }
-                });
+            document.addEventListener('keydown', function esc(e) {
+                if (e.key === 'Escape') { close(false); document.removeEventListener('keydown', esc); }
             });
-        }
+        });
+    }
 
-        /* ── Keyframe animations (injected once) ── */
-        if (!document.getElementById('_utilStyles')) {
-            const s = document.createElement('style');
-            s.id = '_utilStyles';
-            s.textContent = `
+    /* ── Keyframe animations (injected once) ── */
+    if (!document.getElementById('_utilStyles')) {
+        const s = document.createElement('style');
+        s.id = '_utilStyles';
+        s.textContent = `
                 @keyframes _toastIn  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
                 @keyframes _toastOut { from { opacity:1; transform:translateY(0); }   to { opacity:0; transform:translateY(10px); } }
                 @keyframes _fadeIn   { from { opacity:0; }  to { opacity:1; } }
                 @keyframes _fadeOut  { from { opacity:1; }  to { opacity:0; } }
                 @keyframes _slideUp  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
             `;
-            document.head.appendChild(s);
-        }
-    </script>
+        document.head.appendChild(s);
+    }
+</script>
 @endpushS

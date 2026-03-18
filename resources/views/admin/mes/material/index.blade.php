@@ -91,9 +91,10 @@
 @section('content')
 
 @php
-    $q = \App\Models\Material::where('is_active', true);
+    $q = \App\Models\Material::query();
 
-    if (request('status'))   $q->where('status', request('status'));
+    if (request('status') === 'active')   $q->where('is_active', true);
+    if (request('status') === 'inactive') $q->where('is_active', false);
     if (request('category')) $q->where('category', request('category'));
     if (request('unit'))     $q->where('unit', request('unit'));
     if (request('search'))
@@ -105,11 +106,11 @@
         });
 
     $list_items   = $q->orderByDesc('created_at')->paginate(20)->withQueryString();
-    $base         = \App\Models\Material::where('is_active', true);
-    $totalAll     = (clone $base)->count();
-    $activeCnt    = (clone $base)->where('status', 'active')->count();
-    $inactiveCnt  = (clone $base)->where('status', 'inactive')->count();
-    $thisMonthCnt = (clone $base)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
+    
+    $totalAll     = \App\Models\Material::count();
+    $activeCnt    = \App\Models\Material::where('is_active', true)->count();
+    $inactiveCnt  = \App\Models\Material::where('is_active', false)->count();
+    $thisMonthCnt = \App\Models\Material::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
     $categories   = \App\Models\Material::where('is_active', true)->distinct()->pluck('category')->filter()->sort()->values();
     $units        = \App\Models\Material::where('is_active', true)->distinct()->pluck('unit')->filter()->sort()->values();
 @endphp
@@ -247,7 +248,7 @@
         <tbody>
             @forelse($list_items as $item)
                 @php
-                    $isSubmitted = (int) $item->status >= 1;
+                    $isSubmitted = $item->is_active;
                     $statusLabel = $isSubmitted ? 'active' : 'inactive';
                 @endphp
                 <tr id="row-{{ $item->id }}">

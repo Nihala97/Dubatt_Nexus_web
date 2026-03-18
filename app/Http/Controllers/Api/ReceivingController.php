@@ -7,9 +7,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreReceivingRequest;
 use App\Http\Requests\UpdateReceivingRequest;
 use App\Models\Receiving;
+use App\Services\InventoryService;
 
 class ReceivingController extends Controller
 {
+    protected $inventoryService;
+
+    public function __construct(InventoryService $inventoryService)
+    {
+        $this->inventoryService = $inventoryService;
+    }
+
     /**
      * GET /api/receivings
      * List all receivings with filters and pagination
@@ -21,18 +29,18 @@ class ReceivingController extends Controller
             ->when($request->material_id, fn($q) => $q->where('material_id', $request->material_id))
             ->when($request->status !== null, fn($q) => $q->where('status', $request->status))
             ->when($request->date_from, fn($q) => $q->whereDate('receipt_date', '>=', $request->date_from))
-            ->when($request->date_to,   fn($q) => $q->whereDate('receipt_date', '<=', $request->date_to))
-            ->when($request->lot_no,    fn($q) => $q->where('lot_no', 'like', "%{$request->lot_no}%"))
-            ->when($request->search,    fn($q) => $q->where(function ($q) use ($request) {
+            ->when($request->date_to, fn($q) => $q->whereDate('receipt_date', '<=', $request->date_to))
+            ->when($request->lot_no, fn($q) => $q->where('lot_no', 'like', "%{$request->lot_no}%"))
+            ->when($request->search, fn($q) => $q->where(function ($q) use ($request) {
                 $q->where('lot_no', 'like', "%{$request->search}%")
-                  ->orWhere('vehicle_number', 'like', "%{$request->search}%");
+                    ->orWhere('vehicle_number', 'like', "%{$request->search}%");
             }))
             ->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 20);
 
         return response()->json([
             'status' => 'ok',
-            'data'   => $receivings,
+            'data' => $receivings,
         ]);
     }
 
@@ -42,17 +50,17 @@ class ReceivingController extends Controller
      */
     public function store(StoreReceivingRequest $request)
     {
-        $data               = $request->validated();
+        $data = $request->validated();
         $data['created_by'] = auth()->id();
         // $data['updated_by'] = auth()->id();
-        $data['status']     = 0; // 0 = Pending
+        $data['status'] = 0; // 0 = Pending
 
         $receiving = Receiving::create($data);
 
         return response()->json([
-            'status'  => 'ok',
+            'status' => 'ok',
             'message' => 'Receiving record created successfully.',
-            'data'    => $receiving->load(['supplier', 'material']),
+            'data' => $receiving->load(['supplier', 'material']),
         ], 201);
     }
 
@@ -67,7 +75,7 @@ class ReceivingController extends Controller
 
         return response()->json([
             'status' => 'ok',
-            'data'   => $receiving,
+            'data' => $receiving,
         ]);
     }
 
@@ -83,14 +91,14 @@ class ReceivingController extends Controller
 
         if (!$receiving) {
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'Lot number not found.',
             ], 404);
         }
 
         return response()->json([
             'status' => 'ok',
-            'data'   => $receiving,
+            'data' => $receiving,
         ]);
     }
 
@@ -105,20 +113,20 @@ class ReceivingController extends Controller
         // Lock record if it has moved to acid testing
         if ($receiving->status >= 2) {
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'Cannot edit — this lot has already been processed downstream.',
             ], 422);
         }
 
-        $data               = $request->validated();
+        $data = $request->validated();
         $data['updated_by'] = auth()->id();
 
         $receiving->update($data);
 
         return response()->json([
-            'status'  => 'ok',
+            'status' => 'ok',
             'message' => 'Receiving record updated successfully.',
-            'data'    => $receiving->fresh(['supplier', 'material']),
+            'data' => $receiving->fresh(['supplier', 'material']),
         ]);
     }
 
@@ -138,20 +146,35 @@ class ReceivingController extends Controller
         // Prevent cancelling if already in downstream process
         if ($request->status == 4 && $receiving->status >= 2) {
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'Cannot cancel — lot is already in downstream processing.',
             ], 422);
         }
 
+        $oldStatus = $receiving->status;
+
         $receiving->update([
-            'status'     => $request->status,
+            'status' => $request->status,
             'updated_by' => auth()->id(),
         ]);
 
+        if ($request->status == 1 && $oldStatus != 1) {
+            $this->inventoryService->stockIn(
+                $receiving->material_id,
+                $receiving->received_qty,
+                'Receiving',
+                $receiving->id,
+                $receiving->lot_no,
+                auth()->id()
+            );
+        } elseif ($request->status != 1 && $oldStatus == 1) {
+            $this->inventoryService->revertTransaction('Receiving', $receiving->id, auth()->id());
+        }
+
         return response()->json([
-            'status'  => 'ok',
+            'status' => 'ok',
             'message' => 'Status updated successfully.',
-            'data'    => ['status' => $receiving->status],
+            'data' => ['status' => $receiving->status],
         ]);
     }
 
@@ -165,7 +188,7 @@ class ReceivingController extends Controller
 
         if ($receiving->status >= 1) {
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'Cannot delete — this lot is already in downstream processing.',
             ], 422);
         }
@@ -174,7 +197,7 @@ class ReceivingController extends Controller
         $receiving->delete();
 
         return response()->json([
-            'status'  => 'ok',
+            'status' => 'ok',
             'message' => 'Receiving record deleted successfully.',
         ]);
     }

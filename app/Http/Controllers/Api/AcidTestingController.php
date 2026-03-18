@@ -9,10 +9,19 @@ use App\Models\AcidTesting;
 use App\Models\AcidTestPercentageDetail;
 use App\Models\AcidStockCondition;
 use App\Models\Receiving;
+use App\Models\Material;
+use App\Services\InventoryService;
 use Illuminate\Http\Request;
 
 class AcidTestingController extends Controller
 {
+    protected $inventoryService;
+
+    public function __construct(InventoryService $inventoryService)
+    {
+        $this->inventoryService = $inventoryService;
+    }
+
     // ── GET /api/acid-testings ────────────────────────────────────
     public function index(Request $request)
     {
@@ -115,8 +124,8 @@ class AcidTestingController extends Controller
                 $query->where('is_active', 1);
             }
         ])
-        ->where('is_active', 1)
-        ->findOrFail($id);
+            ->where('is_active', 1)
+            ->findOrFail($id);
 
         return response()->json(['status' => 'ok', 'data' => $test]);
     }
@@ -230,13 +239,53 @@ class AcidTestingController extends Controller
     {
         $request->validate(['status' => 'required|integer|in:0,1,2,3,4']);
 
-        $header = AcidTesting::findOrFail($id);
+        $header = AcidTesting::with('details')->findOrFail($id);
+        $oldStatus = $header->status;
+
         $header->update(['status' => $request->status, 'updated_by' => auth()->id()]);
+
+        if ($request->status == 1 && $oldStatus != 1) {
+            // Processing Acid Testing Stock
+            // 1. OUT: Deduct incoming material
+            $receiving = Receiving::where('lot_no', $header->lot_number)->first();
+            if ($receiving && $receiving->material_id) {
+                // Determine the total input qty to deduce
+                $this->inventoryService->stockOut(
+                    $receiving->material_id,
+                    $header->received_qty,
+                    'AcidTesting',
+                    $header->id,
+                    $header->lot_number,
+                    auth()->id()
+                );
+            }
+
+            // 2. IN: Add resulting test output materials to stock based on stock code
+            foreach ($header->details as $detail) {
+                if ($detail->stock_code) {
+                    $material = Material::where('stock_code', $detail->stock_code)
+                        ->orWhere('material_code', $detail->stock_code)
+                        ->first();
+                    if ($material) {
+                        $this->inventoryService->stockIn(
+                            $material->id,
+                            $detail->net_weight, // using net_weight as output qty
+                            'AcidTesting',
+                            $header->id,
+                            $header->lot_number,
+                            auth()->id()
+                        );
+                    }
+                }
+            }
+        } elseif ($request->status != 1 && $oldStatus == 1) {
+            $this->inventoryService->revertTransaction('AcidTesting', $header->id, auth()->id());
+        }
 
         return response()->json([
             'status' => 'ok',
             'message' => 'Status updated.',
-            'data' => ['status' => $header->status],
+            'data' => ['status' => $request->status],
         ]);
     }
 
