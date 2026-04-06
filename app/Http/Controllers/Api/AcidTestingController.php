@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AcidTesting;
 use App\Models\AcidTestPercentageDetail;
 use App\Models\AcidStockCondition;
+use App\Models\Company;
 use App\Models\Receiving;
 use App\Models\Material;
 use App\Services\InventoryService;
@@ -22,44 +23,143 @@ class AcidTestingController extends Controller
         $this->inventoryService = $inventoryService;
     }
 
-    // ── GET /api/acid-testings ────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────
+    // HELPER: Resolve matching AcidStockCondition from acid_stock_conditions
+    //
+    // Range rules (from DB data):
+    //   min_pct > 0  AND  max_pct > 0  → bounded range   e.g. 18% – 24%
+    //   min_pct > 0  AND  max_pct = 0  → open upper end  e.g. > 24%
+    //   min_pct = 0  AND  max_pct > 0  → bounded from 0  e.g. 0% – 1%
+    //   min_pct = 0  AND  max_pct = 0  → non-acid / dry  → excluded at query level
+    //
+    // Boundaries are INCLUSIVE on both ends:
+    //   18.00 <= acidPct <= 24.00  matches 1000001
+    //   Open-ended (max=0, min>0):  acidPct >= min  always matches upper
+    //
+    // ORDER: CAST(min_pct AS DECIMAL) ASC guarantees numeric sort even when
+    //   the column is stored as varchar/string in older MySQL schemas.
+    //   Tightest lower bound is checked first; first full match wins.
+    // ─────────────────────────────────────────────────────────────
+    private function resolveCondition(float $acidPct): ?AcidStockCondition
+    {
+        // Exclude non-acid rows (min=0, max=0) at query level — no PHP skip needed.
+        // CAST ensures numeric ordering regardless of column type.
+        $conditions = AcidStockCondition::where('is_active', true)
+            ->where(function ($q) {
+                $q->where('min_pct', '>', 0)
+                    ->orWhere('max_pct', '>', 0);
+            })
+            ->orderByRaw('CAST(min_pct AS DECIMAL(10,4)) ASC')
+            ->get();
+
+        foreach ($conditions as $condition) {
+            $min = (float) $condition->min_pct;
+            $max = (float) $condition->max_pct;
+
+            // Lower bound — always inclusive
+            if ($acidPct < $min) {
+                continue;
+            }
+
+            // Upper bound:
+            //   max_pct = 0 with min_pct > 0 → open-ended (no ceiling)
+            //   otherwise                    → inclusive upper bound
+            if ($max > 0 && $acidPct > $max) {
+                continue;
+            }
+
+            return $condition;
+        }
+
+        return null;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // HELPER: Compute Net Average Acid % for the entire batch
+    //
+    //   Net Avg Acid % = (Σ weight_diff / Σ initial_weight) × 100
+    //   where weight_diff per pallet = initial_weight − drained_weight
+    //
+    // Only pallets with initial_weight > 0 contribute (acid-present rows).
+    // ─────────────────────────────────────────────────────────────
+    private function computeNetAvgAcidPct(array $details): float
+    {
+        $totalWeightDiff = 0.0;
+        $totalInitial = 0.0;
+
+        foreach ($details as $row) {
+            $initial = (float) ($row['initial_weight'] ?? 0);
+            $drained = (float) ($row['drained_weight'] ?? 0);
+
+            if ($initial > 0) {
+                $totalWeightDiff += max(0.0, $initial - $drained);
+                $totalInitial += $initial;
+            }
+        }
+
+        return $totalInitial > 0
+            ? round(($totalWeightDiff / $totalInitial) * 100, 4)
+            : 0.0;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // GET /api/acid-testings
+    // ─────────────────────────────────────────────────────────────
     public function index(Request $request)
     {
         $tests = AcidTesting::with(['supplier', 'createdBy', 'updatedBy', 'details'])
-            ->when($request->supplier_id, fn($q) => $q->where('supplier_id', $request->supplier_id))
-            ->when($request->status !== null && $request->status !== '', fn($q) => $q->where('status', $request->status))
-            ->when($request->date_from, fn($q) => $q->whereDate('test_date', '>=', $request->date_from))
-            ->when($request->date_to, fn($q) => $q->whereDate('test_date', '<=', $request->date_to))
-            ->when($request->lot_number, fn($q) => $q->where('lot_number', 'like', "%{$request->lot_number}%"))
+            ->when(
+                $request->supplier_id,
+                fn($q) => $q->where('supplier_id', $request->supplier_id)
+            )
+            ->when(
+                $request->status !== null && $request->status !== '',
+                fn($q) => $q->where('status', $request->status)
+            )
+            ->when(
+                $request->date_from,
+                fn($q) => $q->whereDate('test_date', '>=', $request->date_from)
+            )
+            ->when(
+                $request->date_to,
+                fn($q) => $q->whereDate('test_date', '<=', $request->date_to)
+            )
+            ->when(
+                $request->lot_number,
+                fn($q) => $q->where('lot_number', 'like', "%{$request->lot_number}%")
+            )
             ->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 20);
 
         return response()->json(['status' => 'ok', 'data' => $tests]);
     }
 
-    // ── GET /api/acid-testings/stock-conditions ───────────────────
-    // Returns all active conditions for client-side stock code resolution
+    // ─────────────────────────────────────────────────────────────
+    // GET /api/acid-testings/stock-conditions
+    // ─────────────────────────────────────────────────────────────
     public function stockConditions()
     {
         $conditions = AcidStockCondition::where('is_active', true)
-            ->orderByRaw('COALESCE(min_pct, -999) ASC')
-            ->get(['stock_code', 'description', 'min_pct', 'max_pct']);
+            ->orderBy('min_pct', 'asc')
+            ->get(['id', 'stock_code', 'description', 'min_pct', 'max_pct']);
 
         return response()->json(['status' => 'ok', 'data' => $conditions]);
     }
 
-    // ── GET /api/acid-testings/available-lots ─────────────────────
-    // Returns lots that are: receiving status=1 (submitted/approved)
-    // AND not already in acid_test_header (any status)
+    // ─────────────────────────────────────────────────────────────
+    // GET /api/acid-testings/available-lots
+    // ─────────────────────────────────────────────────────────────
     public function availableLots(Request $request)
     {
-        // Lots already used in acid testing (draft OR submitted)
         $usedLots = AcidTesting::withTrashed()->pluck('lot_number')->toArray();
 
         $lots = Receiving::with('supplier')
-            ->where('status', 1)                       // submitted/approved receivings only
-            ->whereNotIn('lot_no', $usedLots)          // not already in acid testing
-            ->when($request->search, fn($q) => $q->where('lot_no', 'like', "%{$request->search}%"))
+            ->where('status', 1)
+            ->whereNotIn('lot_no', $usedLots)
+            ->when(
+                $request->search,
+                fn($q) => $q->where('lot_no', 'like', "%{$request->search}%")
+            )
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(fn($r) => [
@@ -75,8 +175,9 @@ class AcidTestingController extends Controller
         return response()->json(['status' => 'ok', 'data' => $lots]);
     }
 
-    // ── GET /api/acid-testings/lot-check/{lotNo} ─────────────────
-    // Validates a lot before use — returns prefill data or error
+    // ─────────────────────────────────────────────────────────────
+    // GET /api/acid-testings/lot-check/{lotNo}
+    // ─────────────────────────────────────────────────────────────
     public function lotCheck($lotNo)
     {
         $receiving = Receiving::with('supplier')
@@ -84,11 +185,17 @@ class AcidTestingController extends Controller
             ->first();
 
         if (!$receiving) {
-            return response()->json(['status' => 'error', 'message' => 'Lot number not found in receiving records.'], 404);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Lot number not found in receiving records.',
+            ], 404);
         }
 
         if ((int) $receiving->status !== 1) {
-            return response()->json(['status' => 'error', 'message' => 'This lot has not been submitted/approved in receiving.'], 422);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'This lot has not been submitted/approved in receiving.',
+            ], 422);
         }
 
         $existing = AcidTesting::where('lot_number', $lotNo)->first();
@@ -113,16 +220,16 @@ class AcidTestingController extends Controller
         ]);
     }
 
-    // ── GET /api/acid-testings/{id} ───────────────────────────────
+    // ─────────────────────────────────────────────────────────────
+    // GET /api/acid-testings/{id}
+    // ─────────────────────────────────────────────────────────────
     public function show($id)
     {
         $test = AcidTesting::with([
             'supplier',
             'createdBy',
             'updatedBy',
-            'details' => function ($query) {
-                $query->where('is_active', 1);
-            }
+            'details' => fn($q) => $q->where('is_active', 1),
         ])
             ->where('is_active', 1)
             ->findOrFail($id);
@@ -130,7 +237,9 @@ class AcidTestingController extends Controller
         return response()->json(['status' => 'ok', 'data' => $test]);
     }
 
-    // ── POST /api/acid-testings ───────────────────────────────────
+    // ─────────────────────────────────────────────────────────────
+    // POST /api/acid-testings
+    // ─────────────────────────────────────────────────────────────
     public function store(Request $request)
     {
         $request->validate([
@@ -150,13 +259,18 @@ class AcidTestingController extends Controller
             'details.*.net_weight' => 'required|numeric',
             'details.*.initial_weight' => 'nullable|numeric|min:0',
             'details.*.drained_weight' => 'nullable|numeric|min:0',
-            'details.*.stock_code' => 'nullable|string|max:20',
+            // stock_code and remarks are server-resolved — not accepted from client
         ]);
 
-        // Check lot not already taken
         if (AcidTesting::where('lot_number', $request->lot_number)->exists()) {
-            return response()->json(['status' => 'error', 'message' => 'This lot already has an acid test record.'], 422);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'This lot already has an acid test record.',
+            ], 422);
         }
+
+        // Compute net avg acid% across all pallet rows
+        $netAvgAcidPct = $this->computeNetAvgAcidPct($request->details);
 
         $header = AcidTesting::create([
             'test_date' => $request->test_date,
@@ -168,15 +282,15 @@ class AcidTestingController extends Controller
             'invoice_qty' => $request->invoice_qty,
             'received_qty' => $request->received_qty,
             'avg_pallet_and_foreign_weight' => $request->avg_pallet_and_foreign_weight,
+            'net_avg_acid_pct' => $netAvgAcidPct,
             'status' => 0,
             'is_active' => true,
             'created_by' => auth()->id(),
             'updated_by' => auth()->id(),
         ]);
 
-        $this->syncDetails($header, $request->details);
+        $this->syncDetails($header, $request->details, $netAvgAcidPct);
 
-        // Mark receiving as in-testing
         Receiving::where('lot_no', $request->lot_number)
             ->update(['status' => 2, 'updated_by' => auth()->id()]);
 
@@ -187,13 +301,18 @@ class AcidTestingController extends Controller
         ], 201);
     }
 
-    // ── PUT /api/acid-testings/{id} ───────────────────────────────
+    // ─────────────────────────────────────────────────────────────
+    // PUT /api/acid-testings/{id}
+    // ─────────────────────────────────────────────────────────────
     public function update(Request $request, $id)
     {
         $header = AcidTesting::findOrFail($id);
 
         if ((int) $header->status >= 1) {
-            return response()->json(['status' => 'error', 'message' => 'Cannot edit — record is already submitted.'], 422);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Cannot edit — record is already submitted.',
+            ], 422);
         }
 
         $request->validate([
@@ -209,8 +328,12 @@ class AcidTestingController extends Controller
             'details.*.net_weight' => 'required|numeric',
             'details.*.initial_weight' => 'nullable|numeric|min:0',
             'details.*.drained_weight' => 'nullable|numeric|min:0',
-            'details.*.stock_code' => 'nullable|string|max:20',
+            // stock_code and remarks are server-resolved — not accepted from client
         ]);
+
+        $netAvgAcidPct = $request->has('details')
+            ? $this->computeNetAvgAcidPct($request->details)
+            : (float) $header->net_avg_acid_pct;
 
         $header->update(array_merge(
             $request->only([
@@ -220,11 +343,14 @@ class AcidTestingController extends Controller
                 'avg_pallet_and_foreign_weight',
                 'vehicle_number',
             ]),
-            ['updated_by' => auth()->id()]
+            [
+                'net_avg_acid_pct' => $netAvgAcidPct,
+                'updated_by' => auth()->id(),
+            ]
         ));
 
         if ($request->has('details')) {
-            $this->syncDetails($header, $request->details);
+            $this->syncDetails($header, $request->details, $netAvgAcidPct);
         }
 
         return response()->json([
@@ -234,7 +360,9 @@ class AcidTestingController extends Controller
         ]);
     }
 
-    // ── PATCH /api/acid-testings/{id}/status ─────────────────────
+    // ─────────────────────────────────────────────────────────────
+    // PATCH /api/acid-testings/{id}/status
+    // ─────────────────────────────────────────────────────────────
     public function updateStatus(Request $request, $id)
     {
         $request->validate(['status' => 'required|integer|in:0,1,2,3,4']);
@@ -242,14 +370,15 @@ class AcidTestingController extends Controller
         $header = AcidTesting::with('details')->findOrFail($id);
         $oldStatus = $header->status;
 
-        $header->update(['status' => $request->status, 'updated_by' => auth()->id()]);
+        $header->update([
+            'status' => $request->status,
+            'updated_by' => auth()->id(),
+        ]);
 
         if ($request->status == 1 && $oldStatus != 1) {
-            // Processing Acid Testing Stock
-            // 1. OUT: Deduct incoming material
+            // Stock OUT: deduct the incoming raw material
             $receiving = Receiving::where('lot_no', $header->lot_number)->first();
             if ($receiving && $receiving->material_id) {
-                // Determine the total input qty to deduce
                 $this->inventoryService->stockOut(
                     $receiving->material_id,
                     $header->received_qty,
@@ -260,26 +389,36 @@ class AcidTestingController extends Controller
                 );
             }
 
-            // 2. IN: Add resulting test output materials to stock based on stock code
-            foreach ($header->details as $detail) {
-                if ($detail->stock_code) {
-                    $material = Material::where('stock_code', $detail->stock_code)
-                        ->orWhere('material_code', $detail->stock_code)
-                        ->first();
-                    if ($material) {
-                        $this->inventoryService->stockIn(
-                            $material->id,
-                            $detail->net_weight, // using net_weight as output qty
-                            'AcidTesting',
-                            $header->id,
-                            $header->lot_number,
-                            auth()->id()
-                        );
-                    }
+            // Stock IN: add output materials grouped by stock_code
+            // All rows share the same batch stock_code, so we aggregate
+            // net_weight per stock_code to avoid duplicate stock-in entries.
+            $grouped = $header->details
+                ->whereNotNull('stock_code')
+                ->groupBy('stock_code');
+
+            foreach ($grouped as $stockCode => $rows) {
+                $material = Material::where('stock_code', $stockCode)
+                    ->orWhere('material_code', $stockCode)
+                    ->first();
+
+                if ($material) {
+                    $totalNetWeight = $rows->sum('net_weight');
+                    $this->inventoryService->stockIn(
+                        $material->id,
+                        $totalNetWeight,
+                        'AcidTesting',
+                        $header->id,
+                        $header->lot_number,
+                        auth()->id()
+                    );
                 }
             }
         } elseif ($request->status != 1 && $oldStatus == 1) {
-            $this->inventoryService->revertTransaction('AcidTesting', $header->id, auth()->id());
+            $this->inventoryService->revertTransaction(
+                'AcidTesting',
+                $header->id,
+                auth()->id()
+            );
         }
 
         return response()->json([
@@ -289,13 +428,18 @@ class AcidTestingController extends Controller
         ]);
     }
 
-    // ── DELETE /api/acid-testings/{id} ───────────────────────────
+    // ─────────────────────────────────────────────────────────────
+    // DELETE /api/acid-testings/{id}
+    // ─────────────────────────────────────────────────────────────
     public function destroy($id)
     {
         $header = AcidTesting::findOrFail($id);
 
         if ((int) $header->status >= 1) {
-            return response()->json(['status' => 'error', 'message' => 'Cannot delete a submitted record.'], 422);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Cannot delete a submitted record.',
+            ], 422);
         }
 
         Receiving::where('lot_no', $header->lot_number)
@@ -307,34 +451,134 @@ class AcidTestingController extends Controller
         return response()->json(['status' => 'ok', 'message' => 'Deleted successfully.']);
     }
 
-    // ── Private: sync detail rows ─────────────────────────────────
-    private function syncDetails(AcidTesting $header, array $details): void
+    // ─────────────────────────────────────────────────────────────
+    // GET /api/acid-testings/{id}/print
+    // ─────────────────────────────────────────────────────────────
+    public function printView($id)
     {
-        // AcidTestPercentageDetail::where('acid_test_id', $header->id)->delete();
-        AcidTestPercentageDetail::where('acid_test_id', $header->id)->update(['is_active' => 0]);
+        $test = AcidTesting::where('is_active', 1)
+            ->with([
+                'details' => fn($q) => $q->where('is_active', 1),
+                'createdBy',
+                'supplier',
+            ])
+            ->findOrFail($id);
+
+        if ((int) $test->status < 1) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Only submitted records can be printed.',
+            ], 422);
+        }
+
+        $company = Company::first();
+
+        return response()->json([
+            'status' => 'ok',
+            'data' => [
+                'acidTesting' => $test,
+                'company' => $company,
+            ],
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // PRIVATE: Sync / replace detail rows
+    //
+    // ulab_type = '5'  (acid / wet battery):
+    //   • Per-pallet acid% = (weight_diff / initial_weight) × 100
+    //     stored as avg_acid_pct for display/reference only.
+    //   • stock_code / ulab_type / remarks are resolved from the
+    //     NET AVERAGE acid% of the WHOLE BATCH (netAvgAcidPct),
+    //     NOT from each pallet's own acid%.
+    //     Rule: Net Avg Acid% = (Σ weight_diff / Σ initial_weight) × 100
+    //     All acid-present pallets in the batch share the same
+    //     stock_code because they belong to the same pallet load.
+    //
+    // ulab_type ∈ {1000024, 1000025, 1000026, 1000028}  (non-acid / dry types):
+    //   • No acid% calculation — ulab_type stored as-is
+    //   • stock_code column → null (no acid categorisation applies)
+    //   • remarks    column → description fetched by that stock_code
+    //   • initial_weight / drained_weight are null
+    // ─────────────────────────────────────────────────────────────
+    private function syncDetails(
+        AcidTesting $header,
+        array $details,
+        float $netAvgAcidPct   // batch-level net avg acid% — used for ALL acid row categorisation
+    ): void {
+        // Soft-delete existing active rows
+        AcidTestPercentageDetail::where('acid_test_id', $header->id)
+            ->update(['is_active' => 0]);
+
+        // ── Pre-load non-acid descriptions in one query ───────────
+        $nonAcidStockCodes = collect($details)
+            ->pluck('ulab_type')
+            ->map(fn($v) => (string) $v)
+            ->filter(fn($v) => $v !== '5')
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $nonAcidDescriptions = [];
+        if (!empty($nonAcidStockCodes)) {
+            AcidStockCondition::where('is_active', true)
+                ->whereIn('stock_code', $nonAcidStockCodes)
+                ->get(['stock_code', 'description'])
+                ->each(function ($c) use (&$nonAcidDescriptions) {
+                    $nonAcidDescriptions[$c->stock_code] = $c->description;
+                });
+        }
+
+        // ── Resolve stock condition once for ALL acid rows using batch net avg acid% ──
+        // All acid-present pallets share the same stock_code because the
+        // categorisation is based on the full batch average, not per-pallet.
+        $batchAcidCondition = $netAvgAcidPct > 0
+            ? $this->resolveCondition($netAvgAcidPct)
+            : null;
+
         foreach ($details as $row) {
-            $initial = (float) ($row['initial_weight'] ?? 0);
-            $drained = (float) ($row['drained_weight'] ?? 0);
+            $frontUlabType = (string) ($row['ulab_type'] ?? '');
             $gross = (float) ($row['gross_weight'] ?? 0);
+            $isAcid = ($frontUlabType === '5');
 
-            $weightDiff = max(0, $initial - $drained);
+            // initial / drained only exist for acid rows
+            $initial = $isAcid ? (float) ($row['initial_weight'] ?? 0) : 0.0;
+            $drained = $isAcid ? (float) ($row['drained_weight'] ?? 0) : 0.0;
 
-            $avgAcidPct = ($initial > 0)
-                ? round(($drained / $initial) * 100, 2)
-                : 0;
+            $weightDiff = $initial > 0 ? max(0.0, $initial - $drained) : 0.0;
+
+            // Per-pallet acid% = (weight_difference / initial_weight) × 100
+            // Stored for display/reference — NOT used for stock_code resolution.
+            $perPalletAcidPct = $initial > 0
+                ? round(($weightDiff / $initial) * 100, 2)
+                : 0.0;
+
+            if ($isAcid) {
+                // ── Categorise using the BATCH net avg acid% ─────────
+                // All acid rows in this batch get the same stock_code,
+                // derived from (Σ weight_diff / Σ initial_weight) × 100.
+                $dbUlabType = $batchAcidCondition?->stock_code;  // overwrites '5'
+                $dbStockCode = $batchAcidCondition?->stock_code;
+                $dbRemarks = $batchAcidCondition?->description;
+            } else {
+                // ── Non-acid: store as-is, look up description only ──
+                $dbUlabType = $frontUlabType;
+                $dbStockCode = null;
+                $dbRemarks = $nonAcidDescriptions[$frontUlabType] ?? null;
+            }
 
             AcidTestPercentageDetail::create([
                 'acid_test_id' => $header->id,
                 'pallet_no' => $row['pallet_no'],
                 'gross_weight' => $gross,
                 'net_weight' => (float) ($row['net_weight'] ?? 0),
-                'ulab_type' => $row['ulab_type'],
-                'stock_code' => $row['stock_code'] ?? null,
-                'initial_weight' => $initial,
-                'drained_weight' => $drained,
-                'weight_difference' => $weightDiff,
-                'avg_acid_pct' => $avgAcidPct,
-                'remarks' => $row['remarks'] ?? null,
+                'ulab_type' => $dbUlabType,
+                'stock_code' => $dbStockCode,
+                'initial_weight' => $initial ?: null,
+                'drained_weight' => $drained ?: null,
+                'weight_difference' => $weightDiff ?: null,
+                'avg_acid_pct' => $perPalletAcidPct ?: null,  // per-pallet, display only
+                'remarks' => $dbRemarks,
                 'status' => 0,
                 'is_active' => true,
                 'created_by' => auth()->id(),

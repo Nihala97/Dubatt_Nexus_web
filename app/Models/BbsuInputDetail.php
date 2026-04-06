@@ -14,6 +14,7 @@ class BbsuInputDetail extends Model
         'lot_no',
         'quantity',
         'acid_percentage',
+        'material_breakdown',
         'status',
         'is_active',
         'created_by',
@@ -21,9 +22,10 @@ class BbsuInputDetail extends Model
     ];
 
     protected $casts = [
-        'quantity'        => 'decimal:4',
-        'acid_percentage' => 'decimal:4',
-        'is_active'       => 'boolean',
+        'quantity'           => 'decimal:4',
+        'acid_percentage'    => 'decimal:4',
+        'material_breakdown' => 'array',
+        'is_active'          => 'boolean',
     ];
 
     public function batch(): BelongsTo

@@ -661,7 +661,7 @@
 @section('content')
 
     @php
-        $q = \App\Models\AcidTesting::with(['supplier', 'createdBy', 'details'])->where('is_active', true);
+        $q = \App\Models\AcidTesting::with(['supplier', 'createdBy', 'details' => fn($q) => $q->where('is_active', 1)])->where('is_active', true);
 
         if (request('status') !== null && request('status') !== '') {
             if (request('status') == '1') {
@@ -1074,15 +1074,15 @@
 @endsection
 
 @push('scripts')
-<script>
-    function toggleFilter() {
-        document.getElementById('filterBody').classList.toggle('open');
-        document.getElementById('filterChevron').classList.toggle('open');
-    }
-    let searchTimer;
-    function debounceSearch(input) {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => document.getElementById('filterForm').submit(), 500);
-    }
-</script>
-@endpushS
+    <script>
+        function toggleFilter() {
+            document.getElementById('filterBody').classList.toggle('open');
+            document.getElementById('filterChevron').classList.toggle('open');
+        }
+        let searchTimer;
+        function debounceSearch(input) {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => document.getElementById('filterForm').submit(), 500);
+        }
+    </script>
+@endpush

@@ -25,7 +25,7 @@
             --err: #dc2626;
             --warn: #d97706;
             --shadow: 0 2px 10px rgba(0, 0, 0, .07);
-            --r: 12px;
+            --r: 12px
         }
 
         *,
@@ -40,85 +40,213 @@
             color: var(--txt)
         }
 
-        .sdd { display:block; width:100%; position:relative; }
+        /* ── SDD (Searchable Dropdown) ── */
+        .sdd {
+            display: block;
+            width: 100%
+        }
+
         .sdd-trigger {
-            width:100%; display:flex; align-items:center; justify-content:space-between;
-            padding:7px 10px 7px 32px;
-            border:1.5px solid var(--bdr); border-radius:6px;
-            background:var(--gxl);
-            font-family:'Outfit',sans-serif; font-size:12.5px; color:var(--txt);
-            cursor:pointer; user-select:none; gap:6px; min-height:36px;
-            transition:border-color .18s, background .18s;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 10px;
+            border: 1.5px solid var(--bdr);
+            border-radius: 6px;
+            background: var(--gxl);
+            font-family: 'Outfit', sans-serif;
+            font-size: 12.5px;
+            color: var(--txt);
+            cursor: pointer;
+            user-select: none;
+            gap: 6px;
+            transition: border-color .18s, background .18s;
+            min-width: 130px
         }
+
         .sdd-trigger:hover,
-        .sdd.open > .sdd-trigger {
-            border-color:var(--g); background:var(--white);
+        .sdd.open>.sdd-trigger {
+            border-color: var(--g);
+            background: var(--white)
         }
+
         .sdd-trigger-text {
-            flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: left
         }
-        .sdd-trigger-text.placeholder { color:var(--txtmu); }
+
+        .sdd-trigger-text.placeholder {
+            color: var(--txtmu)
+        }
+
         .sdd-trigger-chevron {
-            width:12px; height:12px; stroke:var(--txtmu); fill:none;
-            stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round;
-            flex-shrink:0; transition:transform .18s;
+            width: 12px;
+            height: 12px;
+            stroke: var(--txtmu);
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+            transition: transform .18s
         }
-        .sdd.open > .sdd-trigger .sdd-trigger-chevron { transform:rotate(180deg); stroke:var(--g); }
+
+        .sdd.open>.sdd-trigger .sdd-trigger-chevron {
+            transform: rotate(180deg);
+            stroke: var(--g)
+        }
+
         .sdd-clear {
-            display:none; width:12px; height:12px;
-            stroke:var(--txtmu); fill:none; stroke-width:2.5;
-            stroke-linecap:round; stroke-linejoin:round;
-            flex-shrink:0; cursor:pointer; transition:stroke .15s;
+            display: none;
+            width: 13px;
+            height: 13px;
+            stroke: var(--txtmu);
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: stroke .15s
         }
-        .sdd-clear:hover { stroke:#dc2626; }
-        .sdd.open > .sdd-trigger .sdd-clear,
-        .sdd-trigger:hover .sdd-clear { display:block; }
-        
-        /* Portal — fixed, appears above everything */
+
+        .sdd-clear:hover {
+            stroke: var(--err)
+        }
+
+        .sdd.open>.sdd-trigger .sdd-clear,
+        .sdd-trigger:hover .sdd-clear {
+            display: block
+        }
+
         .sdd-portal {
-            position:fixed; z-index:9999;
-            background:#fff; border:1.5px solid var(--g);
-            border-radius:10px; box-shadow:0 6px 24px rgba(0,0,0,.16);
-            min-width:220px; overflow:hidden;
-            display:none; animation:sddIn .12s ease;
+            position: fixed;
+            z-index: 9999;
+            background: #fff;
+            border: 1.5px solid var(--g);
+            border-radius: 10px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, .16);
+            min-width: 220px;
+            width: 260px;
+            overflow: hidden;
+            display: none;
+            animation: sddIn .12s ease
         }
-        .sdd-portal.visible { display:block; }
+
+        .sdd-portal.visible {
+            display: block
+        }
+
         @keyframes sddIn {
-            from { opacity:0; transform:translateY(-4px); }
-            to   { opacity:1; transform:translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-4px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
         }
+
         .sdd-search-wrap {
-            padding:8px 10px; border-bottom:1px solid var(--bdr); position:relative;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--bdr);
+            position: relative
         }
+
         .sdd-search-ico {
-            position:absolute; left:18px; top:50%; transform:translateY(-50%);
-            width:13px; height:13px; stroke:var(--txtmu); fill:none;
-            stroke-width:2; stroke-linecap:round; stroke-linejoin:round; pointer-events:none;
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 13px;
+            height: 13px;
+            stroke: var(--txtmu);
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            pointer-events: none
         }
+
         .sdd-search {
-            width:100%; padding:7px 10px 7px 32px;
-            border:1.5px solid var(--bdr); border-radius:7px;
-            background:var(--gxl); font-family:'Outfit',sans-serif;
-            font-size:12.5px; color:var(--txt); outline:none;
-            transition:border-color .18s; box-sizing:border-box;
+            width: 100%;
+            padding: 7px 10px 7px 32px;
+            border: 1.5px solid var(--bdr);
+            border-radius: 7px;
+            background: var(--gxl);
+            font-family: 'Outfit', sans-serif;
+            font-size: 12.5px;
+            color: var(--txt);
+            outline: none;
+            transition: border-color .18s;
+            box-sizing: border-box
         }
-        .sdd-search:focus { border-color:var(--g); background:#fff; }
-        .sdd-search::placeholder { color:var(--txtmu); }
-        .sdd-list { max-height:220px; overflow-y:auto; padding:4px 0; }
+
+        .sdd-search:focus {
+            border-color: var(--g);
+            background: #fff
+        }
+
+        .sdd-search::placeholder {
+            color: var(--txtmu)
+        }
+
+        .sdd-list {
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 4px 0
+        }
+
         .sdd-item {
-            padding:8px 14px; font-size:12.5px; cursor:pointer;
-            transition:background .1s; display:flex; align-items:center;
-            gap:9px; color:var(--txt);
+            padding: 8px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background .1s;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            color: var(--txt);
+            white-space: nowrap
         }
-        .sdd-item:hover { background:#f0f9f4; color:var(--g); }
-        .sdd-item.selected { background:#e8f5ed; color:var(--g); font-weight:600; }
+
+        .sdd-item:hover {
+            background: #f0f9f4;
+            color: var(--g)
+        }
+
+        .sdd-item.selected {
+            background: #e8f5ed;
+            color: var(--g);
+            font-weight: 600
+        }
+
         .sdd-item-check {
-            width:14px; height:14px; flex-shrink:0;
-            stroke:transparent; fill:none; stroke-width:2.5;
-            stroke-linecap:round; stroke-linejoin:round;
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            stroke: transparent;
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round
         }
-        .sdd-item.selected .sdd-item-check { stroke:var(--g); }
-        .sdd-empty { padding:18px 14px; font-size:12px; color:var(--txtmu); text-align:center; }
+
+        .sdd-item.selected .sdd-item-check {
+            stroke: var(--g)
+        }
+
+        .sdd-empty {
+            padding: 18px 14px;
+            font-size: 12.5px;
+            color: var(--txtmu);
+            text-align: center
+        }
 
         /* ── Page header ── */
         .ph {
@@ -229,8 +357,7 @@
             transform: translateY(-1px)
         }
 
-        .btn-add svg,
-        .btn-add-sm svg {
+        .btn-add svg {
             width: 13px;
             height: 13px;
             stroke: #fff;
@@ -288,7 +415,7 @@
             padding: 22px 20px
         }
 
-        /* ── Two-column layout ── */
+        /* ── Layout ── */
         .two-col {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -299,6 +426,12 @@
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 14px
+        }
+
+        .panel-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px
         }
 
         /* ── Form fields ── */
@@ -336,7 +469,8 @@
             stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;
-            pointer-events: none
+            pointer-events: none;
+            display: none
         }
 
         input[type=text],
@@ -347,7 +481,7 @@
         select,
         textarea {
             width: 100%;
-            padding: 9px 12px 9px 36px;
+            padding: 9px 12px 9px 6px;
             border: 1.5px solid var(--bdr);
             border-radius: 8px;
             background: var(--gxl);
@@ -398,7 +532,7 @@
             pointer-events: none
         }
 
-        /* ── Status badge ── */
+        /* ── Badge ── */
         .badge {
             display: inline-flex;
             align-items: center;
@@ -419,23 +553,7 @@
             color: #065f46
         }
 
-        /* ── Consumption mini card ── */
-        .cons-card {
-            background: var(--gxl);
-            border: 1.5px solid var(--bdr);
-            border-radius: 9px;
-            padding: 14px 16px
-        }
-
-        .cons-title {
-            font-size: 10px;
-            font-weight: 800;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            color: var(--g);
-            margin-bottom: 12px
-        }
-
+        /* ── Consumption ── */
         .cons-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -465,7 +583,7 @@
             color: var(--g)
         }
 
-        /* ── Process table ── */
+        /* ── Tables ── */
         .proc-table {
             width: 100%;
             border-collapse: collapse;
@@ -495,10 +613,10 @@
             background: #f7fbf8
         }
 
-        /* ── Temp table ── */
         .data-table {
             width: 100%;
-            border-collapse: collapse
+            border-collapse: collapse;
+            min-width: 560px
         }
 
         .data-table thead th {
@@ -527,7 +645,6 @@
             padding: 8px 10px
         }
 
-        /* Row inputs */
         .ri {
             width: 100%;
             padding: 7px 10px;
@@ -578,7 +695,7 @@
             pointer-events: none
         }
 
-        /* Process button cells */
+        /* ── Process buttons ── */
         .proc-btn {
             padding: 6px 12px;
             border: none;
@@ -609,7 +726,7 @@
             background: #b91c1c
         }
 
-        /* Delete btn */
+        /* ── Del btn ── */
         .del-btn {
             width: 26px;
             height: 26px;
@@ -638,7 +755,7 @@
             stroke-linejoin: round
         }
 
-        /* Alert */
+        /* ── Alert ── */
         .form-alert {
             display: none;
             padding: 11px 15px;
@@ -662,7 +779,7 @@
             display: block
         }
 
-        /* Sticky footer */
+        /* ── Sticky footer ── */
         .form-actions {
             position: sticky;
             bottom: 0;
@@ -678,7 +795,7 @@
             box-shadow: 0 -4px 16px rgba(0, 0, 0, .06)
         }
 
-        /* Autosave dot */
+        /* ── Autosave dot ── */
         .as-dot {
             width: 7px;
             height: 7px;
@@ -712,12 +829,10 @@
             }
         }
 
-        /* Right panel mini inputs (no left icon needed) */
         .ni {
             padding: 9px 12px
         }
 
-        /* Readonly notice */
         .readonly-notice {
             background: #fef3c7;
             border: 1px solid #fcd34d;
@@ -730,12 +845,11 @@
             display: none
         }
 
-        /* Scrollable table wrap */
         .tbl-wrap {
             overflow-x: auto
         }
 
-        /* ── BBSU Lot Selection Modal ── */
+        /* ── Modals ── */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -846,7 +960,6 @@
             border-radius: 0 0 14px 14px
         }
 
-        /* Lot table inside modal */
         .lot-table {
             width: 100%;
             border-collapse: collapse;
@@ -952,19 +1065,22 @@
             font-variant-numeric: tabular-nums
         }
 
-        /* Two panel layout for raw materials + flux */
-        .panel-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 18px
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
         }
 
-        /* Responsive */
+        @media(max-width:1024px) {
+            .panel-row {
+                grid-template-columns: 1fr
+            }
+        }
+
         @media(max-width:900px) {
 
             .two-col,
-            .three-col,
-            .panel-row {
+            .three-col {
                 grid-template-columns: 1fr
             }
 
@@ -992,20 +1108,19 @@
 
 @section('content')
 
+    {{-- Shared SDD portal (one instance, reused by all row dropdowns) --}}
     <div class="sdd-portal" id="sddPortal">
         <div class="sdd-search-wrap">
             <svg class="sdd-search-ico" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8"/>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
-            <input class="sdd-search" id="sddPortalSearch" placeholder="Search…"
-                autocomplete="off"
-                oninput="sddPortalFilter(this.value)"
-                onkeydown="sddPortalKeydown(event)">
+            <input class="sdd-search" id="sddPortalSearch" placeholder="Search…" autocomplete="off"
+                oninput="sddPortalFilter(this.value)" onkeydown="sddPortalKeydown(event)">
         </div>
         <div class="sdd-list" id="sddPortalList"></div>
     </div>
-    {{-- ── Page header ── --}}
+
     <div class="ph">
         <div>
             <h2 id="pageTitle">Loading…</h2>
@@ -1021,9 +1136,7 @@
         </div>
     </div>
 
-    <div id="readonlyNotice" class="readonly-notice">
-        🔒 This batch has been submitted and is locked from editing.
-    </div>
+    <div id="readonlyNotice" class="readonly-notice">🔒 This batch has been submitted and is locked from editing.</div>
     <div id="formAlert" class="form-alert"></div>
 
     {{-- ── BBSU Lot Selection Modal ── --}}
@@ -1102,19 +1215,11 @@
                 <button class="btn btn-primary btn-sm" id="bbsuConfirmBtn" onclick="confirmBbsuSelection()" disabled>
                     <svg viewBox="0 0 24 24">
                         <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    Confirm Selection
+                    </svg> Confirm Selection
                 </button>
             </div>
         </div>
     </div>
-    <style>
-        @keyframes spin {
-            to {
-                transform: rotate(360deg)
-            }
-        }
-    </style>
 
     {{-- ── Output QTY Window Modal ── --}}
     <div class="modal-overlay" id="outputQtyModal" onclick="closeOutputModal(event)">
@@ -1144,9 +1249,7 @@
                                 QTY (KG)</th>
                         </tr>
                     </thead>
-                    <tbody id="outputBlockTbody">
-                        {{-- rows added by JS --}}
-                    </tbody>
+                    <tbody id="outputBlockTbody"></tbody>
                     <tfoot>
                         <tr style="background:var(--gl);border-top:2px solid var(--bdr)">
                             <td
@@ -1167,16 +1270,14 @@
                         style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round">
                         <line x1="12" y1="5" x2="12" y2="19" />
                         <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    ADD
+                    </svg> ADD
                 </button>
                 <div style="display:flex;gap:8px">
                     <button class="btn btn-outline btn-sm" onclick="closeOutputModal()">Cancel</button>
                     <button class="btn btn-primary btn-sm" onclick="confirmOutputQty()">
                         <svg viewBox="0 0 24 24">
                             <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                        OK
+                        </svg> OK
                     </button>
                 </div>
             </div>
@@ -1259,16 +1360,13 @@
                 <button class="btn btn-primary btn-sm" id="fluxConfirmBtn" onclick="confirmFluxSelection()" disabled>
                     <svg viewBox="0 0 24 24">
                         <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    OK
+                    </svg> OK
                 </button>
             </div>
         </div>
     </div>
 
-    {{-- ═══════════════════════════════════════════════════════════════
-    SECTION 1 — Primary Details
-    ═══════════════════════════════════════════════════════════════ --}}
+    {{-- SECTION 1 — Primary Details --}}
     <div class="card">
         <div class="card-head">
             <div class="card-head-left">
@@ -1283,11 +1381,9 @@
         </div>
         <div class="card-body">
             <div class="three-col">
-
                 <div class="field">
                     <label>Batch No <span class="req">*</span></label>
-                    <div class="iw">
-                        <svg class="ico" viewBox="0 0 24 24">
+                    <div class="iw"><svg class="ico" viewBox="0 0 24 24">
                             <rect x="5" y="2" width="14" height="20" rx="2" />
                             <line x1="9" y1="9" x2="15" y2="9" />
                             <line x1="9" y1="13" x2="15" y2="13" />
@@ -1295,11 +1391,9 @@
                         <input type="text" id="batch_no" readonly class="ro" placeholder="Auto-generated…">
                     </div>
                 </div>
-
                 <div class="field">
                     <label>Date <span class="req">*</span></label>
-                    <div class="iw">
-                        <svg class="ico" viewBox="0 0 24 24">
+                    <div class="iw"><svg class="ico" viewBox="0 0 24 24">
                             <rect x="3" y="4" width="18" height="18" rx="2" />
                             <line x1="16" y1="2" x2="16" y2="6" />
                             <line x1="8" y1="2" x2="8" y2="6" />
@@ -1308,11 +1402,9 @@
                         <input type="date" id="date" required>
                     </div>
                 </div>
-
                 <div class="field">
                     <label>Rotary No <span class="req">*</span></label>
-                    <div class="iw sw">
-                        <svg class="ico" viewBox="0 0 24 24">
+                    <div class="iw sw"><svg class="ico" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="3" />
                             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
                         </svg>
@@ -1323,38 +1415,41 @@
                         </select>
                     </div>
                 </div>
-
                 <div class="field">
                     <label>Start Time</label>
-                    <div class="iw">
-                        <svg class="ico" viewBox="0 0 24 24">
+                    <div class="iw"><svg class="ico" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="10" />
                             <polyline points="12 6 12 12 16 14" />
                         </svg>
                         <input type="time" id="start_time">
                     </div>
                 </div>
-
                 <div class="field">
                     <label>End Time</label>
-                    <div class="iw">
-                        <svg class="ico" viewBox="0 0 24 24">
+                    <div class="iw"><svg class="ico" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="10" />
                             <polyline points="12 6 12 12 16 14" />
                         </svg>
                         <input type="time" id="end_time">
                     </div>
                 </div>
-
+                {{-- ── Charge No — wired into loadRecord, buildPayload, setupAutosave ── --}}
+                <div class="field">
+                    <label>Charge No</label>
+                    <div class="iw"><svg class="ico" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        <input type="text" id="charge_no" placeholder="Enter charge no…"
+                            oninput="triggerAutosave()">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    {{-- ═══════════════════════════════════════════════════════════════
-    SECTION 2 — Raw Materials + Flux/Chemicals (side by side)
-    ═══════════════════════════════════════════════════════════════ --}}
+    {{-- SECTION 2 — Raw Materials + Flux/Chemicals --}}
     <div class="panel-row">
-
         {{-- Raw Materials --}}
         <div class="card">
             <div class="card-head">
@@ -1443,15 +1538,10 @@
                 </div>
             </div>
         </div>
-
     </div>
 
-    {{-- ═══════════════════════════════════════════════════════════════
-    SECTION 3 — Process Details + Right Consumption Panel
-    ═══════════════════════════════════════════════════════════════ --}}
+    {{-- SECTION 3 — Process Details + Consumption/Output --}}
     <div class="two-col" style="align-items:start">
-
-        {{-- Process Details --}}
         <div class="card">
             <div class="card-head">
                 <div class="card-head-left">
@@ -1475,18 +1565,14 @@
                                 <th>Firing Mode</th>
                             </tr>
                         </thead>
-                        <tbody id="procBody">
-                            {{-- Rows pre-generated by JS from PROCESS_NAMES constant --}}
-                        </tbody>
+                        <tbody id="procBody"></tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="5"
                                     style="text-align:right;padding-right:10px;font-size:11px;font-weight:700;color:var(--g)">
                                     TOTAL BATCH TIME</td>
-                                <td colspan="2">
-                                    <input type="text" id="totalBatchTime" readonly class="ri ro"
-                                        style="font-weight:700;color:var(--g)" placeholder="0 min">
-                                </td>
+                                <td colspan="2"><input type="text" id="totalBatchTime" readonly class="ri ro"
+                                        style="font-weight:700;color:var(--g)" placeholder="0 min"></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -1494,9 +1580,7 @@
             </div>
         </div>
 
-        {{-- Right panel — Consumption + Output --}}
         <div>
-
             {{-- LPG + O2 --}}
             <div class="card">
                 <div class="card-head">
@@ -1511,22 +1595,24 @@
                 <div class="card-body">
                     <div class="cons-grid" style="grid-template-columns:1fr 1fr;gap:12px">
                         <div class="field">
-                            <label>LPG (m³)</label>
+                            <label>LPG (NM³)</label>
                             <div class="iw"><svg class="ico" viewBox="0 0 24 24">
                                     <path d="M12 2v20M2 12h20" />
                                 </svg>
                                 <input type="number" id="lpg_consumption" step="0.001" placeholder="0.000"
-                                    oninput="triggerAutosave()">
+                                    oninput="calcLpgConversion(); triggerAutosave()">
                             </div>
+                            <small id="lpg_converted" style="color:var(--g);font-weight:600;margin-top:4px;">0.00 LTR</small>
                         </div>
                         <div class="field">
-                            <label>Liquid O₂ (m³)</label>
+                            <label>Liquid O₂ (NM³)</label>
                             <div class="iw"><svg class="ico" viewBox="0 0 24 24">
                                     <path d="M12 2v20M2 12h20" />
                                 </svg>
                                 <input type="number" id="o2_consumption" step="0.001" placeholder="0.000"
-                                    oninput="triggerAutosave()">
+                                    oninput="calcO2Conversion(); triggerAutosave()">
                             </div>
+                            <small id="o2_converted" style="color:var(--g);font-weight:600;margin-top:4px;">0.00 KG</small>
                         </div>
                     </div>
                 </div>
@@ -1562,10 +1648,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="cons-total">
-                        <span class="cons-total-label">CONSUMPTION</span>
-                        <span class="cons-total-val" id="id_fan_consumption_display">—</span>
-                    </div>
+                    <div class="cons-total"><span class="cons-total-label">CONSUMPTION</span><span class="cons-total-val"
+                            id="id_fan_consumption_display">—</span></div>
                     <input type="hidden" id="id_fan_consumption">
                 </div>
             </div>
@@ -1600,15 +1684,13 @@
                             </div>
                         </div>
                     </div>
-                    <div class="cons-total">
-                        <span class="cons-total-label">CONSUMPTION</span>
-                        <span class="cons-total-val" id="rotary_power_consumption_display">—</span>
-                    </div>
+                    <div class="cons-total"><span class="cons-total-label">CONSUMPTION</span><span class="cons-total-val"
+                            id="rotary_power_consumption_display">—</span></div>
                     <input type="hidden" id="rotary_power_consumption">
                 </div>
             </div>
 
-            {{-- Output Window --}}
+            {{-- Output Window — SDD for material --}}
             <div class="card">
                 <div class="card-head">
                     <div class="card-head-left">
@@ -1624,10 +1706,15 @@
                             <label>Material</label>
                             <div class="sdd" id="sdd_output_material">
                                 <div class="sdd-trigger" onclick="toggleSdd('output_material')">
-                                    <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);width:13px;height:13px;stroke:var(--txtmu);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none" viewBox="0 0 24 24"><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0"/></svg>
-                                    <span class="sdd-trigger-text placeholder" id="sdd_output_material_label" data-placeholder="Select material…">Select material…</span>
-                                    <svg class="sdd-clear" onclick="clearSdd('output_material',event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                                    <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                                    <span class="sdd-trigger-text placeholder" id="sdd_output_material_label"
+                                        data-placeholder="Select material…">Select material…</span>
+                                    <svg class="sdd-clear" onclick="clearSdd('output_material',event)" viewBox="0 0 24 24">
+                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                    <svg class="sdd-trigger-chevron" viewBox="0 0 24 24">
+                                        <polyline points="6 9 12 15 18 9" />
+                                    </svg>
                                 </div>
                                 <input type="hidden" id="output_material">
                             </div>
@@ -1647,13 +1734,10 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
-    {{-- ═══════════════════════════════════════════════════════════════
-    SECTION 4 — Temperature Records
-    ═══════════════════════════════════════════════════════════════ --}}
+    {{-- SECTION 4 — Temperature Records --}}
     <div class="card">
         <div class="card-head">
             <div class="card-head-left">
@@ -1689,9 +1773,6 @@
         </div>
     </div>
 
-    {{-- ═══════════════════════════════════════════════════════════════
-    AUTOSAVE STATUS + STICKY FOOTER
-    ═══════════════════════════════════════════════════════════════ --}}
     <div class="form-actions" id="formActions">
         <a href="{{ route('admin.mes.smelting.index') }}" class="btn btn-outline btn-sm">Cancel</a>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -1721,80 +1802,179 @@
 
 @push('scripts')
     <script>
-        // ── Constants ───────────────────────────────────────────────────────
+        // ── Constants ──────────────────────────────────────────────────────────────
         const PATH = window.location.pathname.split('/').filter(Boolean);
         const isCreate = PATH[PATH.length - 1] === 'create';
         const recordId = isCreate ? null : PATH[PATH.length - 2];
 
-        const PROCESS_NAMES = [
-            'CHARGING', 'ROCKING', 'SMELTING 1', 'SMELTING 2',
-            'SMELTING 3', 'SMELTING 4', 'TAPPING', 'SLAG PROCESS', 'SLAG TAPPING'
-        ];
+        const PROCESS_NAMES = ['CHARGING', 'ROCKING', 'SMELTING 1', 'SMELTING 2', 'SMELTING 3', 'SMELTING 4', 'TAPPING', 'SLAG PROCESS', 'SLAG TAPPING'];
         const FIRING_OPTIONS = ['', 'Low', 'Medium', 'High'];
 
         let isSubmitted = false;
         let rawRowCount = 0, fluxRowCount = 0, tempRowCount = 0;
         let autosaveTimer;
-        let itemsList = []; // for dropdowns
+        let itemsList = [];
 
-        // ── Init ────────────────────────────────────────────────────────────
+        // ════════════════════════════════════════════════════════════════════════════
+        // SDD ENGINE
+        // ════════════════════════════════════════════════════════════════════════════
+        const sddRegistry = {};
+        let sddActiveField = null;
+
+        function sddRegister(fieldId, items, selectedValue = null) {
+            sddRegistry[fieldId] = { items, selected: null };
+            if (selectedValue) sddSelect(fieldId, String(selectedValue), false);
+            else sddUpdateTrigger(fieldId);
+        }
+
+        function sddUpdateTrigger(fieldId) {
+            const reg = sddRegistry[fieldId];
+            const label = document.getElementById(`sdd_${fieldId}_label`);
+            const hidden = document.getElementById(fieldId);
+            if (!label) return;
+            if (reg?.selected) { label.textContent = reg.selected.label; label.classList.remove('placeholder'); }
+            else { label.textContent = label.dataset.placeholder || 'Select…'; label.classList.add('placeholder'); }
+            if (hidden) hidden.value = reg?.selected?.value ?? '';
+        }
+
+        function sddSelect(fieldId, value, triggerChange = true) {
+            if (!sddRegistry[fieldId]) return;
+            const item = value ? sddRegistry[fieldId].items.find(i => String(i.value) === String(value)) : null;
+            sddRegistry[fieldId].selected = item || null;
+            sddUpdateTrigger(fieldId);
+            const hidden = document.getElementById(fieldId);
+            if (hidden && triggerChange) hidden.dispatchEvent(new Event('change'));
+            sddClosePortal();
+        }
+
+        function clearSdd(fieldId, e) {
+            if (e) { e.stopPropagation(); e.preventDefault(); }
+            sddSelect(fieldId, '', false);
+            const hidden = document.getElementById(fieldId);
+            if (hidden) hidden.dispatchEvent(new Event('change'));
+        }
+
+        function toggleSdd(fieldId) {
+            if (sddActiveField === fieldId) { sddClosePortal(); return; }
+            sddOpenPortal(fieldId);
+        }
+
+        function sddOpenPortal(fieldId) {
+            const trigger = document.querySelector(`#sdd_${fieldId} .sdd-trigger`);
+            if (!trigger || !sddRegistry[fieldId]) return;
+            sddActiveField = fieldId;
+            document.querySelectorAll('.sdd.open').forEach(el => el.classList.remove('open'));
+            document.getElementById(`sdd_${fieldId}`)?.classList.add('open');
+
+            const portal = document.getElementById('sddPortal');
+            const rect = trigger.getBoundingClientRect();
+            const viewW = window.innerWidth;
+            const viewH = window.innerHeight;
+
+            portal.style.top = ''; portal.style.bottom = ''; portal.style.left = ''; portal.style.right = '';
+            portal.style.width = Math.max(rect.width, 240) + 'px';
+
+            let left = rect.left;
+            const portalW = Math.max(rect.width, 240);
+            if (left + portalW > viewW - 8) left = Math.max(8, viewW - portalW - 8);
+            portal.style.left = left + 'px';
+
+            const spaceBelow = viewH - rect.bottom;
+            const spaceAbove = rect.top;
+            if (spaceBelow >= 200 || spaceBelow >= spaceAbove) { portal.style.top = (rect.bottom + 4) + 'px'; }
+            else { portal.style.bottom = (viewH - rect.top + 4) + 'px'; }
+
+            sddPortalRender('');
+            portal.classList.add('visible');
+            const search = document.getElementById('sddPortalSearch');
+            if (search) { search.value = ''; setTimeout(() => search.focus(), 40); }
+        }
+
+        function sddClosePortal() {
+            document.getElementById('sddPortal')?.classList.remove('visible');
+            document.querySelectorAll('.sdd.open').forEach(el => el.classList.remove('open'));
+            sddActiveField = null;
+        }
+
+        function sddPortalRender(query) {
+            if (!sddActiveField || !sddRegistry[sddActiveField]) return;
+            const q = query.toLowerCase().trim();
+            const items = sddRegistry[sddActiveField].items;
+            const filtered = q ? items.filter(i => i.label.toLowerCase().includes(q)) : items;
+            const current = sddRegistry[sddActiveField].selected?.value ?? '';
+            const list = document.getElementById('sddPortalList');
+            if (!list) return;
+            if (!filtered.length) { list.innerHTML = '<div class="sdd-empty">No results found</div>'; return; }
+            list.innerHTML = filtered.map(item => {
+                const sel = String(item.value) === String(current);
+                return `<div class="sdd-item${sel ? ' selected' : ''}" onclick="sddSelect('${sddActiveField}','${item.value}')">
+                    <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>${item.label}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function sddPortalFilter(query) { sddPortalRender(query); }
+        function sddPortalKeydown(e) { if (e.key === 'Escape') sddClosePortal(); }
+
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.sdd') && !e.target.closest('#sddPortal')) sddClosePortal();
+        });
+        document.addEventListener('scroll', () => {
+            if (sddActiveField) {
+                const trigger = document.querySelector(`#sdd_${sddActiveField} .sdd-trigger`);
+                if (trigger) {
+                    const rect = trigger.getBoundingClientRect();
+                    const portal = document.getElementById('sddPortal');
+                    portal.style.top = (rect.bottom + 4) + 'px';
+                    portal.style.left = rect.left + 'px';
+                }
+            }
+        }, true);
+
+        // ── Helper: register material SDD for a row field ──────────────────────────
+        function initMaterialSdd(fieldId, selectedId = null) {
+            const items = itemsList.map(i => ({ value: String(i.id), label: i.name ?? i.secondary_name ?? '' }));
+            sddRegister(fieldId, items, selectedId ? String(selectedId) : null);
+        }
+
+        // ── Init ───────────────────────────────────────────────────────────────────
         async function init() {
             document.getElementById('date').value = new Date().toISOString().slice(0, 10);
             await loadItems();
             buildProcessTable();
             buildOutputDropdown();
+            document.getElementById('output_material').addEventListener('change', onOutputMaterialChange);
 
             if (isCreate) {
                 const res = await apiFetch('/smelting-batches/generate-batch-no');
-                if (res?.ok) {
-                    const d = await res.json();
-                    document.getElementById('batch_no').value = d.batch_no;
-                }
+                if (res?.ok) { const d = await res.json(); document.getElementById('batch_no').value = d.batch_no; }
                 document.getElementById('pageTitle').textContent = 'Create Smelting Batch';
                 document.getElementById('pageSubtitle').textContent = 'Record new smelting batch log';
                 document.getElementById('breadcrumbTitle').textContent = 'Create Batch';
                 document.getElementById('btnSaveLabel').textContent = 'Create Batch';
-                addRawRow();
-                addFluxRow();
-                addTempRow();
+                addRawRow(); addFluxRow(); addTempRow();
             } else {
                 await loadRecord();
             }
         }
         init();
 
-        // ── Load items for dropdowns ─────────────────────────────────────────
+        // ── Load items ─────────────────────────────────────────────────────────────
         async function loadItems() {
             try {
-                // Query the materials table directly (SELECT * FROM materials)
-                const res = await apiFetch('/materials?per_page=500');
-                if (res?.ok) {
-                    const d = await res.json();
-                    itemsList = d.data?.data ?? d.data ?? [];
-                }
+                const res = await apiFetch('/materials?per_page=1000');
+                if (res?.ok) { const d = await res.json(); itemsList = d.data?.data ?? d.data ?? []; }
             } catch (e) { console.warn('Materials load failed', e); }
         }
 
-        function buildOutputDropdown() {
-            const sel = document.getElementById('output_material');
-            sel.innerHTML = '<option value="">Select material…</option>';
-            itemsList.forEach(item => {
-                const o = document.createElement('option');
-                o.value = item.id;
-                o.textContent = item.name ?? item.item_name ?? item.material_name;
-                sel.appendChild(o);
-            });
+        // ── Output material SDD ────────────────────────────────────────────────────
+        function buildOutputDropdown(selectedId = null) {
+            const items = itemsList.map(i => ({ value: String(i.id), label: i.name ?? i.secondary_name ?? '' }));
+            sddRegister('output_material', items, selectedId ? String(selectedId) : null);
         }
 
-        function getItemOptions(selectedId) {
-            if (!itemsList.length) return '<option value="">Select material…</option>';
-            return '<option value="">Select material…</option>' +
-                itemsList.map(i =>
-                    `<option value="${i.id}" ${String(i.id) === String(selectedId) ? 'selected' : ''}>${i.name ?? i.item_name ?? i.material_name}</option>`
-                ).join('');
-        }
-
-        // ── Process table (fixed rows from PROCESS_NAMES) ───────────────────
+        // ── Process table ──────────────────────────────────────────────────────────
         function buildProcessTable() {
             const tbody = document.getElementById('procBody');
             tbody.innerHTML = '';
@@ -1802,18 +1982,17 @@
                 const tr = document.createElement('tr');
                 tr.id = `prow-${idx}`;
                 tr.dataset.process = name;
-                const firingOpts = FIRING_OPTIONS.map(f =>
-                    `<option value="${f}">${f || 'Select…'}</option>`).join('');
+                const firingOpts = FIRING_OPTIONS.map(f => `<option value="${f}">${f || 'Select…'}</option>`).join('');
                 tr.innerHTML = `
-          <td style="font-size:12px;font-weight:600;padding-left:10px;white-space:nowrap">${name}</td>
-          <td><button class="proc-btn proc-start" onclick="setProcessTime(${idx},'start')">START</button></td>
-          <td style="padding:4px 4px"><input type="time" class="ri" id="proc_start_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
-          <td><button class="proc-btn proc-end" onclick="setProcessTime(${idx},'end')">END</button></td>
-          <td style="padding:4px 4px"><input type="time" class="ri" id="proc_end_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
-          <td><input type="text" class="ri ro" id="proc_total_${idx}" readonly placeholder="0 min" style="min-width:70px;font-weight:700;color:var(--g);background:var(--gxl)"></td>
-          <td style="position:relative" class="sc">
-            <select class="rs" id="proc_firing_${idx}" onchange="triggerAutosave()" style="min-width:100px">${firingOpts}</select>
-          </td>`;
+              <td style="font-size:12px;font-weight:600;padding-left:10px;white-space:nowrap">${name}</td>
+              <td><button class="proc-btn proc-start" onclick="setProcessTime(${idx},'start')">START</button></td>
+              <td style="padding:4px 4px"><input type="time" class="ri" id="proc_start_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
+              <td><button class="proc-btn proc-end" onclick="setProcessTime(${idx},'end')">END</button></td>
+              <td style="padding:4px 4px"><input type="time" class="ri" id="proc_end_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
+              <td><input type="text" class="ri ro" id="proc_total_${idx}" readonly placeholder="0 min" style="min-width:70px;font-weight:700;color:var(--g);background:var(--gxl)"></td>
+              <td style="position:relative" class="sc">
+                <select class="rs" id="proc_firing_${idx}" onchange="triggerAutosave()" style="min-width:100px">${firingOpts}</select>
+              </td>`;
                 tbody.appendChild(tr);
             });
         }
@@ -1822,8 +2001,7 @@
             const now = new Date();
             const t = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
             document.getElementById(`proc_${which}_${idx}`).value = t;
-            calcProcTime(idx);
-            triggerAutosave();
+            calcProcTime(idx); triggerAutosave();
         }
 
         function calcProcTime(idx) {
@@ -1835,26 +2013,21 @@
                 const [eh, em] = e.split(':').map(Number);
                 let mins = (eh * 60 + em) - (sh * 60 + sm);
                 if (mins < 0) mins += 1440;
-                el.value = mins + ' min';
-                el.dataset.mins = mins;
-            } else {
-                el.value = '';
-                el.dataset.mins = 0;
-            }
+                el.value = mins + ' min'; el.dataset.mins = mins;
+            } else { el.value = ''; el.dataset.mins = 0; }
             calcTotalBatchTime();
         }
 
         function calcTotalBatchTime() {
             let total = 0;
-            PROCESS_NAMES.forEach((_, idx) => {
-                total += parseInt(document.getElementById(`proc_total_${idx}`)?.dataset.mins ?? 0);
-            });
-            const h = Math.floor(total / 60);
-            const m = total % 60;
+            PROCESS_NAMES.forEach((_, idx) => { total += parseInt(document.getElementById(`proc_total_${idx}`)?.dataset.mins ?? 0); });
+            const h = Math.floor(total / 60), m = total % 60;
             document.getElementById('totalBatchTime').value = h > 0 ? `${h}h ${m}min` : `${m} min`;
         }
 
-        // ── Raw Material rows ───────────────────────────────────────────────
+        // ════════════════════════════════════════════════════════════════════════════
+        // RAW MATERIALS TABLE
+        // ════════════════════════════════════════════════════════════════════════════
         function addRawRow(data = {}) {
             rawRowCount++;
             const i = rawRowCount;
@@ -1862,61 +2035,55 @@
             const tr = document.createElement('tr');
             tr.id = `rrow-${i}`;
             tr.dataset.rowIndex = i;
-            // Store bbsu data on the row element itself
             tr.dataset.bbsuBatchId = data.bbsu_batch_id || '';
             tr.dataset.bbsuBatchNo = data.bbsu_batch_no || '';
-            tr.dataset.bbsuAvailableQty = data.bbsu_available_qty || '';
+            tr.dataset.bbsuSelections = data.bbsu_selections ? JSON.stringify(data.bbsu_selections) : '';
             tr.innerHTML = `
-        <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-        <td style="position:relative" class="sc">
-          <select class="rs" id="rm_id_${i}" name="raw_materials[${i}][raw_material_id]"
-            onchange="onRawMaterialChange(${i});triggerAutosave()"
-            style="min-width:130px">${getItemOptions(data.raw_material_id)}</select>
-        </td>
-        <td>
-          <input type="number" class="ri" id="rm_qty_${i}" name="raw_materials[${i}][raw_material_qty]"
-            value="${data.raw_material_qty ?? ''}" step="0.001" placeholder="0.000"
-            oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"
-            onclick="onRawQtyClick(${i})"
-            onfocus="onRawQtyFocus(${i})"
-            style="min-width:90px;cursor:pointer"
-            title="Click to assign from BBSU batch">
-          <input type="hidden" id="rm_bbsu_id_${i}" name="raw_materials[${i}][bbsu_batch_id]" value="${data.bbsu_batch_id ?? ''}">
-          <input type="hidden" id="rm_bbsu_no_${i}" name="raw_materials[${i}][bbsu_batch_no]" value="${data.bbsu_batch_no ?? ''}">
-        </td>
-        <td><input type="number" class="ri" id="rm_yield_${i}" name="raw_materials[${i}][raw_material_yield_pct]"
-          value="${data.raw_material_yield_pct ?? ''}" step="0.01" placeholder="0.00"
-          oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"></td>
-        <td><input type="number" class="ri ro" id="rm_exp_${i}"
-          value="${data.expected_output_qty ?? ''}" readonly placeholder="0.000"
-          style="background:#eef6f1;color:var(--g);font-weight:600"></td>
-        <td><button class="del-btn" onclick="removeRow('rrow-${i}',recalcRawTotals)" title="Remove">
-          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-        </button></td>`;
+            <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+            <td style="position:relative;min-width:160px">
+              <div class="sdd" id="sdd_rm_id_${i}">
+                <div class="sdd-trigger" onclick="toggleSdd('rm_id_${i}')">
+                  <span class="sdd-trigger-text placeholder" id="sdd_rm_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                  <svg class="sdd-clear" onclick="clearSdd('rm_id_${i}',event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <input type="hidden" id="rm_id_${i}" onchange="onRawMaterialChange(${i});triggerAutosave()">
+              </div>
+            </td>
+            <td>
+              <input type="number" class="ri" id="rm_qty_${i}" name="raw_materials[${i}][raw_material_qty]"
+                value="${data.raw_material_qty ?? ''}" step="0.001" placeholder="0.000"
+                oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"
+                onclick="onRawQtyClick(${i})" onfocus="onRawQtyFocus(${i})"
+                style="min-width:90px;cursor:pointer" title="Click to assign from BBSU batch">
+              <input type="hidden" id="rm_bbsu_id_${i}" value="${data.bbsu_batch_id ?? ''}">
+              <input type="hidden" id="rm_bbsu_no_${i}" value="${data.bbsu_batch_no ?? ''}">
+            </td>
+            <td><input type="number" class="ri" id="rm_yield_${i}" value="${data.raw_material_yield_pct ?? ''}" step="0.01" placeholder="0.00"
+              oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"></td>
+            <td><input type="number" class="ri ro" id="rm_exp_${i}" value="${data.expected_output_qty ?? ''}" readonly placeholder="0.000"
+              style="background:#eef6f1;color:var(--g);font-weight:600"></td>
+            <td><button class="del-btn" onclick="removeRow('rrow-${i}',recalcRawTotals)" title="Remove">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
+            initMaterialSdd(`rm_id_${i}`, data.raw_material_id ?? null);
         }
 
-        // Called when material dropdown changes — enable/reset BBSU button
-        function onRawMaterialChange(i) {
-            clearBbsuOnRow(i);
-        }
+        function onRawMaterialChange(i) { clearBbsuOnRow(i); }
 
-        // When user focuses the QTY field — if no BBSU selected yet AND material chosen, open modal
         function onRawQtyClick(i) {
-            const materialId = document.getElementById(`rm_id_${i}`)?.value;
-            if (materialId) openBbsuModal(i);
+            const matId = document.getElementById(`rm_id_${i}`)?.value;
+            if (matId) openBbsuModal(i);
         }
 
         function onRawQtyFocus(i) {
-            const materialId = document.getElementById(`rm_id_${i}`)?.value;
+            const matId = document.getElementById(`rm_id_${i}`)?.value;
             const bbsuId = document.getElementById(`rm_bbsu_id_${i}`)?.value;
-            if (materialId && !bbsuId) {
-                openBbsuModal(i);
-            }
+            if (matId && !bbsuId) openBbsuModal(i);
         }
 
-        // Clear BBSU selection on a row
         function clearBbsuOnRow(i) {
             const idEl = document.getElementById(`rm_bbsu_id_${i}`);
             const noEl = document.getElementById(`rm_bbsu_no_${i}`);
@@ -1947,7 +2114,9 @@
             document.getElementById('rawTotalExpected').value = exp ? exp.toFixed(3) : '';
         }
 
-        // ── Flux / Chemical rows ────────────────────────────────────────────
+        // ════════════════════════════════════════════════════════════════════════════
+        // FLUX / CHEMICAL TABLE
+        // ════════════════════════════════════════════════════════════════════════════
         function addFluxRow(data = {}) {
             fluxRowCount++;
             const i = fluxRowCount;
@@ -1957,27 +2126,32 @@
             tr.dataset.rowIndex = i;
             tr.dataset.fluxBbsuSelections = data.flux_bbsu_selections ? JSON.stringify(data.flux_bbsu_selections) : '';
             tr.innerHTML = `
-        <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-        <td style="position:relative" class="sc">
-          <select class="rs" id="fl_id_${i}" onchange="onFluxMaterialChange(${i});triggerAutosave()"
-            style="min-width:130px">${getItemOptions(data.chemical_id)}</select>
-        </td>
-        <td>
-          <input type="number" class="ri" id="fl_qty_${i}"
-            value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
-            oninput="recalcFluxTotals();triggerAutosave()"
-            onclick="onFluxQtyClick(${i})"
-            onfocus="onFluxQtyFocus(${i})"
-            style="min-width:90px;cursor:pointer"
-            title="Click to assign from BBSU batch">
-          <input type="hidden" id="fl_bbsu_id_${i}" value="${data.fl_bbsu_batch_id ?? ''}">
-          <input type="hidden" id="fl_bbsu_no_${i}" value="${data.fl_bbsu_batch_no ?? ''}">
-        </td>
-        <td><button class="del-btn" onclick="removeRow('frow-${i}',recalcFluxTotals)" title="Remove">
-          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-        </button></td>`;
+            <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+            <td style="position:relative;min-width:160px">
+              <div class="sdd" id="sdd_fl_id_${i}">
+                <div class="sdd-trigger" onclick="toggleSdd('fl_id_${i}')">
+                  <span class="sdd-trigger-text placeholder" id="sdd_fl_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                  <svg class="sdd-clear" onclick="clearSdd('fl_id_${i}',event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <input type="hidden" id="fl_id_${i}" onchange="onFluxMaterialChange(${i});triggerAutosave()">
+              </div>
+            </td>
+            <td>
+              <input type="number" class="ri" id="fl_qty_${i}"
+                value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
+                oninput="recalcFluxTotals();triggerAutosave()"
+                onclick="onFluxQtyClick(${i})" onfocus="onFluxQtyFocus(${i})"
+                style="min-width:90px;cursor:pointer" title="Click to assign from BBSU batch">
+              <input type="hidden" id="fl_bbsu_id_${i}" value="${data.fl_bbsu_batch_id ?? ''}">
+              <input type="hidden" id="fl_bbsu_no_${i}" value="${data.fl_bbsu_batch_no ?? ''}">
+            </td>
+            <td><button class="del-btn" onclick="removeRow('frow-${i}',recalcFluxTotals)" title="Remove">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
+            initMaterialSdd(`fl_id_${i}`, data.chemical_id ?? null);
         }
 
         function recalcFluxTotals() {
@@ -1989,20 +2163,17 @@
             document.getElementById('fluxTotalQty').value = qty ? qty.toFixed(3) : '';
         }
 
-        // ── Flux BBSU helpers ───────────────────────────────────────────
-        function onFluxMaterialChange(i) {
-            clearFluxBbsuOnRow(i);
-        }
+        function onFluxMaterialChange(i) { clearFluxBbsuOnRow(i); }
 
         function onFluxQtyClick(i) {
-            const materialId = document.getElementById(`fl_id_${i}`)?.value;
-            if (materialId) openFluxModal(i);
+            const matId = document.getElementById(`fl_id_${i}`)?.value;
+            if (matId) openFluxModal(i);
         }
 
         function onFluxQtyFocus(i) {
-            const materialId = document.getElementById(`fl_id_${i}`)?.value;
+            const matId = document.getElementById(`fl_id_${i}`)?.value;
             const bbsuId = document.getElementById(`fl_bbsu_id_${i}`)?.value;
-            if (materialId && !bbsuId) openFluxModal(i);
+            if (matId && !bbsuId) openFluxModal(i);
         }
 
         function clearFluxBbsuOnRow(i) {
@@ -2017,7 +2188,7 @@
             triggerAutosave();
         }
 
-        // ── Temperature rows ────────────────────────────────────────────────
+        // ── Temperature rows ───────────────────────────────────────────────────────
         function addTempRow(data = {}) {
             tempRowCount++;
             const i = tempRowCount;
@@ -2026,20 +2197,20 @@
             tr.id = `trow-${i}`;
             tr.dataset.rowIndex = i;
             tr.innerHTML = `
-        <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-        <td><input type="time" class="ri" id="temp_time_${i}" value="${data.record_time ?? ''}" oninput="triggerAutosave()"></td>
-        <td><input type="number" class="ri" id="temp_inside_${i}" value="${data.inside_temp_before_charging ?? ''}" step="0.01" placeholder="°C" oninput="triggerAutosave()"></td>
-        <td><input type="text" class="ri" id="temp_pgc_${i}" value="${data.process_gas_chamber_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
-        <td><input type="text" class="ri" id="temp_shell_${i}" value="${data.shell_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
-        <td><input type="text" class="ri" id="temp_bag_${i}" value="${data.bag_house_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
-        <td><button class="del-btn" onclick="removeRow('trow-${i}',null)" title="Remove">
-          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-        </button></td>`;
+            <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+            <td><input type="time" class="ri" id="temp_time_${i}" value="${data.record_time ?? ''}" oninput="triggerAutosave()"></td>
+            <td><input type="number" class="ri" id="temp_inside_${i}" value="${data.inside_temp_before_charging ?? ''}" step="0.01" placeholder="°C" oninput="triggerAutosave()"></td>
+            <td><input type="text" class="ri" id="temp_pgc_${i}" value="${data.process_gas_chamber_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
+            <td><input type="text" class="ri" id="temp_shell_${i}" value="${data.shell_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
+            <td><input type="text" class="ri" id="temp_bag_${i}" value="${data.bag_house_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
+            <td><button class="del-btn" onclick="removeRow('trow-${i}',null)" title="Remove">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
         }
 
-        // ── Consumption calc ─────────────────────────────────────────────────
+        // ── Consumption calc ───────────────────────────────────────────────────────
         function calcConsumption(prefix) {
             const init = parseFloat(document.getElementById(`${prefix}_initial`)?.value) || 0;
             const fin = parseFloat(document.getElementById(`${prefix}_final`)?.value) || 0;
@@ -2050,7 +2221,19 @@
             if (hid) hid.value = diff !== null ? diff : '';
         }
 
-        // ── Load record for edit ─────────────────────────────────────────────
+        function calcLpgConversion() {
+            const val = parseFloat(document.getElementById('lpg_consumption').value) || 0;
+            const el = document.getElementById('lpg_converted');
+            if (el) el.textContent = val > 0 ? (val * 4.2).toFixed(2) + ' LTR' : '0.00 LTR';
+        }
+
+        function calcO2Conversion() {
+            const val = parseFloat(document.getElementById('o2_consumption').value) || 0;
+            const el = document.getElementById('o2_converted');
+            if (el) el.textContent = val > 0 ? (val * 1.429).toFixed(2) + ' KG' : '0.00 KG';
+        }
+
+        // ── Load record ────────────────────────────────────────────────────────────
         async function loadRecord() {
             const res = await apiFetch(`/smelting-batches/${recordId}`);
             if (!res?.ok) { showAlert('Failed to load record.'); return; }
@@ -2058,55 +2241,55 @@
 
             isSubmitted = data.status === 'submitted';
 
-            // Fill header
-            document.getElementById('batch_no').value = data.batch_no ?? '';
-            document.getElementById('date').value = data.date?.slice(0, 10) ?? '';
-            document.getElementById('rotary_no').value = data.rotary_no ?? '';
+            document.getElementById('batch_no').value    = data.batch_no ?? '';
+            document.getElementById('date').value        = data.date?.slice(0, 10) ?? '';
+            document.getElementById('rotary_no').value   = data.rotary_no ?? '';
             if (data.start_time) document.getElementById('start_time').value = data.start_time.slice(11, 16);
-            if (data.end_time) document.getElementById('end_time').value = data.end_time.slice(11, 16);
+            if (data.end_time)   document.getElementById('end_time').value   = data.end_time.slice(11, 16);
 
-            document.getElementById('lpg_consumption').value = data.lpg_consumption ?? '';
-            document.getElementById('o2_consumption').value = data.o2_consumption ?? '';
-            document.getElementById('id_fan_initial').value = data.id_fan_initial ?? '';
-            document.getElementById('id_fan_final').value = data.id_fan_final ?? '';
+            // ── Charge No ──────────────────────────────────────────────────────────
+            document.getElementById('charge_no').value = data.charge_no ?? '';
+
+            document.getElementById('lpg_consumption').value      = data.lpg_consumption ?? '';
+            document.getElementById('o2_consumption').value       = data.o2_consumption ?? '';
+            calcLpgConversion();
+            calcO2Conversion();
+            document.getElementById('id_fan_initial').value       = data.id_fan_initial ?? '';
+            document.getElementById('id_fan_final').value         = data.id_fan_final ?? '';
             document.getElementById('rotary_power_initial').value = data.rotary_power_initial ?? '';
-            document.getElementById('rotary_power_final').value = data.rotary_power_final ?? '';
-            document.getElementById('output_material').value = data.output_material ?? '';
-            loadOutputBlocks(data.output_blocks);   // fills output_qty from block weights
+            document.getElementById('rotary_power_final').value   = data.rotary_power_final ?? '';
 
+            if (data.output_material) sddSelect('output_material', String(data.output_material), false);
+
+            loadOutputBlocks(data.output_blocks);
             calcConsumption('id_fan');
             calcConsumption('rotary_power');
 
-            // Raw materials
             (data.raw_materials ?? []).forEach(r => addRawRow(r));
             if (!data.raw_materials?.length) addRawRow();
             recalcRawTotals();
 
-            // Flux chemicals
             (data.flux_chemicals ?? []).forEach(f => addFluxRow(f));
             if (!data.flux_chemicals?.length) addFluxRow();
             recalcFluxTotals();
 
-            // Process details
             (data.process_details ?? []).forEach(pd => {
                 const idx = PROCESS_NAMES.indexOf(pd.process_name);
                 if (idx >= 0) {
                     if (pd.start_time) document.getElementById(`proc_start_${idx}`).value = pd.start_time.slice(11, 16);
-                    if (pd.end_time) document.getElementById(`proc_end_${idx}`).value = pd.end_time.slice(11, 16);
+                    if (pd.end_time)   document.getElementById(`proc_end_${idx}`).value   = pd.end_time.slice(11, 16);
                     if (pd.firing_mode) document.getElementById(`proc_firing_${idx}`).value = pd.firing_mode;
                     calcProcTime(idx);
                 }
             });
 
-            // Temperature records
             (data.temperature_records ?? []).forEach(t => addTempRow(t));
             if (!data.temperature_records?.length) addTempRow();
 
-            // Page title
-            document.getElementById('pageTitle').textContent = 'Edit Smelting Batch';
-            document.getElementById('pageSubtitle').textContent = `Batch: ${data.batch_no}`;
+            document.getElementById('pageTitle').textContent      = 'Edit Smelting Batch';
+            document.getElementById('pageSubtitle').textContent   = `Batch: ${data.batch_no}`;
             document.getElementById('breadcrumbTitle').textContent = 'Edit Batch';
-            document.getElementById('btnSaveLabel').textContent = 'Save Draft';
+            document.getElementById('btnSaveLabel').textContent   = 'Save Draft';
 
             const badge = document.getElementById('statusBadge');
             if (isSubmitted) {
@@ -2119,30 +2302,24 @@
             }
         }
 
-        // ── Build payload ────────────────────────────────────────────────────
+        // ── Build payload ──────────────────────────────────────────────────────────
         function buildPayload() {
             const raw_materials = [];
             document.querySelectorAll('#rawBody tr').forEach(tr => {
                 const i = tr.dataset.rowIndex;
                 const id = document.getElementById(`rm_id_${i}`)?.value;
                 if (!id) return;
-                // For multi-bbsu: bbsu_selections holds each batch+qty pair;
-                // bbsu_batch_id/no hold first (or only) value for backward compat
-                const bbsuSelections = tr.dataset.bbsuSelections
-                    ? JSON.parse(tr.dataset.bbsuSelections) : null;
+                const bbsuSelections = tr.dataset.bbsuSelections ? JSON.parse(tr.dataset.bbsuSelections) : null;
                 const bbsuIdRaw = document.getElementById(`rm_bbsu_id_${i}`)?.value || null;
                 const bbsuNoRaw = document.getElementById(`rm_bbsu_no_${i}`)?.value || null;
-                // first id/no only (backward compat with single-batch DB column)
-                const firstBbsuId = bbsuIdRaw ? bbsuIdRaw.split(',')[0] : null;
-                const firstBbsuNo = bbsuNoRaw ? bbsuNoRaw.split(',')[0] : null;
                 raw_materials.push({
-                    raw_material_id: id,
-                    bbsu_batch_id: firstBbsuId,
-                    bbsu_batch_no: firstBbsuNo,
-                    bbsu_selections: bbsuSelections, // full multi-batch detail
-                    raw_material_qty: document.getElementById(`rm_qty_${i}`)?.value || 0,
+                    raw_material_id:        id,
+                    bbsu_batch_id:          bbsuIdRaw ? bbsuIdRaw.split(',')[0] : null,
+                    bbsu_batch_no:          bbsuNoRaw ? bbsuNoRaw.split(',')[0] : null,
+                    bbsu_selections:        bbsuSelections,
+                    raw_material_qty:       document.getElementById(`rm_qty_${i}`)?.value || 0,
                     raw_material_yield_pct: document.getElementById(`rm_yield_${i}`)?.value || 0,
-                    expected_output_qty: document.getElementById(`rm_exp_${i}`)?.value || 0,
+                    expected_output_qty:    document.getElementById(`rm_exp_${i}`)?.value || 0,
                 });
             });
 
@@ -2151,27 +2328,24 @@
                 const i = tr.dataset.rowIndex;
                 const id = document.getElementById(`fl_id_${i}`)?.value;
                 if (!id) return;
-                const fluxSelections = tr.dataset.fluxBbsuSelections
-                    ? JSON.parse(tr.dataset.fluxBbsuSelections) : null;
+                const fluxSelections = tr.dataset.fluxBbsuSelections ? JSON.parse(tr.dataset.fluxBbsuSelections) : null;
                 const fluxBbsuIdRaw = document.getElementById(`fl_bbsu_id_${i}`)?.value || null;
                 const fluxBbsuNoRaw = document.getElementById(`fl_bbsu_no_${i}`)?.value || null;
                 flux_chemicals.push({
-                    chemical_id: id,
+                    chemical_id:   id,
                     bbsu_batch_id: fluxBbsuIdRaw ? fluxBbsuIdRaw.split(',')[0] : null,
                     bbsu_batch_no: fluxBbsuNoRaw ? fluxBbsuNoRaw.split(',')[0] : null,
                     bbsu_selections: fluxSelections,
-                    qty: document.getElementById(`fl_qty_${i}`)?.value || 0,
+                    qty:           document.getElementById(`fl_qty_${i}`)?.value || 0,
                 });
             });
 
             const process_details = PROCESS_NAMES.map((name, idx) => ({
                 process_name: name,
                 start_time: document.getElementById(`proc_start_${idx}`)?.value
-                    ? document.getElementById('date').value + 'T' + document.getElementById(`proc_start_${idx}`).value + ':00'
-                    : null,
+                    ? document.getElementById('date').value + 'T' + document.getElementById(`proc_start_${idx}`).value + ':00' : null,
                 end_time: document.getElementById(`proc_end_${idx}`)?.value
-                    ? document.getElementById('date').value + 'T' + document.getElementById(`proc_end_${idx}`).value + ':00'
-                    : null,
+                    ? document.getElementById('date').value + 'T' + document.getElementById(`proc_end_${idx}`).value + ':00' : null,
                 total_time: parseInt(document.getElementById(`proc_total_${idx}`)?.dataset.mins ?? 0),
                 firing_mode: document.getElementById(`proc_firing_${idx}`)?.value || null,
             })).filter(p => p.start_time || p.end_time);
@@ -2181,69 +2355,58 @@
                 const i = tr.dataset.rowIndex;
                 temperature_records.push({
                     record_time: document.getElementById(`temp_time_${i}`)?.value
-                        ? document.getElementById('date').value + 'T' + document.getElementById(`temp_time_${i}`).value + ':00'
-                        : null,
+                        ? document.getElementById('date').value + 'T' + document.getElementById(`temp_time_${i}`).value + ':00' : null,
                     inside_temp_before_charging: document.getElementById(`temp_inside_${i}`)?.value || null,
-                    process_gas_chamber_temp: document.getElementById(`temp_pgc_${i}`)?.value || null,
-                    shell_temp: document.getElementById(`temp_shell_${i}`)?.value || null,
-                    bag_house_temp: document.getElementById(`temp_bag_${i}`)?.value || null,
+                    process_gas_chamber_temp:    document.getElementById(`temp_pgc_${i}`)?.value || null,
+                    shell_temp:                  document.getElementById(`temp_shell_${i}`)?.value || null,
+                    bag_house_temp:              document.getElementById(`temp_bag_${i}`)?.value || null,
                 });
             });
 
-            const dateVal = document.getElementById('date').value;
-            const stVal = document.getElementById('start_time').value;
-            const etVal = document.getElementById('end_time').value;
-
             return {
-                batch_no: document.getElementById('batch_no').value,
-                rotary_no: document.getElementById('rotary_no').value,
-                date: dateVal,
-                start_time: stVal || null,
-                end_time: etVal || null,
-                lpg_consumption: document.getElementById('lpg_consumption').value || null,
-                o2_consumption: document.getElementById('o2_consumption').value || null,
-                id_fan_initial: document.getElementById('id_fan_initial').value || null,
-                id_fan_final: document.getElementById('id_fan_final').value || null,
-                id_fan_consumption: document.getElementById('id_fan_consumption').value || null,
-                rotary_power_initial: document.getElementById('rotary_power_initial').value || null,
-                rotary_power_final: document.getElementById('rotary_power_final').value || null,
-                rotary_power_consumption: document.getElementById('rotary_power_consumption').value || null,
-                output_material: document.getElementById('output_material').value || null,
-                output_qty: document.getElementById('output_qty').value || null,
-                raw_materials,
-                flux_chemicals,
-                process_details,
-                temperature_records,
+                batch_no:   document.getElementById('batch_no').value,
+                rotary_no:  document.getElementById('rotary_no').value,
+                date:       document.getElementById('date').value,
+                start_time: document.getElementById('start_time').value || null,
+                end_time:   document.getElementById('end_time').value || null,
+
+                // ── Charge No included in every save/autosave ──────────────────────
+                charge_no:  document.getElementById('charge_no').value.trim() || null,
+
+                lpg_consumption:           document.getElementById('lpg_consumption').value || null,
+                o2_consumption:            document.getElementById('o2_consumption').value || null,
+                id_fan_initial:            document.getElementById('id_fan_initial').value || null,
+                id_fan_final:              document.getElementById('id_fan_final').value || null,
+                id_fan_consumption:        document.getElementById('id_fan_consumption').value || null,
+                rotary_power_initial:      document.getElementById('rotary_power_initial').value || null,
+                rotary_power_final:        document.getElementById('rotary_power_final').value || null,
+                rotary_power_consumption:  document.getElementById('rotary_power_consumption').value || null,
+                output_material:           document.getElementById('output_material').value || null,
+                output_qty:                document.getElementById('output_qty').value || null,
+                raw_materials, flux_chemicals, process_details, temperature_records,
                 output_blocks: outputBlockRows.map((r, idx) => ({
-                    material_id: document.getElementById('output_material').value || null,
-                    block_sl_no: idx + 1,
-                    block_weight: parseFloat(r.qty) || 0,
+                    material_id:   document.getElementById('output_material').value || null,
+                    block_sl_no:   idx + 1,
+                    block_weight:  parseFloat(r.qty) || 0,
                 })).filter(r => r.block_weight > 0),
             };
         }
 
-        // ── Save form ────────────────────────────────────────────────────────
+        // ── Save ───────────────────────────────────────────────────────────────────
         async function saveForm(silent = false) {
             const payload = buildPayload();
             const btn = document.getElementById('btnSave');
             if (!silent) btn.disabled = true;
-
-            const method = isCreate ? 'POST' : 'PUT';
+            const method   = isCreate ? 'POST' : 'PUT';
             const endpoint = isCreate ? '/smelting-batches' : `/smelting-batches/${recordId}`;
-
             const res = await apiFetch(endpoint, { method, body: JSON.stringify(payload) });
             if (!silent) btn.disabled = false;
             if (!res) return;
-
             const data = await res.json();
-
             if (res.ok && data.status === 'ok') {
                 if (!silent) {
-                    if (isCreate) {
-                        window.location.href = `{{ url('/admin/mes/smelting') }}/${data.data.id}/edit`;
-                    } else {
-                        showAlert('Saved successfully.', 'success');
-                    }
+                    if (isCreate) { window.location.href = `{{ url('/admin/mes/smelting') }}/${data.data.id}/edit`; }
+                    else { showAlert('Saved successfully.', 'success'); }
                 } else {
                     setDot('saved', 'Autosaved at ' + new Date().toLocaleTimeString());
                     setTimeout(() => document.getElementById('autosaveStatus').style.display = 'none', 4000);
@@ -2255,7 +2418,7 @@
             }
         }
 
-        // ── Submit ───────────────────────────────────────────────────────────
+        // ── Submit ─────────────────────────────────────────────────────────────────
         async function submitBatch() {
             if (!confirm('Submit this batch? It will be locked from further edits.')) return;
             await saveForm(true);
@@ -2269,23 +2432,31 @@
             }
         }
 
-        // ── Autosave ─────────────────────────────────────────────────────────
+        // ── Autosave ───────────────────────────────────────────────────────────────
         function setupAutosave() {
-            const watch = ['date', 'rotary_no', 'start_time', 'end_time', 'lpg_consumption', 'o2_consumption',
-                'id_fan_initial', 'id_fan_final', 'rotary_power_initial', 'rotary_power_final',
-                'output_material', 'output_qty'];
+            // ── charge_no added to the watched field list ──────────────────────────
+            const watch = [
+                'date', 'rotary_no', 'start_time', 'end_time',
+                'charge_no',                          // ← NEW
+                'lpg_consumption', 'o2_consumption',
+                'id_fan_initial', 'id_fan_final',
+                'rotary_power_initial', 'rotary_power_final',
+                'output_material', 'output_qty',
+            ];
             watch.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('change', triggerAutosave);
             });
         }
+
         function triggerAutosave() {
             if (isCreate || isSubmitted) return;
             setDot('saving', 'Saving…');
             document.getElementById('autosaveStatus').style.display = 'inline';
             clearTimeout(autosaveTimer);
-            autosaveTimer = setTimeout(() => saveForm(true), 2200);
+            // autosaveTimer = setTimeout(() => saveForm(true), 2200);
         }
+
         function setDot(state, text) {
             const dot = document.getElementById('asDot');
             const txt = document.getElementById('asText');
@@ -2293,70 +2464,61 @@
             if (txt) txt.textContent = text;
         }
 
-        // ── Helpers ──────────────────────────────────────────────────────────
+        // ── Helpers ────────────────────────────────────────────────────────────────
         function removeRow(id, recalcFn) {
             const el = document.getElementById(id);
             if (!el) return;
-            el.style.transition = 'opacity .18s';
-            el.style.opacity = '0';
+            el.style.transition = 'opacity .18s'; el.style.opacity = '0';
             setTimeout(() => { el.remove(); if (recalcFn) recalcFn(); triggerAutosave(); }, 190);
         }
         function animateIn(el) {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(-5px)';
+            el.style.opacity = '0'; el.style.transform = 'translateY(-5px)';
             requestAnimationFrame(() => {
                 el.style.transition = 'opacity .22s,transform .22s';
-                el.style.opacity = '1';
-                el.style.transform = 'translateY(0)';
+                el.style.opacity = '1'; el.style.transform = 'translateY(0)';
             });
         }
         function showAlert(msg, type = 'error') {
             const el = document.getElementById('formAlert');
-            el.className = `form-alert ${type}`;
-            el.textContent = msg;
+            el.className = `form-alert ${type}`; el.textContent = msg;
             window.scrollTo({ top: 0, behavior: 'smooth' });
             if (type === 'success') setTimeout(() => { el.className = 'form-alert'; el.textContent = ''; }, 4000);
         }
         function setReadonly(ro) {
             document.querySelectorAll('input,select,textarea').forEach(el => {
-                if (ro) { el.setAttribute('disabled', true); }
-                else { el.removeAttribute('disabled'); }
+                if (ro) el.setAttribute('disabled', true); else el.removeAttribute('disabled');
             });
-            document.getElementById('btnSave').style.display = ro ? 'none' : '';
-            document.getElementById('btnSubmit').style.display = ro ? 'none' : '';
-            document.getElementById('btnAddRaw').style.display = ro ? 'none' : '';
-            document.getElementById('btnAddFlux').style.display = ro ? 'none' : '';
-            document.getElementById('btnAddTemp').style.display = ro ? 'none' : '';
+            document.querySelectorAll('.sdd-trigger').forEach(t => {
+                t.style.pointerEvents = ro ? 'none' : '';
+                t.style.opacity = ro ? '0.6' : '';
+            });
+            ['btnSave', 'btnSubmit', 'btnAddRaw', 'btnAddFlux', 'btnAddTemp'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = ro ? 'none' : '';
+            });
             if (ro) document.getElementById('readonlyNotice').style.display = 'block';
             document.querySelectorAll('.del-btn').forEach(b => b.style.display = ro ? 'none' : '');
             document.querySelectorAll('.proc-btn').forEach(b => b.style.display = ro ? 'none' : '');
         }
 
-        // ════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
         // OUTPUT QTY WINDOW MODAL
-        // User enters block SL NO + weight rows; total → output_qty field
-        // ════════════════════════════════════════════════════════════════
-        let outputBlockRows = [];   // [{qty}] persisted across modal opens
-        const OUTPUT_MAX_ROWS = 11; // screenshot shows 11 fixed rows
+        // ════════════════════════════════════════════════════════════════════════════
+        let outputBlockRows = [];
+        const OUTPUT_MAX_ROWS = 11;
 
         function onOutputMaterialChange() {
-            // When material changes, clear blocks
             outputBlockRows = [];
             document.getElementById('output_qty').value = '';
         }
 
         function openOutputModal() {
             const matId = document.getElementById('output_material').value;
-            if (!matId) {
-                showAlert('Please select a material first.', 'error');
-                return;
-            }
-            const matName = document.getElementById('output_material').selectedOptions[0]?.text ?? '';
+            if (!matId) { showAlert('Please select a material first.', 'error'); return; }
+            const matName = sddRegistry['output_material']?.selected?.label ?? '';
             document.getElementById('outputModalSubtitle').textContent = matName
                 ? `Material: ${matName} — enter block weights`
                 : 'Enter block weights — total auto-calculates';
-
-            // Render rows
             renderOutputRows();
             document.getElementById('outputQtyModal').classList.add('open');
             document.body.style.overflow = 'hidden';
@@ -2371,36 +2533,27 @@
         function renderOutputRows() {
             const tbody = document.getElementById('outputBlockTbody');
             tbody.innerHTML = '';
-            // Always show at least OUTPUT_MAX_ROWS rows
             const count = Math.max(OUTPUT_MAX_ROWS, outputBlockRows.length);
             for (let i = 0; i < count; i++) {
                 const qty = outputBlockRows[i]?.qty ?? '';
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid var(--bdr)';
                 tr.innerHTML = `
-          <td style="padding:5px 14px;font-size:12.5px;font-weight:700;color:var(--g);text-align:right;
-                     background:var(--gxl);width:80px;border-right:1px solid var(--bdr)">${i + 1}</td>
-          <td style="padding:4px 10px">
-            <input type="number" step="0.001" min="0" placeholder="0.000"
-              value="${qty}"
-              style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:6px;
-                     font-family:'Outfit',sans-serif;font-size:13px;text-align:right;
-                     background:var(--white);outline:none;transition:border-color .15s"
-              oninput="onOutputQtyInput(this, ${i})"
-              onfocus="this.style.borderColor='var(--g)'"
-              onblur="this.style.borderColor='var(--bdr)'">
-          </td>`;
+              <td style="padding:5px 14px;font-size:12.5px;font-weight:700;color:var(--g);text-align:right;background:var(--gxl);width:80px;border-right:1px solid var(--bdr)">${i + 1}</td>
+              <td style="padding:4px 10px">
+                <input type="number" step="0.001" min="0" placeholder="0.000" value="${qty}"
+                  style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-family:'Outfit',sans-serif;font-size:13px;text-align:right;background:var(--white);outline:none;transition:border-color .15s"
+                  oninput="onOutputQtyInput(this,${i})"
+                  onfocus="this.style.borderColor='var(--g)'"
+                  onblur="this.style.borderColor='var(--bdr)'">
+              </td>`;
                 tbody.appendChild(tr);
             }
             recalcOutputTotal();
         }
 
         function addOutputRow() {
-            // Save current values first
-            syncOutputRows();
-            outputBlockRows.push({ qty: '' });
-            renderOutputRows();
-            // Focus the new row's input
+            syncOutputRows(); outputBlockRows.push({ qty: '' }); renderOutputRows();
             const inputs = document.querySelectorAll('#outputBlockTbody input');
             if (inputs.length) inputs[inputs.length - 1].focus();
         }
@@ -2421,27 +2574,20 @@
         function recalcOutputTotal() {
             let total = 0;
             document.querySelectorAll('#outputBlockTbody input').forEach(inp => {
-                const v = parseFloat(inp.value);
-                if (!isNaN(v) && v > 0) total += v;
+                const v = parseFloat(inp.value); if (!isNaN(v) && v > 0) total += v;
             });
             document.getElementById('outputBlockTotal').textContent = total > 0 ? total.toFixed(3) : '0.000';
         }
 
         function confirmOutputQty() {
             syncOutputRows();
-            const total = outputBlockRows.reduce((s, r) => {
-                const v = parseFloat(r.qty);
-                return s + (isNaN(v) || v <= 0 ? 0 : v);
-            }, 0);
-
+            const total = outputBlockRows.reduce((s, r) => { const v = parseFloat(r.qty); return s + (isNaN(v) || v <= 0 ? 0 : v); }, 0);
             document.getElementById('output_qty').value = total > 0 ? total.toFixed(3) : '';
             triggerAutosave();
-
             document.getElementById('outputQtyModal').classList.remove('open');
             document.body.style.overflow = '';
         }
 
-        // ── Populate output_blocks from saved data (edit mode) ──────────
         function loadOutputBlocks(blocks) {
             if (!blocks?.length) return;
             outputBlockRows = blocks.map(b => ({ qty: b.block_weight ?? 0 }));
@@ -2449,29 +2595,21 @@
             if (total > 0) document.getElementById('output_qty').value = total.toFixed(3);
         }
 
-        // ════════════════════════════════════════════════════════════════
-        // BBSU LOT SELECTION MODAL
-        // Supports multi-row selection: user assigns qty per BBSU batch,
-        // sum of all assign qtys populates the raw material QTY field.
-        // Multiple selected batches are stored as comma-separated in
-        // hidden fields (bbsu_batch_id / bbsu_batch_no).
-        // ════════════════════════════════════════════════════════════════
-        let bbsuActiveRowIndex = null;   // which raw-material row triggered modal
+        // ════════════════════════════════════════════════════════════════════════════
+        // BBSU LOT SELECTION MODAL (Raw Materials)
+        // ════════════════════════════════════════════════════════════════════════════
+        let bbsuActiveRowIndex = null;
 
         function openBbsuModal(rowIndex) {
             const materialId = document.getElementById(`rm_id_${rowIndex}`)?.value;
             if (!materialId) return;
-
             bbsuActiveRowIndex = rowIndex;
-
-            const materialName = document.getElementById(`rm_id_${rowIndex}`)?.selectedOptions[0]?.text ?? 'Material';
+            const materialName = sddRegistry[`rm_id_${rowIndex}`]?.selected?.label ?? 'Material';
             document.getElementById('bbsuModalTitle').textContent = 'Available Stock — ' + materialName;
             document.getElementById('bbsuModalSubtitle').textContent = 'Current available stock for this material. Enter the quantity to assign.';
             document.getElementById('bbsuConfirmBtn').disabled = true;
-
             document.getElementById('bbsuLotModal').classList.add('open');
             document.body.style.overflow = 'hidden';
-
             loadBbsuLots(materialId, rowIndex);
         }
 
@@ -2484,15 +2622,13 @@
 
         async function loadBbsuLots(materialId, rowIndex) {
             const loading = document.getElementById('bbsuLotLoading');
-            const empty = document.getElementById('bbsuLotEmpty');
-            const scroll = document.getElementById('bbsuLotTableScroll');
-            const tbody = document.getElementById('bbsuLotTbody');
-            const tfoot = document.getElementById('bbsuLotTfoot');
+            const empty   = document.getElementById('bbsuLotEmpty');
+            const scroll  = document.getElementById('bbsuLotTableScroll');
+            const tbody   = document.getElementById('bbsuLotTbody');
+            const tfoot   = document.getElementById('bbsuLotTfoot');
 
-            loading.style.display = 'block';
-            empty.style.display = 'none';
-            scroll.style.display = 'none';
-            tfoot.style.display = 'none';
+            loading.style.display = 'block'; empty.style.display = 'none';
+            scroll.style.display = 'none'; tfoot.style.display = 'none';
             tbody.innerHTML = '';
             document.getElementById('bbsuTotalAssign').textContent = '0.000';
             document.getElementById('bbsuConfirmBtn').disabled = true;
@@ -2501,156 +2637,98 @@
             const res = await apiFetch(`/smelting-batches/bbsu-lots/${materialId}${excl}`, { method: 'GET' });
             loading.style.display = 'none';
 
-            // apiFetch returns a Response object — parse JSON
             if (!res || !res.ok) { empty.style.display = 'block'; return; }
             const json = await res.json();
             const lots = json.data ?? [];
-
             if (!lots.length) { empty.style.display = 'block'; return; }
 
-            scroll.style.display = 'block';
-            tfoot.style.display = '';
+            scroll.style.display = 'block'; tfoot.style.display = '';
 
             lots.forEach(lot => {
-                const availClass = lot.available_qty <= 0 ? 'avail-zero'
-                    : lot.available_qty < 50 ? 'avail-low'
-                        : 'avail-good';
+                const availClass = lot.available_qty <= 0 ? 'avail-zero' : lot.available_qty < 50 ? 'avail-low' : 'avail-good';
                 const tr = document.createElement('tr');
-                tr.dataset.bbsuId = lot.bbsu_batch_id;
-                tr.dataset.bbsuNo = lot.batch_no;
-                tr.dataset.availableQty = lot.available_qty;
-
+                tr.dataset.bbsuId = lot.bbsu_batch_id; tr.dataset.bbsuNo = lot.batch_no; tr.dataset.availableQty = lot.available_qty;
                 tr.innerHTML = `
-          <td><span class="lot-bbsu-tag">${lot.batch_no}</span></td>
-          <td style="font-size:12.5px;font-weight:600">${lot.material_name}</td>
-          <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
-          <td><span class="avail-pill ${availClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
-          <td>
-            <input type="number" class="assign-input" id="bbs_assign_${lot.bbsu_batch_id}"
-              placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
-              ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
-              oninput="onAssignQtyInput(${lot.bbsu_batch_id}, ${lot.available_qty})"
-              onclick="event.stopPropagation()">
-          </td>`;
-
-                // clicking the row focuses the assign input
-                tr.addEventListener('click', (e) => {
+              <td><span class="lot-bbsu-tag">${lot.batch_no}</span></td>
+              <td style="font-size:12.5px;font-weight:600">${lot.material_name}</td>
+              <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
+              <td><span class="avail-pill ${availClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
+              <td>
+                <input type="number" class="assign-input" id="bbs_assign_${lot.bbsu_batch_id}"
+                  placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
+                  ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
+                  oninput="onAssignQtyInput(${lot.bbsu_batch_id},${lot.available_qty})"
+                  onclick="event.stopPropagation()">
+              </td>`;
+                tr.addEventListener('click', e => {
                     if (e.target.tagName === 'INPUT') return;
                     const inp = document.getElementById(`bbs_assign_${lot.bbsu_batch_id}`);
                     if (inp && !inp.disabled) inp.focus();
                 });
-
                 tbody.appendChild(tr);
             });
         }
 
-        // Called every time any assign-qty input changes
         function onAssignQtyInput(bbsuId, maxQty) {
             const input = document.getElementById(`bbs_assign_${bbsuId}`);
             if (!input) return;
-
             let val = parseFloat(input.value);
             if (isNaN(val) || val < 0) { val = 0; input.value = ''; }
-            if (val > maxQty) {
-                val = parseFloat(maxQty.toFixed(3));
-                input.value = val.toFixed(3);
-                input.style.borderColor = '#d97706'; // orange = capped
-            } else {
-                input.style.borderColor = val > 0 ? 'var(--g)' : '';
-            }
-
-            // Highlight row if qty > 0
+            if (val > maxQty) { val = parseFloat(maxQty.toFixed(3)); input.value = val.toFixed(3); input.style.borderColor = '#d97706'; }
+            else { input.style.borderColor = val > 0 ? 'var(--g)' : ''; }
             const tr = input.closest('tr');
             if (tr) tr.classList.toggle('selected', val > 0);
-
             recalcBbsuModalTotal();
         }
 
-        // Sum all filled assign-qty inputs and update total + confirm button
         function recalcBbsuModalTotal() {
             let total = 0;
-            document.querySelectorAll('#bbsuLotTbody .assign-input').forEach(inp => {
-                const v = parseFloat(inp.value);
-                if (!isNaN(v) && v > 0) total += v;
-            });
+            document.querySelectorAll('#bbsuLotTbody .assign-input').forEach(inp => { const v = parseFloat(inp.value); if (!isNaN(v) && v > 0) total += v; });
             document.getElementById('bbsuTotalAssign').textContent = total > 0 ? total.toFixed(3) : '0.000';
             document.getElementById('bbsuConfirmBtn').disabled = total <= 0;
         }
 
-        // OK button — collect all rows that have assign qty > 0
         function confirmBbsuSelection() {
             if (!bbsuActiveRowIndex) return;
-
             const i = bbsuActiveRowIndex;
             const selections = [];
-
             document.querySelectorAll('#bbsuLotTbody tr').forEach(tr => {
-                const bbsuId = tr.dataset.bbsuId;
-                const bbsuNo = tr.dataset.bbsuNo;
+                const bbsuId = tr.dataset.bbsuId; const bbsuNo = tr.dataset.bbsuNo;
                 const inp = document.getElementById(`bbs_assign_${bbsuId}`);
                 const qty = parseFloat(inp?.value);
-                if (!isNaN(qty) && qty > 0) {
-                    selections.push({ bbsuId, bbsuNo, qty });
-                }
+                if (!isNaN(qty) && qty > 0) selections.push({ bbsuId, bbsuNo, qty });
             });
-
             if (!selections.length) return;
-
             const totalQty = selections.reduce((s, r) => s + r.qty, 0);
-            // Store first batch id/no in hidden fields (for single-batch compat);
-            // store all as JSON in a data attribute on the row for multi-batch awareness
-            const batchIds = selections.map(r => r.bbsuId).join(',');
-            const batchNos = selections.map(r => r.bbsuNo).join(',');
-
-            document.getElementById(`rm_bbsu_id_${i}`).value = batchIds;
-            document.getElementById(`rm_bbsu_no_${i}`).value = batchNos;
-
-            // Also store full detail on the row element for buildPayload
+            document.getElementById(`rm_bbsu_id_${i}`).value = selections.map(r => r.bbsuId).join(',');
+            document.getElementById(`rm_bbsu_no_${i}`).value = selections.map(r => r.bbsuNo).join(',');
             const tr = document.getElementById(`rrow-${i}`);
             if (tr) tr.dataset.bbsuSelections = JSON.stringify(selections);
-
-            // Set QTY field to total assigned qty
             const qtyInput = document.getElementById(`rm_qty_${i}`);
-            if (qtyInput) {
-                qtyInput.value = totalQty.toFixed(3);
-                calcRawExpected(i);
-                recalcRawTotals();
-            }
-
-            // Show selected batches as tooltip on the QTY input
+            if (qtyInput) { qtyInput.value = totalQty.toFixed(3); calcRawExpected(i); recalcRawTotals(); }
             const qtyEl = document.getElementById(`rm_qty_${i}`);
-            if (qtyEl) {
-                qtyEl.title = 'BBSU: ' + selections.map(r => `${r.bbsuNo} (${r.qty} KG)`).join(', ');
-                qtyEl.style.borderColor = 'var(--g)';
-            }
-
+            if (qtyEl) { qtyEl.title = 'BBSU: ' + selections.map(r => `${r.bbsuNo} (${r.qty} KG)`).join(', '); qtyEl.style.borderColor = 'var(--g)'; }
             triggerAutosave();
             document.getElementById('bbsuLotModal').classList.remove('open');
             document.body.style.overflow = '';
             bbsuActiveRowIndex = null;
         }
 
-        // ════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
         // FLUX BBSU LOT SELECTION MODAL
-        // Same pattern as raw-material BBSU modal — reuses same API endpoint
-        // getBbsuLots, filtering by the selected flux/chemical item id.
-        // ════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
         let fluxActiveRowIndex = null;
 
         function openFluxModal(rowIndex) {
             const materialId = document.getElementById(`fl_id_${rowIndex}`)?.value;
             if (!materialId) return;
-
             fluxActiveRowIndex = rowIndex;
-
-            const materialName = document.getElementById(`fl_id_${rowIndex}`)?.selectedOptions[0]?.text ?? 'Chemical';
+            const materialName = sddRegistry[`fl_id_${rowIndex}`]?.selected?.label ?? 'Chemical';
             document.getElementById('fluxModalTitle').textContent = 'Available Stock — ' + materialName;
             document.getElementById('fluxModalSubtitle').textContent = 'Current available stock for this material. Enter the quantity to assign.';
             document.getElementById('fluxConfirmBtn').disabled = true;
-
             document.getElementById('fluxLotModal').classList.add('open');
             document.body.style.overflow = 'hidden';
-
             loadFluxLots(materialId, rowIndex);
         }
 
@@ -2663,15 +2741,13 @@
 
         async function loadFluxLots(materialId, rowIndex) {
             const loading = document.getElementById('fluxLotLoading');
-            const empty = document.getElementById('fluxLotEmpty');
-            const scroll = document.getElementById('fluxLotTableScroll');
-            const tbody = document.getElementById('fluxLotTbody');
-            const tfoot = document.getElementById('fluxLotTfoot');
+            const empty   = document.getElementById('fluxLotEmpty');
+            const scroll  = document.getElementById('fluxLotTableScroll');
+            const tbody   = document.getElementById('fluxLotTbody');
+            const tfoot   = document.getElementById('fluxLotTfoot');
 
-            loading.style.display = 'block';
-            empty.style.display = 'none';
-            scroll.style.display = 'none';
-            tfoot.style.display = 'none';
+            loading.style.display = 'block'; empty.style.display = 'none';
+            scroll.style.display = 'none'; tfoot.style.display = 'none';
             tbody.innerHTML = '';
             document.getElementById('fluxTotalAssign').textContent = '0.000';
             document.getElementById('fluxConfirmBtn').disabled = true;
@@ -2683,40 +2759,31 @@
             if (!res || !res.ok) { empty.style.display = 'block'; return; }
             const json = await res.json();
             const lots = json.data ?? [];
-
             if (!lots.length) { empty.style.display = 'block'; return; }
 
-            scroll.style.display = 'block';
-            tfoot.style.display = '';
+            scroll.style.display = 'block'; tfoot.style.display = '';
 
             lots.forEach(lot => {
-                const availClass = lot.available_qty <= 0 ? 'avail-zero'
-                    : lot.available_qty < 50 ? 'avail-low'
-                        : 'avail-good';
+                const availClass = lot.available_qty <= 0 ? 'avail-zero' : lot.available_qty < 50 ? 'avail-low' : 'avail-good';
                 const tr = document.createElement('tr');
-                tr.dataset.bbsuId = lot.bbsu_batch_id;
-                tr.dataset.bbsuNo = lot.batch_no;
-                tr.dataset.availableQty = lot.available_qty;
-
+                tr.dataset.bbsuId = lot.bbsu_batch_id; tr.dataset.bbsuNo = lot.batch_no; tr.dataset.availableQty = lot.available_qty;
                 tr.innerHTML = `
-          <td><span class="lot-bbsu-tag">${lot.batch_no}</span></td>
-          <td style="font-size:12.5px;font-weight:600">${lot.material_name}</td>
-          <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
-          <td><span class="avail-pill ${availClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
-          <td>
-            <input type="number" class="assign-input" id="flux_assign_${lot.bbsu_batch_id}"
-              placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
-              ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
-              oninput="onFluxAssignInput(${lot.bbsu_batch_id}, ${lot.available_qty})"
-              onclick="event.stopPropagation()">
-          </td>`;
-
-                tr.addEventListener('click', (e) => {
+              <td><span class="lot-bbsu-tag">${lot.batch_no}</span></td>
+              <td style="font-size:12.5px;font-weight:600">${lot.material_name}</td>
+              <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
+              <td><span class="avail-pill ${availClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
+              <td>
+                <input type="number" class="assign-input" id="flux_assign_${lot.bbsu_batch_id}"
+                  placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
+                  ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
+                  oninput="onFluxAssignInput(${lot.bbsu_batch_id},${lot.available_qty})"
+                  onclick="event.stopPropagation()">
+              </td>`;
+                tr.addEventListener('click', e => {
                     if (e.target.tagName === 'INPUT') return;
                     const inp = document.getElementById(`flux_assign_${lot.bbsu_batch_id}`);
                     if (inp && !inp.disabled) inp.focus();
                 });
-
                 tbody.appendChild(tr);
             });
         }
@@ -2724,73 +2791,42 @@
         function onFluxAssignInput(bbsuId, maxQty) {
             const input = document.getElementById(`flux_assign_${bbsuId}`);
             if (!input) return;
-
             let val = parseFloat(input.value);
             if (isNaN(val) || val < 0) { val = 0; input.value = ''; }
-            if (val > maxQty) {
-                val = parseFloat(maxQty.toFixed(3));
-                input.value = val.toFixed(3);
-                input.style.borderColor = '#d97706';
-            } else {
-                input.style.borderColor = val > 0 ? 'var(--g)' : '';
-            }
-
+            if (val > maxQty) { val = parseFloat(maxQty.toFixed(3)); input.value = val.toFixed(3); input.style.borderColor = '#d97706'; }
+            else { input.style.borderColor = val > 0 ? 'var(--g)' : ''; }
             const tr = input.closest('tr');
             if (tr) tr.classList.toggle('selected', val > 0);
-
             recalcFluxModalTotal();
         }
 
         function recalcFluxModalTotal() {
             let total = 0;
-            document.querySelectorAll('#fluxLotTbody .assign-input').forEach(inp => {
-                const v = parseFloat(inp.value);
-                if (!isNaN(v) && v > 0) total += v;
-            });
+            document.querySelectorAll('#fluxLotTbody .assign-input').forEach(inp => { const v = parseFloat(inp.value); if (!isNaN(v) && v > 0) total += v; });
             document.getElementById('fluxTotalAssign').textContent = total > 0 ? total.toFixed(3) : '0.000';
             document.getElementById('fluxConfirmBtn').disabled = total <= 0;
         }
 
         function confirmFluxSelection() {
             if (!fluxActiveRowIndex) return;
-
             const i = fluxActiveRowIndex;
             const selections = [];
-
             document.querySelectorAll('#fluxLotTbody tr').forEach(tr => {
-                const bbsuId = tr.dataset.bbsuId;
-                const bbsuNo = tr.dataset.bbsuNo;
+                const bbsuId = tr.dataset.bbsuId; const bbsuNo = tr.dataset.bbsuNo;
                 const inp = document.getElementById(`flux_assign_${bbsuId}`);
                 const qty = parseFloat(inp?.value);
                 if (!isNaN(qty) && qty > 0) selections.push({ bbsuId, bbsuNo, qty });
             });
-
             if (!selections.length) return;
-
             const totalQty = selections.reduce((s, r) => s + r.qty, 0);
-            const batchIds = selections.map(r => r.bbsuId).join(',');
-            const batchNos = selections.map(r => r.bbsuNo).join(',');
-
-            document.getElementById(`fl_bbsu_id_${i}`).value = batchIds;
-            document.getElementById(`fl_bbsu_no_${i}`).value = batchNos;
-
+            document.getElementById(`fl_bbsu_id_${i}`).value = selections.map(r => r.bbsuId).join(',');
+            document.getElementById(`fl_bbsu_no_${i}`).value = selections.map(r => r.bbsuNo).join(',');
             const tr = document.getElementById(`frow-${i}`);
             if (tr) tr.dataset.fluxBbsuSelections = JSON.stringify(selections);
-
-            // Set QTY field to total assigned qty
             const qtyInput = document.getElementById(`fl_qty_${i}`);
-            if (qtyInput) {
-                qtyInput.value = totalQty.toFixed(3);
-                recalcFluxTotals();
-            }
-
-            // Show selected batches as tooltip on the QTY input
+            if (qtyInput) { qtyInput.value = totalQty.toFixed(3); recalcFluxTotals(); }
             const fluxQtyEl = document.getElementById(`fl_qty_${i}`);
-            if (fluxQtyEl) {
-                fluxQtyEl.title = 'BBSU: ' + selections.map(r => `${r.bbsuNo} (${r.qty} KG)`).join(', ');
-                fluxQtyEl.style.borderColor = 'var(--g)';
-            }
-
+            if (fluxQtyEl) { fluxQtyEl.title = 'BBSU: ' + selections.map(r => `${r.bbsuNo} (${r.qty} KG)`).join(', '); fluxQtyEl.style.borderColor = 'var(--g)'; }
             triggerAutosave();
             document.getElementById('fluxLotModal').classList.remove('open');
             document.body.style.overflow = '';

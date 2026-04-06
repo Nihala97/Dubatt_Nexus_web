@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BbsuBatch extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'bbsu_batches';
 
     protected $fillable = [
@@ -24,37 +24,52 @@ class BbsuBatch extends Model
     ];
 
     protected $casts = [
-        'start_time'  => 'datetime',
-        'end_time'    => 'datetime',
-        'doc_date'    => 'date',
-        'is_active'   => 'boolean',
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
+        'doc_date' => 'date',
+        'is_active' => 'boolean',
     ];
 
-    // -------------------------------------------------------
-    // Relationships
-    // -------------------------------------------------------
+    // ─── Relationships ───────────────────────────────────────────────────────
 
-    public function inputDetails(): HasMany
+    public function inputDetails()
     {
-        return $this->hasMany(BbsuInputDetail::class, 'bbsu_batch_id');
+        return $this->hasMany(BbsuInputDetail::class, 'bbsu_batch_id')
+            ->where('is_active', true);
     }
 
-    public function outputMaterial(): HasOne
+    /**
+     * Output materials — now HAS MANY (one row per material, 9 rows per batch).
+     * Old code used hasOne/outputMaterial — update every reference to use
+     * outputMaterials (plural).
+     */
+    public function outputMaterials()
     {
-        return $this->hasOne(BbsuOutputMaterial::class, 'bbsu_batch_id');
+        return $this->hasMany(BbsuOutputMaterial::class, 'bbsu_batch_id')
+            ->where('is_active', true);
     }
 
-    public function powerConsumption(): HasOne
+    /**
+     * @deprecated  kept for backwards-compat during transition.
+     * Returns the first output material row — use outputMaterials() instead.
+     */
+    public function outputMaterial()
+    {
+        return $this->hasMany(BbsuOutputMaterial::class, 'bbsu_batch_id')
+            ->where('is_active', true);
+    }
+
+    public function powerConsumption()
     {
         return $this->hasOne(BbsuPowerConsumption::class, 'bbsu_batch_id');
     }
 
-    public function createdBy(): BelongsTo
+    public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function updatedBy(): BelongsTo
+    public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by');
     }

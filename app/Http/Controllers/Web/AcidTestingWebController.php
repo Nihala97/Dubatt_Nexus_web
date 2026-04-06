@@ -56,22 +56,31 @@ class AcidTestingWebController extends Controller
         return view('admin.mes.acidTesting.form', ['item_id' => $id]);
     }
 
-    // Named printView (not print) to avoid PHP reserved-word conflicts
-    public function printView($id)
-    {
-        $test = AcidTesting::with(['supplier', 'details', 'createdBy'])
-            ->findOrFail($id);
-
-        if ((int) $test->status < 1) {
-            return redirect()
-                ->to(url('/admin/mes/acidTesting/' . $id . '/edit'))
-                ->with('error', 'Only submitted records can be printed.');
-        }
-
-        $company = Company::first();
-
-        return view('admin.mes.acidTesting.print', compact('test', 'company'));
-    }
+     // Named printView (not print) to avoid PHP reserved-word conflicts
+     public function printView($id)
+     {
+         $test = AcidTesting::where('is_active', 1)
+         ->with([
+             'supplier' => function ($query) {
+                 $query->where('is_active', 1);
+             },
+             'details' => function ($query) {
+                 $query->where('is_active', 1);
+             },
+             'createdBy' // usually no filter needed for users
+         ])
+     ->findOrFail($id);
+ 
+         if ((int) $test->status < 1) {
+             return redirect()
+                 ->to(url('/admin/mes/acidTesting/' . $id . '/edit'))
+                 ->with('error', 'Only submitted records can be printed.');
+         }
+ 
+         $company = Company::first();
+ 
+         return view('admin.mes.acidTesting.print', compact('test', 'company'));
+     }
 
     // Actual deletion is handled via DELETE /api/acid-testings/{id} from JS
     public function destroy($id)

@@ -17,6 +17,7 @@ class SmeltingBatch extends Model
 
     protected $fillable = [
         'batch_no',
+        'charge_no', 
         'rotary_no',
         'date',
         'start_time',

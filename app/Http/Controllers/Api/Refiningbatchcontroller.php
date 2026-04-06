@@ -96,6 +96,10 @@ class RefiningBatchController extends Controller
                 'lpg_initial' => $request->lpg_initial,
                 'lpg_final' => $request->lpg_final,
                 'lpg_consumption' => $this->calcDiff($request->lpg_final, $request->lpg_initial),
+                // Add after 'lpg_consumption' => ...
+                'lpg2_initial'     => $request->lpg2_initial,
+                'lpg2_final'       => $request->lpg2_final,
+                'lpg2_consumption' => $this->calcDiff($request->lpg2_final, $request->lpg2_initial),
                 'electricity_initial' => $request->electricity_initial,
                 'electricity_final' => $request->electricity_final,
                 'electricity_consumption' => $this->calcDiff($request->electricity_final, $request->electricity_initial),
@@ -104,7 +108,7 @@ class RefiningBatchController extends Controller
                 'oxygen_flow_time' => $request->oxygen_flow_time,
                 'oxygen_consumption' => $request->oxygen_consumption,
                 'total_process_time' => $request->total_process_time,
-                'status' => 'draft',
+                'status' => 0,
                 'is_active' => true,
                 'created_by' => $userId,
                 'updated_by' => $userId,
@@ -159,6 +163,13 @@ class RefiningBatchController extends Controller
                     $request->lpg_final ?? $batch->lpg_final,
                     $request->lpg_initial ?? $batch->lpg_initial
                 ),
+                // Add after 'lpg_consumption' => ...
+                'lpg2_initial'     => $request->lpg2_initial ?? $batch->lpg2_initial,
+                'lpg2_final'       => $request->lpg2_final   ?? $batch->lpg2_final,
+                'lpg2_consumption' => $this->calcDiff(
+                    $request->lpg2_final   ?? $batch->lpg2_final,
+                    $request->lpg2_initial ?? $batch->lpg2_initial
+                ),
                 'electricity_initial' => $request->electricity_initial ?? $batch->electricity_initial,
                 'electricity_final' => $request->electricity_final ?? $batch->electricity_final,
                 'electricity_consumption' => $this->calcDiff(
@@ -210,6 +221,8 @@ class RefiningBatchController extends Controller
                 'date',
                 'lpg_initial',
                 'lpg_final',
+                'lpg2_initial',
+                'lpg2_final',   
                 'electricity_initial',
                 'electricity_final',
                 'oxygen_flow_nm3',
@@ -226,6 +239,10 @@ class RefiningBatchController extends Controller
             $updates['lpg_consumption'] = $this->calcDiff(
                 $request->lpg_final ?? $batch->lpg_final,
                 $request->lpg_initial ?? $batch->lpg_initial
+            );
+            $updates['lpg2_consumption'] = $this->calcDiff(
+                $request->lpg2_final   ?? $batch->lpg2_final,
+                $request->lpg2_initial ?? $batch->lpg2_initial
             );
             $updates['electricity_consumption'] = $this->calcDiff(
                 $request->electricity_final ?? $batch->electricity_final,
@@ -260,7 +277,7 @@ class RefiningBatchController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Already submitted.'], 422);
         }
 
-        $batch->update(['status' => 'submitted', 'updated_by' => auth()->id()]);
+        $batch->update(['status' => 1, 'updated_by' => auth()->id()]);
 
         $this->processRefiningInventory($batch);
 
@@ -421,15 +438,23 @@ class RefiningBatchController extends Controller
     {
         // Seed defaults + any user-added ones from DB
         $defaults = [
-            'MELTING',
-            'DROSSING',
-            'CUPELLATION',
-            'REFINING-1',
-            'REFINING-2',
-            'REFINING-3',
-            'COOLING',
-            'CASTING',
-            'TAPPING',
+            'BURNER Start',
+            'Loading & Melting',
+            'OD Drossing',
+            'OD Drossing Pot Levelling',
+            'Temp. Raising',
+            'De-Cu',
+            'De Ni',
+            'De-Sn',
+            'De-Sb(By Oxygen)',
+            'De-Sb',
+            'De Sb Caustic',
+            'Caustic Cleaning/palta',
+            'De-Ni/S ',
+            'Pot Holding',
+            'Pot Transfering',
+            'Casting Preparation',
+            'Casting'
         ];
 
         $fromDb = DB::table('refining_process_details')

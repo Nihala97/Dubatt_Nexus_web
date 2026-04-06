@@ -745,10 +745,10 @@
         }
 
         .lot-table .avail-pill {
-            display: inline-flex;
+            /* display: inline-flex; mk changed */ 
             align-items: center;
             gap: 5px;
-            padding: 3px 10px;
+            padding: 3px 10px;    
             border-radius: 20px;
             font-size: 12px;
             font-weight: 700
@@ -1426,6 +1426,7 @@
                     <col style="width:180px">
                     <col>
                     <col>
+                    <col>
                     <col style="width:38%">
                 </colgroup>
 
@@ -1445,6 +1446,16 @@
                                 </svg>
                                 <span
                                     style="font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g)">LPG</span>
+                            </div>
+                        </th>
+                        <!-- Add after the LPG <th> block, before the Electricity <th> -->
+                        <th style="padding:10px 16px;background:var(--gl);border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);text-align:left">
+                            <div style="display:flex;align-items:center;gap:7px">
+                                <svg style="width:13px;height:13px;stroke:var(--g);fill:none;stroke-width:2" viewBox="0 0 24 24">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
+                                    <path d="M12 6v6l4 2" />
+                                </svg>
+                                <span style="font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g)">LPG 2</span>
                             </div>
                         </th>
                         <th
@@ -1489,6 +1500,14 @@
                                 </svg>
                                 <input type="number" id="lpg_initial" step="0.001" placeholder="0.000"
                                     oninput="calcConsumption('lpg');triggerAutosave()">
+                            </div>
+                        </td>
+                        <td style="padding:8px 12px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr)">
+                            <div class="iw"><svg class="ico" viewBox="0 0 24 24">
+                                    <line x1="22" y1="12" x2="2" y2="12" />
+                                </svg>
+                                <input type="number" id="lpg2_initial" step="0.001" placeholder="0.000"
+                                    oninput="calcConsumption('lpg2');triggerAutosave()">
                             </div>
                         </td>
                         <td style="padding:8px 12px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr)">
@@ -1551,6 +1570,14 @@
                             <div class="iw"><svg class="ico" viewBox="0 0 24 24">
                                     <line x1="22" y1="12" x2="2" y2="12" />
                                 </svg>
+                                <input type="number" id="lpg2_final" step="0.001" placeholder="0.000"
+                                    oninput="calcConsumption('lpg2');triggerAutosave()">
+                            </div>
+                        </td>
+                        <td style="padding:8px 12px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr)">
+                            <div class="iw"><svg class="ico" viewBox="0 0 24 24">
+                                    <line x1="22" y1="12" x2="2" y2="12" />
+                                </svg>
                                 <input type="number" id="electricity_final" step="0.001" placeholder="0.000"
                                     oninput="calcConsumption('electricity');triggerAutosave()">
                             </div>
@@ -1586,6 +1613,14 @@
                                     id="lpg_consumption_display">—</span>
                             </div>
                             <input type="hidden" id="lpg_consumption">
+                        </td>
+                        <td style="padding:10px 12px;border-right:1px solid var(--bdr)">
+                            <div style="display:flex;align-items:center;justify-content:space-between">
+                                <span style="font-size:10px;font-weight:700;color:var(--g);letter-spacing:.5px">TOTAL</span>
+                                <span style="font-size:15px;font-weight:700;color:var(--g)"
+                                    id="lpg2_consumption_display">—</span>
+                            </div>
+                            <input type="hidden" id="lpg2_consumption">
                         </td>
                         <td style="padding:10px 12px;border-right:1px solid var(--bdr)">
                             <div style="display:flex;align-items:center;justify-content:space-between">
@@ -1983,9 +2018,9 @@
             list.innerHTML = filtered.map(item => {
                 const sel = String(item.value) === String(current);
                 return `<div class="sdd-item${sel ? ' selected' : ''}" onclick="sddSelect('${sddActiveField}','${item.value}')">
-              <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-              <span>${item.label}</span>
-            </div>`;
+                  <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span>${item.label}</span>
+                </div>`;
             }).join('');
         }
 
@@ -2016,12 +2051,12 @@
 
         // ── Material / Process helpers (now using sdd) ─────────────────
         function buildMaterialDropdown(fieldId, selectedId = null) {
-            const items = itemsList.map(i => ({ value: String(i.id), label: i.name ?? i.material_name ?? '' }));
+            const items = itemsList.map(i => ({ value: String(i.id), label: i.name ?? i.secondary_name ?? '' }));
             sddRegister(fieldId, items, selectedId ? String(selectedId) : null);
         }
 
         function initMaterialSdd(fieldId, selectedId = null) {
-            const items = itemsList.map(i => ({ value: String(i.id), label: i.name ?? i.material_name ?? '' }));
+            const items = itemsList.map(i => ({ value: String(i.id), label: i.name ?? i.secondary_name ?? '' }));
             sddRegister(fieldId, items, selectedId ? String(selectedId) : null);
         }
 
@@ -2051,6 +2086,10 @@
 
             document.getElementById('lpg_initial').value = data.lpg_initial ?? '';
             document.getElementById('lpg_final').value = data.lpg_final ?? '';
+            document.getElementById('lpg2_initial').value = data.lpg2_initial ?? '';
+            document.getElementById('lpg2_final').value = data.lpg2_final ?? '';
+// then recalc:
+ 
             document.getElementById('electricity_initial').value = data.electricity_initial ?? '';
             document.getElementById('electricity_final').value = data.electricity_final ?? '';
             document.getElementById('oxygen_flow_nm3').value = data.oxygen_flow_nm3 ?? '';
@@ -2059,6 +2098,7 @@
             document.getElementById('oxygen_consumption').value = data.oxygen_consumption ?? '';
 
             calcConsumption('lpg');
+            calcConsumption('lpg2');
             calcConsumption('electricity');
             calcOxygen();
 
@@ -2110,29 +2150,29 @@
             tr.dataset.rowIndex = i;
             tr.dataset.smtSelections = data.smelting_selections ? JSON.stringify(data.smelting_selections) : '';
             tr.innerHTML = `
-            <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-            <td style="position:relative;min-width:160px">
-              <div class="sdd" id="sdd_rm_id_${i}">
-                <div class="sdd-trigger" onclick="toggleSdd('rm_id_'+${i})">
-                  <span class="sdd-trigger-text placeholder" id="sdd_rm_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                  <svg class="sdd-clear" onclick="clearSdd('rm_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <input type="hidden" id="rm_id_${i}" onchange="onRawMaterialChange(${i});triggerAutosave()">
-              </div>
-            </td>
-            <td>
-              <input type="number" class="ri" id="rm_qty_${i}"
-                value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
-                onclick="onRawQtyClick(${i})" onfocus="onRawQtyFocus(${i})"
-                oninput="recalcRawTotals();triggerAutosave()"
-                style="min-width:90px;cursor:pointer" title="Click to assign from smelting batch">
-              <input type="hidden" id="rm_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
-              <input type="hidden" id="rm_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
-            </td>
-            <td><button class="del-btn" onclick="removeRow('rrow-${i}',recalcRawTotals)" title="Remove">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-            </button></td>`;
+                <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                <td style="position:relative;min-width:160px">
+                  <div class="sdd" id="sdd_rm_id_${i}">
+                    <div class="sdd-trigger" onclick="toggleSdd('rm_id_'+${i})">
+                      <span class="sdd-trigger-text placeholder" id="sdd_rm_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                      <svg class="sdd-clear" onclick="clearSdd('rm_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <input type="hidden" id="rm_id_${i}" onchange="onRawMaterialChange(${i});triggerAutosave()">
+                  </div>
+                </td>
+                <td>
+                  <input type="number" class="ri" id="rm_qty_${i}"
+                    value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
+                    onclick="onRawQtyClick(${i})" onfocus="onRawQtyFocus(${i})"
+                    oninput="recalcRawTotals();triggerAutosave()"
+                    style="min-width:90px;cursor:pointer" title="Click to assign from smelting batch">
+                  <input type="hidden" id="rm_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
+                  <input type="hidden" id="rm_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
+                </td>
+                <td><button class="del-btn" onclick="removeRow('rrow-${i}',recalcRawTotals)" title="Remove">
+                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             // init searchable dropdown after DOM insertion
@@ -2171,29 +2211,29 @@
             tr.dataset.rowIndex = i;
             tr.dataset.smtSelections = data.smelting_selections ? JSON.stringify(data.smelting_selections) : '';
             tr.innerHTML = `
-            <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-            <td style="position:relative;min-width:160px">
-              <div class="sdd" id="sdd_ch_id_${i}">
-                <div class="sdd-trigger" onclick="toggleSdd('ch_id_'+${i})">
-                  <span class="sdd-trigger-text placeholder" id="sdd_ch_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                  <svg class="sdd-clear" onclick="clearSdd('ch_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <input type="hidden" id="ch_id_${i}" onchange="onChemMaterialChange(${i});triggerAutosave()">
-              </div>
-            </td>
-            <td>
-              <input type="number" class="ri" id="ch_qty_${i}"
-                value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
-                onclick="onChemQtyClick(${i})" onfocus="onChemQtyFocus(${i})"
-                oninput="recalcChemTotals();triggerAutosave()"
-                style="min-width:90px;cursor:pointer" title="Click to assign from smelting batch">
-              <input type="hidden" id="ch_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
-              <input type="hidden" id="ch_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
-            </td>
-            <td><button class="del-btn" onclick="removeRow('crow-${i}',recalcChemTotals)" title="Remove">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-            </button></td>`;
+                <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                <td style="position:relative;min-width:160px">
+                  <div class="sdd" id="sdd_ch_id_${i}">
+                    <div class="sdd-trigger" onclick="toggleSdd('ch_id_'+${i})">
+                      <span class="sdd-trigger-text placeholder" id="sdd_ch_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                      <svg class="sdd-clear" onclick="clearSdd('ch_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <input type="hidden" id="ch_id_${i}" onchange="onChemMaterialChange(${i});triggerAutosave()">
+                  </div>
+                </td>
+                <td>
+                  <input type="number" class="ri" id="ch_qty_${i}"
+                    value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
+                    onclick="onChemQtyClick(${i})" onfocus="onChemQtyFocus(${i})"
+                    oninput="recalcChemTotals();triggerAutosave()"
+                    style="min-width:90px;cursor:pointer" title="Click to assign from smelting batch">
+                  <input type="hidden" id="ch_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
+                  <input type="hidden" id="ch_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
+                </td>
+                <td><button class="del-btn" onclick="removeRow('crow-${i}',recalcChemTotals)" title="Remove">
+                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initMaterialSdd(`ch_id_${i}`, data.chemical_id ?? null);
@@ -2281,17 +2321,17 @@
                 tr.dataset.smtNo = lot.batch_no;
                 tr.dataset.availableQty = lot.available_qty;
                 tr.innerHTML = `
-              <td><span class="smt-tag">${lot.batch_no}</span></td>
-              <td style="font-size:12.5px;font-weight:600">${lot.material_name}</td>
-              <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
-              <td><span class="lot-table avail-pill ${pillClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
-              <td>
-                <input type="number" class="assign-input" id="smt_assign_${lot.smelting_batch_id}"
-                  placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
-                  ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
-                  oninput="onSmtAssignInput(${lot.smelting_batch_id}, ${lot.available_qty})"
-                  onclick="event.stopPropagation()">
-              </td>`;
+                  <td><span class="smt-tag">${lot.batch_no}</span></td>
+                  <td style="font-size:12.5px;font-weight:600">${lot.secondary_name}</td>
+                  <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
+                  <td><span class="lot-table avail-pill ${pillClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
+                  <td>
+                    <input type="number" class="assign-input" id="smt_assign_${lot.smelting_batch_id}"
+                      placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
+                      ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
+                      oninput="onSmtAssignInput(${lot.smelting_batch_id}, ${lot.available_qty})"
+                      onclick="event.stopPropagation()">
+                  </td>`;
                 tr.addEventListener('click', e => {
                     if (e.target.tagName === 'INPUT') return;
                     const inp = document.getElementById(`smt_assign_${lot.smelting_batch_id}`);
@@ -2386,29 +2426,29 @@
             tr.id = `prow-${i}`;
             tr.dataset.rowIndex = i;
             tr.innerHTML = `
-            <td style="position:relative;min-width:160px">
-              <div class="sdd" id="sdd_proc_name_${i}">
-                <div class="sdd-trigger" onclick="toggleSdd('proc_name_'+${i})">
-                  <span class="sdd-trigger-text placeholder" id="sdd_proc_name_${i}_label" data-placeholder="Select process…">Select process…</span>
-                  <svg class="sdd-clear" onclick="clearSdd('proc_name_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <input type="hidden" id="proc_name_${i}" onchange="triggerAutosave()">
-              </div>
-            </td>
-            <td><button class="proc-btn proc-start" onclick="setProcTime(${i},'start')">START</button></td>
-            <td style="padding:4px 4px"><input type="time" class="ri" id="proc_start_${i}"
-              value="${data.start_time ? data.start_time.slice(11, 16) : ''}"
-              oninput="calcProcTime(${i});triggerAutosave()" style="min-width:90px"></td>
-            <td><button class="proc-btn proc-end" onclick="setProcTime(${i},'end')">END</button></td>
-            <td style="padding:4px 4px"><input type="time" class="ri" id="proc_end_${i}"
-              value="${data.end_time ? data.end_time.slice(11, 16) : ''}"
-              oninput="calcProcTime(${i});triggerAutosave()" style="min-width:90px"></td>
-            <td><input type="text" class="ri ro" id="proc_total_${i}" readonly placeholder="0 min"
-              style="min-width:70px;font-weight:700;color:var(--g);background:var(--gxl)"></td>
-            <td><button class="del-btn" onclick="removeRow('prow-${i}',calcTotalProcessTime)" title="Remove">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-            </button></td>`;
+                <td style="position:relative;min-width:160px">
+                  <div class="sdd" id="sdd_proc_name_${i}">
+                    <div class="sdd-trigger" onclick="toggleSdd('proc_name_'+${i})">
+                      <span class="sdd-trigger-text placeholder" id="sdd_proc_name_${i}_label" data-placeholder="Select process…">Select process…</span>
+                      <svg class="sdd-clear" onclick="clearSdd('proc_name_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <input type="hidden" id="proc_name_${i}" onchange="triggerAutosave()">
+                  </div>
+                </td>
+                <td><button class="proc-btn proc-start" onclick="setProcTime(${i},'start')">START</button></td>
+                <td style="padding:4px 4px"><input type="time" class="ri" id="proc_start_${i}"
+                  value="${data.start_time ? data.start_time.slice(11, 16) : ''}"
+                  oninput="calcProcTime(${i});triggerAutosave()" style="min-width:90px"></td>
+                <td><button class="proc-btn proc-end" onclick="setProcTime(${i},'end')">END</button></td>
+                <td style="padding:4px 4px"><input type="time" class="ri" id="proc_end_${i}"
+                  value="${data.end_time ? data.end_time.slice(11, 16) : ''}"
+                  oninput="calcProcTime(${i});triggerAutosave()" style="min-width:90px"></td>
+                <td><input type="text" class="ri ro" id="proc_total_${i}" readonly placeholder="0 min"
+                  style="min-width:70px;font-weight:700;color:var(--g);background:var(--gxl)"></td>
+                <td><button class="del-btn" onclick="removeRow('prow-${i}',calcTotalProcessTime)" title="Remove">
+                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initProcessSdd(`proc_name_${i}`, data.refining_process ?? '');
@@ -2426,25 +2466,58 @@
             const s = document.getElementById(`proc_start_${i}`)?.value;
             const e = document.getElementById(`proc_end_${i}`)?.value;
             const el = document.getElementById(`proc_total_${i}`);
+
             if (s && e) {
                 const [sh, sm] = s.split(':').map(Number);
                 const [eh, em] = e.split(':').map(Number);
+
                 let mins = (eh * 60 + em) - (sh * 60 + sm);
-                if (mins < 0) mins += 1440;
-                el.value = mins + ' min';
-                el.dataset.mins = mins;
-            } else { el.value = ''; el.dataset.mins = 0; }
+                if (mins < 0) mins += 1440; // handle midnight crossing
+
+                const hours = Math.floor(mins / 60);
+                const remainingMins = mins % 60;
+
+                let display = '';
+                if (hours > 0) display += hours + ' hr ';
+                if (remainingMins > 0) display += remainingMins + ' min';
+                if (display === '') display = '0 min';
+
+                el.value = display.trim();
+                el.dataset.mins = mins;   // keep minutes for backend
+                el.dataset.hours = (mins / 60).toFixed(2); // optional decimal hours
+            } else {
+                el.value = '';
+                el.dataset.mins = 0;
+                el.dataset.hours = 0;
+            }
+
             calcTotalProcessTime();
         }
 
         function calcTotalProcessTime() {
-            let total = 0;
+            let totalMins = 0;
+
             document.querySelectorAll('#procBody tr').forEach(tr => {
                 const i = tr.dataset.rowIndex;
-                total += parseInt(document.getElementById(`proc_total_${i}`)?.dataset.mins ?? 0);
+                totalMins += parseInt(
+                    document.getElementById(`proc_total_${i}`)?.dataset.mins ?? 0
+                );
             });
+
             const el = document.getElementById('totalProcessTime');
-            if (el) el.value = total > 0 ? total + ' min' : '';
+
+            if (el && totalMins > 0) {
+                const hours = Math.floor(totalMins / 60);
+                const mins = totalMins % 60;
+
+                let display = '';
+                if (hours > 0) display += hours + ' hr ';
+                if (mins > 0) display += mins + ' min';
+
+                el.value = display.trim();
+            } else if (el) {
+                el.value = '';
+            }
         }
 
         // ════════════════════════════════════════════════════════════════
@@ -2459,26 +2532,26 @@
             tr.dataset.rowIndex = i;
             tr.dataset.outputBlocks = data.output_blocks ? JSON.stringify(data.output_blocks) : '';
             tr.innerHTML = `
-            <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-            <td style="position:relative;min-width:160px">
-              <div class="sdd" id="sdd_fg_id_${i}">
-                <div class="sdd-trigger" onclick="toggleSdd('fg_id_'+${i})">
-                  <span class="sdd-trigger-text placeholder" id="sdd_fg_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                  <svg class="sdd-clear" onclick="clearSdd('fg_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <input type="hidden" id="fg_id_${i}" onchange="onFGMaterialChange(${i});triggerAutosave()">
-              </div>
-            </td>
-            <td>
-              <input type="number" class="ri" id="fg_qty_${i}"
-                value="${data.total_qty ?? ''}" step="0.001" placeholder="Click to enter blocks…"
-                onclick="openOutputModal('fg', ${i})" readonly
-                style="min-width:90px;cursor:pointer;background:var(--gxl)" title="Click to enter block weights">
-            </td>
-            <td><button class="del-btn" onclick="removeRow('fgrow-${i}',recalcFGTotals)" title="Remove">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-            </button></td>`;
+                <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                <td style="position:relative;min-width:160px">
+                  <div class="sdd" id="sdd_fg_id_${i}">
+                    <div class="sdd-trigger" onclick="toggleSdd('fg_id_'+${i})">
+                      <span class="sdd-trigger-text placeholder" id="sdd_fg_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                      <svg class="sdd-clear" onclick="clearSdd('fg_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <input type="hidden" id="fg_id_${i}" onchange="onFGMaterialChange(${i});triggerAutosave()">
+                  </div>
+                </td>
+                <td>
+                  <input type="number" class="ri" id="fg_qty_${i}"
+                    value="${data.total_qty ?? ''}" step="0.001" placeholder="Click to enter blocks…"
+                    onclick="openOutputModal('fg', ${i})" readonly
+                    style="min-width:90px;cursor:pointer;background:var(--gxl)" title="Click to enter block weights">
+                </td>
+                <td><button class="del-btn" onclick="removeRow('fgrow-${i}',recalcFGTotals)" title="Remove">
+                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initMaterialSdd(`fg_id_${i}`, data.material_id ?? null);
@@ -2513,26 +2586,26 @@
             tr.dataset.rowIndex = i;
             tr.dataset.outputBlocks = data.output_blocks ? JSON.stringify(data.output_blocks) : '';
             tr.innerHTML = `
-            <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-            <td style="position:relative;min-width:160px">
-              <div class="sdd" id="sdd_dr_id_${i}">
-                <div class="sdd-trigger" onclick="toggleSdd('dr_id_'+${i})">
-                  <span class="sdd-trigger-text placeholder" id="sdd_dr_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                  <svg class="sdd-clear" onclick="clearSdd('dr_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <input type="hidden" id="dr_id_${i}" onchange="onDrossMaterialChange(${i});triggerAutosave()">
-              </div>
-            </td>
-            <td>
-              <input type="number" class="ri" id="dr_qty_${i}"
-                value="${data.total_qty ?? ''}" step="0.001" placeholder="Click to enter blocks…"
-                onclick="openOutputModal('dross', ${i})" readonly
-                style="min-width:90px;cursor:pointer;background:var(--gxl)" title="Click to enter block weights">
-            </td>
-            <td><button class="del-btn" onclick="removeRow('drow-${i}',recalcDrossTotals)" title="Remove">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-            </button></td>`;
+                <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                <td style="position:relative;min-width:160px">
+                  <div class="sdd" id="sdd_dr_id_${i}">
+                    <div class="sdd-trigger" onclick="toggleSdd('dr_id_'+${i})">
+                      <span class="sdd-trigger-text placeholder" id="sdd_dr_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                      <svg class="sdd-clear" onclick="clearSdd('dr_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <input type="hidden" id="dr_id_${i}" onchange="onDrossMaterialChange(${i});triggerAutosave()">
+                  </div>
+                </td>
+                <td>
+                  <input type="number" class="ri" id="dr_qty_${i}"
+                    value="${data.total_qty ?? ''}" step="0.001" placeholder="Click to enter blocks…"
+                    onclick="openOutputModal('dross', ${i})" readonly
+                    style="min-width:90px;cursor:pointer;background:var(--gxl)" title="Click to enter block weights">
+                </td>
+                <td><button class="del-btn" onclick="removeRow('drow-${i}',recalcDrossTotals)" title="Remove">
+                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initMaterialSdd(`dr_id_${i}`, data.material_id ?? null);
@@ -2600,18 +2673,18 @@
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid var(--bdr)';
                 tr.innerHTML = `
-              <td style="padding:5px 14px;font-size:12.5px;font-weight:700;color:var(--g);text-align:right;
-                         background:var(--gxl);width:80px;border-right:1px solid var(--bdr)">${i + 1}</td>
-              <td style="padding:4px 10px">
-                <input type="number" step="0.001" min="0" placeholder="0.000"
-                  value="${qty}"
-                  style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:6px;
-                         font-family:'Outfit',sans-serif;font-size:13px;text-align:right;
-                         background:var(--white);outline:none;transition:border-color .15s"
-                  oninput="onOutputQtyInput(this,${i})"
-                  onfocus="this.style.borderColor='var(--g)'"
-                  onblur="this.style.borderColor='var(--bdr)'">
-              </td>`;
+                  <td style="padding:5px 14px;font-size:12.5px;font-weight:700;color:var(--g);text-align:right;
+                             background:var(--gxl);width:80px;border-right:1px solid var(--bdr)">${i + 1}</td>
+                  <td style="padding:4px 10px">
+                    <input type="number" step="0.001" min="0" placeholder="0.000"
+                      value="${qty}"
+                      style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:6px;
+                             font-family:'Outfit',sans-serif;font-size:13px;text-align:right;
+                             background:var(--white);outline:none;transition:border-color .15s"
+                      oninput="onOutputQtyInput(this,${i})"
+                      onfocus="this.style.borderColor='var(--g)'"
+                      onblur="this.style.borderColor='var(--bdr)'">
+                  </td>`;
                 tbody.appendChild(tr);
             }
             recalcOutputTotal();
@@ -2808,6 +2881,9 @@
                 lpg_initial: document.getElementById('lpg_initial').value || null,
                 lpg_final: document.getElementById('lpg_final').value || null,
                 lpg_consumption: document.getElementById('lpg_consumption').value || null,
+                lpg2_initial: document.getElementById('lpg2_initial').value || null,
+                lpg2_final: document.getElementById('lpg2_final').value || null,
+                lpg2_consumption: document.getElementById('lpg2_consumption').value || null,
                 electricity_initial: document.getElementById('electricity_initial').value || null,
                 electricity_final: document.getElementById('electricity_final').value || null,
                 electricity_consumption: document.getElementById('electricity_consumption').value || null,
@@ -2869,7 +2945,7 @@
 
         function setupAutosave() {
             const watchFields = ['pot_no', 'material_id', 'date',
-                'lpg_initial', 'lpg_final', 'electricity_initial', 'electricity_final',
+                'lpg_initial', 'lpg_final', 'lpg2_initial', 'lpg2_final', 'electricity_initial', 'electricity_final',
                 'oxygen_flow_nm3', 'oxygen_flow_kg', 'oxygen_flow_time', 'oxygen_consumption'];
             watchFields.forEach(id => {
                 const el = document.getElementById(id);
@@ -2889,7 +2965,7 @@
                 document.getElementById('inputAsText').textContent = 'Saving…';
             }
             clearTimeout(autosaveTimer);
-            autosaveTimer = setTimeout(() => saveForm(true), 2200);
+            // autosaveTimer = setTimeout(() => saveForm(true), 2200);
         }
 
         function setDot(state, text) {

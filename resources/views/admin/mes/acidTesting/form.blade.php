@@ -1299,7 +1299,7 @@
           <div>
             <div class="rb-label">Net Average Acid %</div>
             <div class="rb-val" id="netAvgPct">—</div>
-            <div class="rb-sub">= Total Drained ÷ Total Initial × 100</div>
+            <div class="rb-sub">(WEIGHT DIFFERENCE / INITIAL WEIGHT) * 100</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
             <div class="cat-pill" id="catPill" style="display:none">
@@ -1492,9 +1492,9 @@
       list.innerHTML = filtered.map(item => {
         const sel = String(item.value) === String(current);
         return `<div class="sdd-item${sel ? ' selected' : ''}" onclick="sddSelect('${sddActiveField}','${item.value}')">
-                    <div class="sdd-item-main">${item.label}</div>
-                    ${item.sub ? `<div class="sdd-item-sub">${item.sub}</div>` : ''}
-                  </div>`;
+                            <div class="sdd-item-main">${item.label}</div>
+                            ${item.sub ? `<div class="sdd-item-sub">${item.sub}</div>` : ''}
+                          </div>`;
       }).join('');
     }
 
@@ -1634,9 +1634,10 @@
       rowCount = 0;
 
       (data.details ?? []).forEach(row => {
+        const frontUlabType = parseInt(row.ulab_type) < 1000024 ? '5' : row.ulab_type;
         addRow({
           pallet_no: row.pallet_no,
-          ulab_type: row.ulab_type,
+          ulab_type: frontUlabType,
           gross_weight: row.gross_weight,
           initial_weight: row.initial_weight,
           drained_weight: row.drained_weight,
@@ -1725,7 +1726,7 @@
       document.getElementById('totalInitial').value = tInit > 0 ? tInit.toFixed(3) : '';
       document.getElementById('totalDrained').value = tDrained > 0 ? tDrained.toFixed(3) : '';
 
-      const netPct = tInit > 0 ? (tDrained / tInit) * 100 : null;
+      const netPct = tInit > 0 ? ((tInit - tDrained) / tInit) * 100 : null;
       updateResultBanner(netPct);
     }
 
@@ -1777,39 +1778,39 @@
       const avgPFVal = parseFloat(document.getElementById('avg_pallet_foreign_weight').value || 0).toFixed(3);
 
       tr.innerHTML = `
-                <td class="sr-n">${idx}</td>
-                <td><input type="text" class="ri" id="pallet_no_${idx}" value="${data.pallet_no ?? ''}" placeholder="WP-${String(idx).padStart(2, '0')}"></td>
-                <td>
-                  <select class="rsel" id="ulab_${idx}" onchange="onUlabChange(${idx})">
-                    ${ulabOpts}
-                  </select>
-                </td>
-                <td><input type="number" class="ri" id="gross_${idx}" step="0.001" placeholder="0.000" value="${data.gross_weight ?? ''}" oninput="calcRow(${idx})"></td>
-                <td><input type="number" class="ri" id="avgpf_${idx}" readonly value="${avgPFVal}"></td>
-                <td><input type="number" class="ri" id="net_${idx}" readonly></td>
-                <td class="${cellDis}" id="cell_initial_${idx}">
-                  <input type="number" class="ri" id="initial_${idx}" step="0.001" placeholder="0.000"
-                    value="${data.initial_weight ?? ''}"
-                    ${isAcid ? '' : 'readonly tabindex="-1"'}
-                    oninput="calcRow(${idx})">
-                </td>
-                <td class="${cellDis}" id="cell_drained_${idx}">
-                  <input type="number" class="ri" id="drained_${idx}" step="0.001" placeholder="0.000"
-                    value="${data.drained_weight ?? ''}"
-                    ${isAcid ? '' : 'readonly tabindex="-1"'}
-                    oninput="calcRow(${idx})">
-                </td>
-                <td class="${cellDis}" id="cell_diff_${idx}">
-                  <input type="number" class="ri" id="diff_${idx}" readonly>
-                </td>
-                <td class="${cellDis}" id="cell_pct_${idx}">
-                  <input type="number" class="ri" id="acid_pct_${idx}" readonly>
-                </td>
-                <td style="text-align:center">
-                  ${idx > 1 ? `<button class="del-btn" onclick="removeRow(${idx})" title="Remove">
-                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                  </button>` : ''}
-                </td>`;
+                        <td class="sr-n">${idx}</td>
+                        <td><input type="text" class="ri" id="pallet_no_${idx}" value="${data.pallet_no ?? ''}" placeholder="WP-${String(idx).padStart(2, '0')}"></td>
+                        <td>
+                          <select class="rsel" id="ulab_${idx}" onchange="onUlabChange(${idx})">
+                            ${ulabOpts}
+                          </select>
+                        </td>
+                        <td><input type="number" class="ri" id="gross_${idx}" step="0.001" placeholder="0.000" value="${data.gross_weight ?? ''}" oninput="calcRow(${idx})"></td>
+                        <td><input type="number" class="ri" id="avgpf_${idx}" readonly value="${avgPFVal}"></td>
+                        <td><input type="number" class="ri" id="net_${idx}" readonly></td>
+                        <td class="${cellDis}" id="cell_initial_${idx}">
+                          <input type="number" class="ri" id="initial_${idx}" step="0.001" placeholder="0.000"
+                            value="${data.initial_weight ?? ''}"
+                            ${isAcid ? '' : 'readonly tabindex="-1"'}
+                            oninput="calcRow(${idx})">
+                        </td>
+                        <td class="${cellDis}" id="cell_drained_${idx}">
+                          <input type="number" class="ri" id="drained_${idx}" step="0.001" placeholder="0.000"
+                            value="${data.drained_weight ?? ''}"
+                            ${isAcid ? '' : 'readonly tabindex="-1"'}
+                            oninput="calcRow(${idx})">
+                        </td>
+                        <td class="${cellDis}" id="cell_diff_${idx}">
+                          <input type="number" class="ri" id="diff_${idx}" readonly>
+                        </td>
+                        <td class="${cellDis}" id="cell_pct_${idx}">
+                          <input type="number" class="ri" id="acid_pct_${idx}" readonly>
+                        </td>
+                        <td style="text-align:center">
+                          ${idx > 1 ? `<button class="del-btn" onclick="removeRow(${idx})" title="Remove">
+                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                          </button>` : ''}
+                        </td>`;
 
       tbody.appendChild(tr);
       tr.style.opacity = '0'; tr.style.transform = 'translateY(-4px)';
@@ -1997,7 +1998,7 @@
       setDot('saving', 'Saving…');
       document.getElementById('autosaveStatus').style.display = 'inline';
       clearTimeout(autosaveTimer);
-      autosaveTimer = setTimeout(() => saveForm(true), 2200);
+      // autosaveTimer = setTimeout(() => saveForm(true), 2200);
     }
 
     function setDot(state, text) {

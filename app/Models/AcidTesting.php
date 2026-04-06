@@ -22,6 +22,7 @@ class AcidTesting extends Model
         'avg_pallet_and_foreign_weight',
         'invoice_qty',
         'received_qty',
+        'net_avg_acid_pct',
         'status',
         'is_active',
         'created_by',
@@ -29,14 +30,15 @@ class AcidTesting extends Model
     ];
 
     protected $casts = [
-        'test_date'               => 'date',
-        'avg_pallet_weight'       => 'decimal:2',
+        'test_date' => 'date',
+        'avg_pallet_weight' => 'decimal:2',
         'foreign_material_weight' => 'decimal:2',
         'avg_pallet_and_foreign_weight' => 'decimal:3',
-        'invoice_qty'             => 'decimal:2',
-        'received_qty'            => 'decimal:2',
-        'is_active'               => 'boolean',
-        'status'                  => 'integer',
+        'invoice_qty' => 'decimal:2',
+        'received_qty' => 'decimal:2',
+        'net_avg_acid_pct' => 'decimal:4',
+        'is_active' => 'boolean',
+        'status' => 'integer',
     ];
 
     /*
@@ -48,15 +50,15 @@ class AcidTesting extends Model
     | 3 = Completed
     | 4 = Cancelled
     */
-    const STATUS_PENDING     = 0;
-    const STATUS_APPROVED    = 1;
+    const STATUS_PENDING = 0;
+    const STATUS_APPROVED = 1;
     const STATUS_IN_PROGRESS = 2;
-    const STATUS_COMPLETED   = 3;
-    const STATUS_CANCELLED   = 4;
+    const STATUS_COMPLETED = 3;
+    const STATUS_CANCELLED = 4;
 
     public function getStatusLabelAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             0 => 'Pending',
             1 => 'Approved',
             2 => 'In Progress',
@@ -98,8 +100,8 @@ class AcidTesting extends Model
     {
         return $this->belongsTo(User::class, 'updated_by')->select('id', 'name');
     }
-   
 
 
-    
+
+
 }

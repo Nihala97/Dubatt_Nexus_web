@@ -13,6 +13,7 @@ use App\Models\BbsuPowerConsumption;
 use App\Models\AcidTestPercentageDetail;
 use App\Models\AcidTesting;
 use App\Models\Material;
+use App\Models\StockLedger;
 use App\Services\InventoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,42 +31,93 @@ class BbsuBatchController extends Controller
         $this->inventoryService = $inventoryService;
     }
 
+    // ══════════════════════════════════════════════════════════════════════════
+    //  HELPERS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Calculate total input qty for a batch from its inputDetails.
+     */
+    private function totalInputQty(BbsuBatch $batch): float
+    {
+        return (float) $batch->inputDetails->sum('quantity');
+    }
+
+    /**
+     * Upsert the 9 output material rows for a batch.
+     *
+     * $outputRows is an array keyed by material_code:
+     *   [ '1007' => ['qty' => 120.5], '1008' => ['qty' => 80.0], ... ]
+     *
+     * Yield % = qty / totalInputQty * 100 (auto-calculated here).
+     */
+    private function syncOutputMaterials(BbsuBatch $batch, array $outputRows, int $userId): void
+    {
+        $totalInput = $this->totalInputQty($batch);
+
+        // MATERIAL_KEYS = [ '1007' => 'metallic', '1008' => 'paste', ... ]
+        // These codes match material_code in the materials table exactly.
+        foreach (array_keys(BbsuOutputMaterial::MATERIAL_KEYS) as $code) {
+            $qty = (float) ($outputRows[$code]['qty'] ?? 0);
+            $yieldPct = $totalInput > 0 ? round(($qty / $totalInput) * 100, 4) : 0;
+
+            BbsuOutputMaterial::updateOrCreate(
+                [
+                    'bbsu_batch_id' => $batch->id,
+                    'material_code' => $code,
+                ],
+                [
+                    'qty' => $qty,
+                    'yield_pct' => $yieldPct,
+                    'status' => 0,
+                    'is_active' => true,
+                    'updated_by' => $userId,
+                    'created_by' => $userId,
+                ]
+            );
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  INDEX
+    // ══════════════════════════════════════════════════════════════════════════
+
     /**
      * GET /api/bbsu-batches
-     * List all BBSU batches with optional filters.
      */
     public function index(Request $request)
     {
-        $query = BbsuBatch::with(['inputDetails', 'outputMaterial', 'powerConsumption'])
+        $query = BbsuBatch::with(['inputDetails', 'outputMaterials', 'powerConsumption'])
             ->where('is_active', true);
 
-        // Optional filters
-        if ($request->filled('status')) {
+        if ($request->filled('status'))
             $query->where('status', $request->status);
-        }
-
-        if ($request->filled('category')) {
+        if ($request->filled('category'))
             $query->where('category', $request->category);
-        }
-
-        if ($request->filled('doc_date')) {
+        if ($request->filled('doc_date'))
             $query->whereDate('doc_date', $request->doc_date);
-        }
-
-        if ($request->filled('batch_no')) {
+        if ($request->filled('batch_no'))
             $query->where('batch_no', 'like', '%' . $request->batch_no . '%');
-        }
 
         $batches = $query->orderByDesc('created_at')
             ->paginate($request->get('per_page', 15));
 
-        //return BbsuBatchResource::collection($batches);
         return response()->json(['status' => 'ok', 'data' => $batches]);
     }
 
+    // ══════════════════════════════════════════════════════════════════════════
+    //  STORE
+    // ══════════════════════════════════════════════════════════════════════════
+
     /**
      * POST /api/bbsu-batches
-     * Create a new BBSU batch with all child records in one transaction.
+     *
+     * Payload output_material format (from blade):
+     *   output_material: {
+     *     "1007": { "qty": 120.5 },
+     *     "1008": { "qty": 80.0 },
+     *     ...
+     *   }
      */
     public function store(StoreBbsuBatchRequest $request): JsonResponse
     {
@@ -74,7 +126,7 @@ class BbsuBatchController extends Controller
 
             $userId = auth()->id();
 
-            // 1. Create header (batch)
+            // 1. Create header
             $batch = BbsuBatch::create([
                 'batch_no' => $request->batch_no,
                 'start_time' => $request->start_time,
@@ -87,13 +139,14 @@ class BbsuBatchController extends Controller
                 'updated_by' => $userId,
             ]);
 
-            // 2. Create input detail rows (dynamic / multiple)
+            // 2. Create input detail rows
             foreach ($request->input_details as $detail) {
                 BbsuInputDetail::create([
                     'bbsu_batch_id' => $batch->id,
                     'lot_no' => $detail['lot_no'],
                     'quantity' => $detail['quantity'],
                     'acid_percentage' => $detail['acid_percentage'],
+                    'material_breakdown' => $detail['material_breakdown'] ?? null,
                     'status' => 0,
                     'is_active' => true,
                     'created_by' => $userId,
@@ -101,47 +154,13 @@ class BbsuBatchController extends Controller
                 ]);
             }
 
-            $totalInput = collect($request->input_details)->sum('quantity');
-            $om = $request->output_material;
-            $metallic_yield = $totalInput > 0 ? ($om['metallic_qty'] / $totalInput) * 100 : 0;
-            $paste_yield = $totalInput > 0 ? ($om['paste_qty'] / $totalInput) * 100 : 0;
-            $fines_yield = $totalInput > 0 ? ($om['fines_qty'] / $totalInput) * 100 : 0;
-            $pp_chips_yield = $totalInput > 0 ? ($om['pp_chips_qty'] / $totalInput) * 100 : 0;
-            $abs_chips_yield = $totalInput > 0 ? ($om['abs_chips_qty'] / $totalInput) * 100 : 0;
-            $separator_yield = $totalInput > 0 ? ($om['separator_qty'] / $totalInput) * 100 : 0;
-            $battery_plates_yield = $totalInput > 0 ? ($om['battery_plates_qty'] / $totalInput) * 100 : 0;
-            $terminals_yield = $totalInput > 0 ? ($om['terminals_qty'] / $totalInput) * 100 : 0;
-            $acid_yield = $totalInput > 0 ? ($om['acid_qty'] / $totalInput) * 100 : 0;
+            // Reload inputDetails so totalInputQty is accurate
+            $batch->load('inputDetails');
 
-            // 3. Create output material (single row)
+            // 3. Create 9 output material rows
+            $this->syncOutputMaterials($batch, $request->output_material ?? [], $userId);
 
-            BbsuOutputMaterial::create([
-                'bbsu_batch_id' => $batch->id,
-                'metallic_qty' => $om['metallic_qty'],
-                'paste_qty' => $om['paste_qty'],
-                'fines_qty' => $om['fines_qty'],
-                'pp_chips_qty' => $om['pp_chips_qty'],
-                'abs_chips_qty' => $om['abs_chips_qty'],
-                'separator_qty' => $om['separator_qty'],
-                'battery_plates_qty' => $om['battery_plates_qty'],
-                'terminals_qty' => $om['terminals_qty'],
-                'acid_qty' => $om['acid_qty'],
-                'status' => 0,
-                'is_active' => true,
-                'created_by' => $userId,
-                'updated_by' => $userId,
-                'metallic_yield' => $metallic_yield,
-                'paste_yield' => $paste_yield,
-                'fines_yield' => $fines_yield,
-                'pp_chips_yield' => $pp_chips_yield,
-                'abs_chips_yield' => $abs_chips_yield,
-                'separator_yield' => $separator_yield,
-                'battery_plates_yield' => $battery_plates_yield,
-                'terminals_yield' => $terminals_yield,
-                'acid_yield' => $acid_yield,
-            ]);
-
-            // 4. Create power consumption (single row)
+            // 4. Create power consumption
             $pc = $request->power_consumption;
             BbsuPowerConsumption::create([
                 'bbsu_batch_id' => $batch->id,
@@ -154,37 +173,18 @@ class BbsuBatchController extends Controller
                 'updated_by' => $userId,
             ]);
 
-
-            $totalOutput =
-                ($om['metallic_qty'] ?? 0) +
-                ($om['paste_qty'] ?? 0) +
-                ($om['fines_qty'] ?? 0) +
-                ($om['pp_chips_qty'] ?? 0) +
-                ($om['abs_chips_qty'] ?? 0) +
-                ($om['separator_qty'] ?? 0) +
-                ($om['battery_plates_qty'] ?? 0) +
-                ($om['terminals_qty'] ?? 0) +
-                ($om['acid_qty'] ?? 0);
-
-            $yieldPercent = $totalInput > 0 ? ($totalOutput / $totalInput) * 100 : 0;
-
-            $batch->update([
-                'yield_percentage' => $yieldPercent
-            ]);
-
             DB::commit();
 
-            $batch->load(['inputDetails', 'outputMaterial', 'powerConsumption']);
+            $batch->load(['inputDetails', 'outputMaterials', 'powerConsumption']);
 
             return response()->json([
                 'message' => 'BBSU batch created successfully.',
-                'data' => $batch->load('inputDetails', 'outputMaterial', 'powerConsumption')
-                // 'data'    => $batch->load('pc', 'om',),
+                'data' => $batch,
             ], 201);
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('BBSU batch store failed', ['error' => $e->getMessage()]);
+            Log::error('BBSU batch store failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
 
             return response()->json([
                 'message' => 'Failed to create BBSU batch.',
@@ -193,15 +193,18 @@ class BbsuBatchController extends Controller
         }
     }
 
+    // ══════════════════════════════════════════════════════════════════════════
+    //  SHOW
+    // ══════════════════════════════════════════════════════════════════════════
+
     /**
-     * GET /api/bbsu-batches/{bbsu_batch}
-     * Show a single BBSU batch with all related data.
+     * GET /api/bbsu-batches/{id}
      */
     public function show($id)
     {
         $batch = BbsuBatch::with([
             'inputDetails',
-            'outputMaterial',
+            'outputMaterials',
             'powerConsumption',
             'createdBy:id,name',
             'updatedBy:id,name',
@@ -213,9 +216,12 @@ class BbsuBatchController extends Controller
         ]);
     }
 
+    // ══════════════════════════════════════════════════════════════════════════
+    //  UPDATE
+    // ══════════════════════════════════════════════════════════════════════════
+
     /**
      * PUT /api/bbsu-batches/{bbsu_batch}
-     * Update an existing BBSU batch and all child records.
      */
     public function update(UpdateBbsuBatchRequest $request, BbsuBatch $bbsu_batch): JsonResponse
     {
@@ -234,53 +240,29 @@ class BbsuBatchController extends Controller
                 'updated_by' => $userId,
             ]);
 
-            // 2. Sync input details
-            //    - Soft-delete rows not in the request (by id)
-            //    - Update existing rows (id present)
-            //    - Create new rows (no id)
-            $existingIds = collect($request->input_details)
-                ->pluck('id')
-                ->filter()
-                ->toArray();
-
-            // Delete rows removed by user
-            $bbsu_batch->inputDetails()
-                ->whereNotIn('id', $existingIds)
-                ->update(['is_active' => false, 'updated_by' => $userId]);
+            BbsuInputDetail::where('bbsu_batch_id', $bbsu_batch->id)->delete();
 
             foreach ($request->input_details as $detail) {
-                if (!empty($detail['id'])) {
-                    // Update existing row
-                    BbsuInputDetail::where('id', $detail['id'])
-                        ->update([
-                            'lot_no' => $detail['lot_no'],
-                            'quantity' => $detail['quantity'],
-                            'acid_percentage' => $detail['acid_percentage'],
-                            'updated_by' => $userId,
-                        ]);
-                } else {
-                    // Create new row
-                    BbsuInputDetail::create([
-                        'bbsu_batch_id' => $bbsu_batch->id,
-                        'lot_no' => $detail['lot_no'],
-                        'quantity' => $detail['quantity'],
-                        'acid_percentage' => $detail['acid_percentage'],
-                        'status' => 0,
-                        'is_active' => true,
-                        'created_by' => $userId,
-                        'updated_by' => $userId,
-                    ]);
-                }
+                BbsuInputDetail::create([
+                    'bbsu_batch_id' => $bbsu_batch->id,
+                    'lot_no' => $detail['lot_no'],
+                    'quantity' => $detail['quantity'],
+                    'acid_percentage' => $detail['acid_percentage'],
+                    'material_breakdown' => $detail['material_breakdown'] ?? null,
+                    'status' => 0,
+                    'is_active' => true,
+                    'created_by' => $userId,
+                    'updated_by' => $userId,
+                ]);
             }
 
-            // 3. Update output material (upsert single row)
-            $om = $request->output_material;
-            $bbsu_batch->outputMaterial()->updateOrCreate(
-                ['bbsu_batch_id' => $bbsu_batch->id],
-                array_merge($om, ['updated_by' => $userId])
-            );
+            // Reload so totalInputQty reflects latest input rows
+            $bbsu_batch->load('inputDetails');
 
-            // 4. Update power consumption (upsert single row)
+            // 3. Sync 9 output material rows (upsert, yield auto-calculated)
+            $this->syncOutputMaterials($bbsu_batch, $request->output_material ?? [], $userId);
+
+            // 4. Update power consumption
             $pc = $request->power_consumption;
             $bbsu_batch->powerConsumption()->updateOrCreate(
                 ['bbsu_batch_id' => $bbsu_batch->id],
@@ -289,11 +271,11 @@ class BbsuBatchController extends Controller
 
             DB::commit();
 
-            $bbsu_batch->load(['inputDetails', 'outputMaterial', 'powerConsumption']);
+            $bbsu_batch->load(['inputDetails', 'outputMaterials', 'powerConsumption']);
 
             return response()->json([
                 'message' => 'BBSU batch updated successfully.',
-                'data' => new BbsuBatchResource($bbsu_batch),
+                'data' => $bbsu_batch,
             ]);
 
         } catch (\Throwable $e) {
@@ -307,53 +289,31 @@ class BbsuBatchController extends Controller
         }
     }
 
-    /**
-     * DELETE /api/bbsu-batches/{bbsu_batch}
-     * Soft-delete a BBSU batch (set is_active = false).
-     */
+    // ══════════════════════════════════════════════════════════════════════════
+    //  DESTROY
+    // ══════════════════════════════════════════════════════════════════════════
+
     public function destroy(BbsuBatch $bbsu_batch): JsonResponse
     {
         $userId = auth()->id();
+        $bbsu_batch->update(['is_active' => false, 'updated_by' => $userId]);
 
-        $bbsu_batch->update([
-            'is_active' => false,
-            'updated_by' => $userId,
-        ]);
-
-        return response()->json([
-            'message' => 'BBSU batch deleted successfully.',
-        ]);
+        return response()->json(['message' => 'BBSU batch deleted successfully.']);
     }
 
-    /**
-     * PATCH /api/bbsu-batches/{bbsu_batch}/status
-     * Update the status of a BBSU batch (draft → submitted → completed).
-     */
-    // public function updateStatus(Request $request, BbsuBatch $bbsu_batch): JsonResponse
-    // {
-    //     $request->validate([
-    //         'status' => 'required|in:0,1,2',
-    //     ]);
+    // ══════════════════════════════════════════════════════════════════════════
+    //  STATUS / SUBMIT
+    // ══════════════════════════════════════════════════════════════════════════
 
-    //     $bbsu_batch->update([
-    //         'status'     => $request->status,
-    //         'updated_by' => auth()->id(),
-    //     ]);
-
-    //     return response()->json([
-    //         'message' => 'Status updated successfully.',
-    //         'status'  => $bbsu_batch->status,
-    //     ]);
-    // }
     public function submit($id): JsonResponse
     {
-        $batch = BbsuBatch::with(['inputDetails', 'outputMaterial'])->findOrFail($id);
+        $batch = BbsuBatch::with(['inputDetails', 'outputMaterials'])->findOrFail($id);
+
         if ($batch->status === 1) {
             return response()->json(['status' => 'error', 'message' => 'Already submitted.'], 422);
         }
-        $batch->update(['status' => 1, 'updated_by' => auth()->id()]);
 
-        // Process Inventory
+        $batch->update(['status' => 1, 'updated_by' => auth()->id()]);
         $this->processBbsuInventory($batch);
 
         return response()->json(['status' => 'ok', 'message' => 'Batch submitted and locked.']);
@@ -363,7 +323,7 @@ class BbsuBatchController extends Controller
     {
         $request->validate(['status' => 'required|integer|in:0,1,2,3,4']);
 
-        $header = BbsuBatch::with(['inputDetails', 'outputMaterial'])->findOrFail($id);
+        $header = BbsuBatch::with(['inputDetails', 'outputMaterials'])->findOrFail($id);
         $oldStatus = $header->status;
         $header->update(['status' => $request->status, 'updated_by' => auth()->id()]);
 
@@ -380,12 +340,14 @@ class BbsuBatchController extends Controller
         ]);
     }
 
+    // ══════════════════════════════════════════════════════════════════════════
+    //  INVENTORY PROCESSING  (updated to use new output structure)
+    // ══════════════════════════════════════════════════════════════════════════
+
     private function processBbsuInventory($batch)
     {
-        // 1. OUT stock for input lots
+        // 1. OUT stock for each input lot
         foreach ($batch->inputDetails as $detail) {
-            // we find the receiving or acid test that this lot belongs to, to know the material
-            // but the lot usually corresponds to the original material received
             $receiving = \App\Models\Receiving::where('lot_no', $detail->lot_no)->first();
             if ($receiving && $receiving->material_id) {
                 $this->inventoryService->stockOut(
@@ -399,162 +361,294 @@ class BbsuBatchController extends Controller
             }
         }
 
-        // 2. IN stock for fixed outputs
-        $outputs = [
-            'Metallic Lead' => $batch->outputMaterial->metallic_qty,
-            'Paste' => $batch->outputMaterial->paste_qty,
-            'Fines' => $batch->outputMaterial->fines_qty,
-            'PP Chips' => $batch->outputMaterial->pp_chips_qty,
-            'ABS Chips' => $batch->outputMaterial->abs_chips_qty,
-            'Separator' => $batch->outputMaterial->separator_qty,
-            'Battery Plates' => $batch->outputMaterial->battery_plates_qty,
-            'Terminals' => $batch->outputMaterial->terminals_qty,
-            'Acid' => $batch->outputMaterial->acid_qty,
-        ];
+        // 2. IN stock for each output material row.
+        // material_code on the bbsu_output_materials row IS the material_code
+        // in the materials table — look it up directly, no firstOrCreate needed.
+        foreach ($batch->outputMaterials as $row) {
+            $qty = (float) $row->qty;
+            if ($qty <= 0)
+                continue;
 
-        foreach ($outputs as $name => $qty) {
-            $qty = (float) $qty;
-            if ($qty > 0) {
-                $material = Material::firstOrCreate(
-                    ['material_name' => $name],
-                    ['material_code' => strtoupper(str_replace(' ', '_', $name)) . '-OUT', 'status' => 1, 'is_active' => 1]
-                );
-                $this->inventoryService->stockIn(
-                    $material->id,
-                    $qty,
-                    'BBSU',
-                    $batch->id,
-                    $batch->batch_no,
-                    auth()->id()
-                );
+            $material = Material::where('material_code', $row->material_code)->first();
+
+            if (!$material) {
+                Log::warning('BBSU inventory: material not found for code ' . $row->material_code);
+                continue;
             }
+
+            $this->inventoryService->stockIn(
+                $material->id,
+                $qty,
+                'BBSU',
+                $batch->id,
+                $batch->batch_no,
+                auth()->id()
+            );
         }
     }
 
-    // public function acidSummary(): JsonResponse
-    // {
-    //     // Load all active details with related acidTest and stockCondition
-    //     $data = AcidTestPercentageDetail::with([
-    //         'acidTest.receiving',
-    //         'stockCondition'
-    //     ])
-    //     ->where('is_active', true)
-    //     ->get();
+    // ══════════════════════════════════════════════════════════════════════════
+    //  ACID SUMMARY ROUTES
+    // ══════════════════════════════════════════════════════════════════════════
 
-    //     // Separate ulab_type = 5 and other types
-    //     $typeFive = $data->where('ulab_type', 5);
-    //     $others   = $data->where('ulab_type', '!=', 5);
-
-    //     $result = collect();
-
-    //     // ── Group ulab_type = 5 into one row ─────────────────────────────
-    //     if ($typeFive->count() > 0) {
-    //         $first = $typeFive->first();
-
-    //         $result->push([
-    //             'ulab_type'            => 5,
-    //             'material_description' => $first->stockCondition->description ?? null,
-    //             'lot_no'               => $first->acidTest->receiving->lot_no ?? null,
-    //             'unit'                 => $first->acidTest->receiving->unit ?? null,
-    //             'total_avg_acid_pct'   => $typeFive->sum('avg_acid_pct'),
-    //             'total_net_weight'     => $typeFive->sum('net_weight'),
-    //         ]);
-    //     }
-
-    //     // ── Add other ulab_types as normal rows ──────────────────────────
-    //     foreach ($others as $row) {
-    //         $result->push([
-    //             'ulab_type'            => $row->ulab_type,
-    //             'material_description' => $row->stockCondition->description ?? null,
-    //             'lot_no'               => $row->acidTest->receiving->lot_no ?? null,
-    //             'unit'                 => $row->acidTest->receiving->unit ?? null,
-    //             'avg_acid_pct'         => $row->avg_acid_pct,
-    //             'net_weight'           => $row->net_weight,
-    //         ]);
-    //     }
-
-    //     return response()->json([
-    //         'message' => 'BBSU Acid summary report generated successfully.',
-    //         'data'    => $result
-    //     ]);
-    // }
-
+    /**
+     * GET /api/bbsu-batches/acid-summary/{lotNo}
+     *
+     * Returns per-material-type breakdown for the QTY popup modal.
+     * Each row's avg_acid_pct is the CORRECT acid% for that specific material
+     * within the lot (calculated as drained/initial × 100 for the group).
+     */
+    /**
+     * GET /api/bbsu-batches/acid-summary/{lotNo}
+     * Computes the available quantity for each material type in a lot.
+     */
     public function acidSummaryByLot($lotNo): JsonResponse
     {
-        // Find the acid test header for this lot number
         $acidTest = AcidTesting::where('lot_number', $lotNo)->first();
 
         if (!$acidTest) {
             return response()->json([
                 'message' => 'No acid test found for this lot number.',
-                'data' => []
+                'data' => [],
             ], 404);
         }
 
-        // Load all active details for this specific acid test
-        $data = AcidTestPercentageDetail::with([
-            'acidTest.receiving',
-            'stockCondition'
-        ])
-            ->where('acid_test_id', $acidTest->id)
+        // Qty already used in ALL active BBSU batches for this lot (draft + submitted)
+        $usedQty = DB::table('bbsu_input_details')
+            ->join('bbsu_batches', 'bbsu_batches.id', '=', 'bbsu_input_details.bbsu_batch_id')
+            ->where('bbsu_batches.is_active', true)
+            ->where('bbsu_input_details.is_active', true)
+            ->where('bbsu_input_details.lot_no', $lotNo)
+            ->sum('bbsu_input_details.quantity');
+
+        $data = AcidTestPercentageDetail::where('acid_test_id', $acidTest->id)
             ->where('is_active', true)
             ->get();
 
         if ($data->isEmpty()) {
             return response()->json([
                 'message' => 'No details found for this lot number.',
-                'data' => []
+                'data' => [],
             ]);
         }
 
-        // Separate ulab_type = 5 and other types
-        $typeFive = $data->where('ulab_type', 5);
-        $others = $data->where('ulab_type', '!=', 5);
+        $receiving = \App\Models\Receiving::where('lot_no', $acidTest->lot_number)->first();
+        $lotNoDisplay = $receiving->lot_no ?? $lotNo;
+        $unit = $receiving->unit ?? 'KG';
+
+        $totalNet = (float) $data->sum('net_weight');
+        $totalAvailable = max(0, $totalNet - (float) $usedQty);
+
+        // ── Parse exactly which material was consumed from previous JSON breakdowns ──
+        $usedByUlab = [];
+        $rawBreakdowns = DB::table('bbsu_input_details')
+            ->join('bbsu_batches', 'bbsu_batches.id', '=', 'bbsu_input_details.bbsu_batch_id')
+            ->where('bbsu_batches.is_active', true)
+            ->where('bbsu_input_details.is_active', true)
+            ->where('bbsu_input_details.lot_no', $lotNo)
+            ->pluck('bbsu_input_details.material_breakdown');
+
+        foreach ($rawBreakdowns as $json) {
+            $decoded = json_decode($json, true);
+            if (is_array($decoded)) {
+                foreach ($decoded as $u => $q) {
+                    $usedByUlab[$u] = isset($usedByUlab[$u]) ? $usedByUlab[$u] + $q : $q;
+                }
+            }
+        }
 
         $result = collect();
+        $netAvgPct = (float)($acidTest->net_avg_acid_pct ?? 0);
 
-        // ── Group ulab_type = 5 into one row ─────────────────────────
-        if ($typeFive->count() > 0) {
-            $first = $typeFive->first();
+        // ── 1. Group ALL Acid Pallets together as ONE row ──
+        $acidRows = $data->filter(fn($r) => (float)$r->avg_acid_pct > 0);
+        if ($acidRows->isNotEmpty()) {
+            // Resolve the common category for the whole batch
+            $condition = $this->resolveConditionByPct($netAvgPct);
+            $stockCode = $condition?->stock_code ?? '5';
+            $description = $condition?->description ?? 'ULAB - ACID PRESENT';
+
+            $rowNet = (float) $acidRows->sum('net_weight'); 
+            $thisMaterialUsed = (float) ($usedByUlab[$stockCode] ?? 0);
+            $rowAvail = max(0, $rowNet - $thisMaterialUsed);
 
             $result->push([
-                'ulab_type' => 5,
-                'material_description' => $first->stockCondition->description ?? 'ACID',
-                'lot_no' => $first->acidTest->receiving->lot_no ?? null,
-                'unit' => $first->acidTest->receiving->unit ?? null,
-                'avg_acid_pct' => $typeFive->sum('avg_acid_pct'),
-                'net_weight' => $typeFive->sum('net_weight'), //mk changed
+                'ulab_type'            => $stockCode,
+                'material_description' => $description,
+                'lot_no'               => $lotNoDisplay,
+                'unit'                 => $unit,
+                'avg_acid_pct'         => round($netAvgPct, 3),
+                'net_weight'           => round($rowNet, 3),
+                'available_qty'        => round($rowAvail, 3),
+                'used_qty'             => round($thisMaterialUsed, 3),
             ]);
         }
 
-        // ── Add other ulab_types as normal rows ───────────────────────
-        foreach ($others as $row) {
+        // ── 2. Group Non-Acid (Dry) Pallets by their respective ulab_type ──
+        $dryGroups = $data->filter(fn($r) => !((float)$r->avg_acid_pct > 0))->groupBy('ulab_type');
+        foreach ($dryGroups as $ulabType => $rows) {
+            $rowNet = (float) $rows->sum('net_weight');
+            $thisMaterialUsed = (float) ($usedByUlab[$ulabType] ?? 0);
+            $rowAvail = max(0, $rowNet - $thisMaterialUsed);
+
+            $description = $rows->first()?->remarks ?? $ulabType;
+
             $result->push([
-                'ulab_type' => $row->ulab_type,
-                'material_description' => $row->stockCondition->description ?? null,
-                'lot_no' => $row->acidTest->receiving->lot_no ?? null,
-                'unit' => $row->acidTest->receiving->unit ?? null,
-                'avg_acid_pct' => $row->avg_acid_pct,
-                'net_weight' => $row->net_weight,//mk changed
+                'ulab_type'            => $ulabType,
+                'material_description' => $description,
+                'lot_no'               => $lotNoDisplay,
+                'unit'                 => $unit,
+                'avg_acid_pct'         => 0.0,
+                'net_weight'           => round($rowNet, 3),
+                'available_qty'        => round($rowAvail, 3),
+                'used_qty'             => round($thisMaterialUsed, 3),
             ]);
         }
 
         return response()->json([
-            'message' => 'Acid summary for lot ' . $lotNo . ' retrieved successfully.',
-            'data' => $result
+            'message'       => 'Acid summary for lot ' . $lotNo . ' retrieved successfully.',
+            'total_net'     => round($totalNet, 3),
+            'used_qty'      => round((float) $usedQty, 3),
+            'available_qty' => round($totalAvailable, 3),
+            'data'          => $result,
         ]);
     }
 
-    public function lotNumbers()
+    /**
+     * Helper to resolve matching AcidStockCondition for a PCT value.
+     */
+    private function resolveConditionByPct(float $acidPct): ?\App\Models\AcidStockCondition
+    {
+        $conditions = \App\Models\AcidStockCondition::where('is_active', true)
+            ->where(function ($q) {
+                $q->where('min_pct', '>', 0)
+                  ->orWhere('max_pct', '>', 0);
+            })
+            ->orderByRaw('CAST(min_pct AS DECIMAL(10,4)) ASC')
+            ->get();
+
+        foreach ($conditions as $condition) {
+            $min = (float) $condition->min_pct;
+            $max = (float) $condition->max_pct;
+            if ($acidPct < $min) continue;
+            if ($max > 0 && $acidPct > $max) continue;
+            return $condition;
+        }
+        return null;
+    }
+
+    /**
+     * GET /api/bbsu-batches/acid-test-lot-numbers
+     *
+     * Returns submitted lots with their remaining available qty and
+     * the WEIGHTED AVERAGE acid% across all material types in the lot.
+     * Formula: Sum(qty × acid%) / Sum(qty)
+     */
+    public function acidTestLotNumbers(Request $request): JsonResponse
+    {
+        $includeLots = array_filter(explode(',', $request->get('include', '')));
+
+        $lots = AcidTesting::where('status', 1)
+            ->select('id', 'lot_number', 'net_avg_acid_pct')
+            ->orderBy('lot_number')
+            ->get()
+            ->map(function ($at) use ($includeLots) {
+
+                $usedQty = DB::table('bbsu_input_details')
+                    ->join('bbsu_batches', 'bbsu_batches.id', '=', 'bbsu_input_details.bbsu_batch_id')
+                    ->where('bbsu_batches.is_active', true)
+                    ->where('bbsu_input_details.is_active', true)
+                    ->where('bbsu_input_details.lot_no', $at->lot_number)
+                    ->sum('bbsu_input_details.quantity');
+
+                $details = AcidTestPercentageDetail::where('acid_test_id', $at->id)
+                    ->where('is_active', true)
+                    ->get();
+
+                $netWeight = (float) $details->sum('net_weight');
+
+                // ── EXACT Net Avg Acid % from Acid Testing Header ──
+                $avgAcid = (float) $at->net_avg_acid_pct;
+
+                $availableQty = max(0, $netWeight - (float) $usedQty);
+
+                return [
+                    'lot_number' => $at->lot_number,
+                    'lot_no' => $at->lot_number,
+                    'net_weight' => round($netWeight, 3),
+                    'used_qty' => round((float) $usedQty, 3),
+                    'available_qty' => round($availableQty, 3),
+                    'acid_pct' => $avgAcid,   // weighted average
+                ];
+            })
+            ->filter(fn($l) => $l['available_qty'] > 0 || in_array($l['lot_number'], $includeLots))
+            ->values();
+
+        return response()->json(['status' => 'ok', 'data' => $lots]);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  OUTPUT MATERIAL INFO  (for blade dropdown / table labels)
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * GET /api/bbsu-batches/output-material-info?codes=1007,1008,...
+     *
+     * Returns material_name, secondary_name, stock_code, category from the
+     * materials table for the 9 fixed BBSU output material codes.
+     * The blade uses this to populate the output table labels at runtime
+     * instead of having names hardcoded in JS.
+     */
+    public function outputMaterialInfo(Request $request): JsonResponse
+    {
+        $codes = array_filter(
+            array_map('trim', explode(',', $request->get('codes', '')))
+        );
+
+        // If no codes supplied fall back to all 9 known codes
+        if (empty($codes)) {
+            $codes = array_keys(BbsuOutputMaterial::MATERIAL_KEYS);
+        }
+
+        $materials = Material::whereIn('material_code', $codes)
+            ->select('id', 'material_code', 'material_name', 'stock_code', 'category', 'secondary_name')
+            ->get()
+            ->keyBy('material_code');
+
+        // Return in the same order as MATERIAL_KEYS
+        $result = collect(array_keys(BbsuOutputMaterial::MATERIAL_KEYS))
+            ->map(fn($code) => $materials->get($code))
+            ->filter()
+            ->values();
+
+        return response()->json(['status' => 'ok', 'data' => $result]);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  GENERATE BATCH NO
+    // ══════════════════════════════════════════════════════════════════════════
+
+    public function generateBatchNo(): JsonResponse
+    {
+        $year = now()->format('Y');
+        $last = BbsuBatch::whereYear('created_at', $year)->max('batch_no');
+        $seq = $last ? ((int) substr($last, -4)) + 1 : 1;
+        $batchNo = 'BBSU-' . $year . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
+
+        return response()->json(['status' => 'ok', 'batch_no' => $batchNo]);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  LEGACY
+    // ══════════════════════════════════════════════════════════════════════════
+
+    public function lotNumbers(): JsonResponse
     {
         $lots = AcidTesting::where('status', 1)
             ->select('id', 'lot_number')
             ->orderBy('lot_number')
             ->get();
 
-        return response()->json([
-            'status' => 'ok',
-            'data' => $lots
-        ]);
+        return response()->json(['status' => 'ok', 'data' => $lots]);
     }
 }

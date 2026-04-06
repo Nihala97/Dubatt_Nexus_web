@@ -30,27 +30,12 @@ class UpdateBbsuBatchRequest extends FormRequest
             'input_details.*.lot_no'               => 'required|string|max:100',
             'input_details.*.quantity'             => 'required|numeric|min:0',
             'input_details.*.acid_percentage'      => 'required|numeric|min:0|max:100',
+            'input_details.*.material_breakdown'   => 'nullable|array',
 
-            // ---- Output Materials (single row) ----
+            // ---- Output Materials (nested by material code) ----
             'output_material'                      => 'required|array',
-            'output_material.metallic_qty'         => 'required|numeric|min:0',
-            'output_material.metallic_yield'       => 'required|numeric|min:0',
-            'output_material.paste_qty'            => 'required|numeric|min:0',
-            'output_material.paste_yield'          => 'required|numeric|min:0',
-            'output_material.fines_qty'            => 'required|numeric|min:0',
-            'output_material.fines_yield'          => 'required|numeric|min:0',
-            'output_material.pp_chips_qty'         => 'required|numeric|min:0',
-            'output_material.pp_chips_yield'       => 'required|numeric|min:0',
-            'output_material.abs_chips_qty'        => 'required|numeric|min:0',
-            'output_material.abs_chips_yield'      => 'required|numeric|min:0',
-            'output_material.separator_qty'        => 'required|numeric|min:0',
-            'output_material.separator_yield'      => 'required|numeric|min:0',
-            'output_material.battery_plates_qty'   => 'required|numeric|min:0',
-            'output_material.battery_plates_yield' => 'required|numeric|min:0',
-            'output_material.terminals_qty'        => 'required|numeric|min:0',
-            'output_material.terminals_yield'      => 'required|numeric|min:0',
-            'output_material.acid_qty'             => 'required|numeric|min:0',
-            'output_material.acid_yield'           => 'required|numeric|min:0',
+            'output_material.1007.qty'             => 'required|numeric|min:0', // LEAD GRIDS must have qty
+            'output_material.*.qty'                => 'nullable|numeric|min:0',   // others are optional
 
             // ---- Power Consumption (single row) ----
             'power_consumption'                               => 'required|array',

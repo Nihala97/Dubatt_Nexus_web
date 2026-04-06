@@ -90,6 +90,7 @@ class SmeltingBatchController extends Controller
     {
         $request->validate([
             'batch_no' => 'required|string|unique:smelting_batches,batch_no',
+            'charge_no' => 'required|string|max:50',
             'rotary_no' => 'required|integer|in:1,2',
             'date' => 'required|date',
             'start_time' => 'nullable|date_format:H:i',
@@ -102,6 +103,7 @@ class SmeltingBatchController extends Controller
 
             $batch = SmeltingBatch::create([
                 'batch_no' => $request->batch_no,
+                'charge_no' => $request->charge_no,
                 'rotary_no' => $request->rotary_no,
                 'date' => $request->date,
                 'start_time' => $request->date . ' ' . ($request->start_time ?? '00:00') . ':00',
@@ -172,6 +174,7 @@ class SmeltingBatchController extends Controller
 
             $batch->update([
                 'rotary_no' => $request->rotary_no ?? $batch->rotary_no,
+                'charge_no' => $request->charge_no ?? $batch->charge_no,
                 'date' => $request->date ?? $batch->date,
                 'start_time' => $request->filled('start_time')
                     ? ($request->date ?? \Carbon\Carbon::parse($batch->date)->format('Y-m-d')) . ' ' . $request->start_time . ':00'
@@ -226,6 +229,7 @@ class SmeltingBatchController extends Controller
 
             // Update header fields that are present
             $headerFields = [
+                'charge_no',
                 'rotary_no',
                 'date',
                 'start_time',

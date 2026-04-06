@@ -13,6 +13,7 @@
 
 @push('styles')
     <style>
+        /* ── Buttons ── */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -63,6 +64,18 @@
             background: var(--green-xlight);
         }
 
+        /* ── NEW: Submit button style ── */
+        .btn-submit {
+            background: #1d4ed8;
+            color: #fff;
+        }
+
+        .btn-submit:hover {
+            background: #1e40af;
+            box-shadow: 0 4px 14px rgba(29, 78, 216, 0.28);
+            transform: translateY(-1px);
+        }
+
         .btn-sm {
             padding: 8px 15px;
             font-size: 13px;
@@ -100,6 +113,60 @@
             stroke-linejoin: round;
         }
 
+        /* ── Status pill ── */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .5px;
+        }
+
+        .pill-draft {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .pill-submitted {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .pill-new {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        /* ── Locked banner ── */
+        .locked-banner {
+            display: none;
+            background: #fef3c7;
+            border: 1.5px solid #fde68a;
+            border-radius: 10px;
+            padding: 12px 18px;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            font-size: 13px;
+            color: #92400e;
+            font-weight: 600;
+        }
+
+        .locked-banner.show {
+            display: flex;
+        }
+
+        .locked-banner svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            flex-shrink: 0;
+        }
+
+        /* ── Page header ── */
         .form-page-header {
             display: flex;
             align-items: flex-start;
@@ -122,6 +189,7 @@
             color: var(--text-muted);
         }
 
+        /* ── Cards ── */
         .form-card {
             background: var(--white);
             border: 1px solid var(--border);
@@ -163,6 +231,7 @@
             padding: 26px 22px 30px;
         }
 
+        /* ── Grids ── */
         .form-grid-3 {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -175,6 +244,7 @@
             gap: 18px 26px;
         }
 
+        /* ── Fields ── */
         .field {
             display: flex;
             flex-direction: column;
@@ -273,6 +343,7 @@
             color: var(--error, #dc2626);
         }
 
+        /* ── Two-column layout ── */
         .main-cols {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -280,6 +351,7 @@
             align-items: start;
         }
 
+        /* ── Input Rows Table ── */
         .input-rows-table {
             width: 100%;
             border-collapse: collapse;
@@ -371,6 +443,11 @@
             background: var(--white);
         }
 
+        .qty-btn.filled {
+            border-color: var(--green);
+            background: #d1fae5;
+        }
+
         .qty-btn svg {
             width: 12px;
             height: 12px;
@@ -459,6 +536,7 @@
             justify-content: flex-end;
         }
 
+        /* ── Output Materials Table ── */
         .output-table {
             width: 100%;
             border-collapse: collapse;
@@ -533,6 +611,7 @@
             box-shadow: 0 0 0 3px rgba(26, 122, 58, 0.08);
         }
 
+        /* ── Power Consumption ── */
         .power-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -579,75 +658,7 @@
             display: block;
         }
 
-        /* ── Readonly notice ── */
-        .readonly-notice {
-            background: #fef3c7;
-            border: 1px solid #fcd34d;
-            color: #92400e;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-size: 12.5px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: none;
-        }
-
-        /* ── Status badges ── */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 3px 11px;
-            border-radius: 20px;
-            font-size: 11.5px;
-            font-weight: 700;
-        }
-
-        .badge-draft {
-            background: #e0e7ff;
-            color: #3730a3;
-        }
-
-        .badge-submitted {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        /* ── Autosave dot ── */
-        .as-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-        }
-
-        .as-dot.saving {
-            background: #d97706;
-            animation: pulse .8s infinite;
-        }
-
-        .as-dot.saved {
-            background: var(--green);
-        }
-
-        .as-dot.error {
-            background: #dc2626;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1
-            }
-
-            50% {
-                opacity: .4
-            }
-        }
-
-        /* ── Modal ── */
+        /* ── QTY Popup Modal ── */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -820,6 +831,119 @@
             font-weight: 600;
         }
 
+        .avail-badge.zero {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .view-btn {
+            width: 28px;
+            height: 28px;
+            background: #e0e7ff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            margin: auto;
+        }
+
+        .view-btn:hover {
+            background: #a5b4fc;
+        }
+
+        .view-btn svg {
+            width: 13px;
+            height: 13px;
+            stroke: #3730a3;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* ── Lot Detail Modal ── */
+        .detail-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 1100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .detail-modal-overlay.open {
+            display: flex;
+        }
+
+        .detail-modal-box {
+            background: var(--white);
+            border-radius: 14px;
+            width: 100%;
+            max-width: 560px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+            animation: modalIn 0.22s ease-out;
+        }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .detail-table th {
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--green);
+            background: var(--green-light);
+            padding: 10px 14px;
+            border-bottom: 2px solid var(--border);
+            text-align: left;
+        }
+
+        .detail-table td {
+            padding: 9px 14px;
+            border-bottom: 1px solid #edf2ef;
+            font-size: 13px;
+            color: var(--text);
+            vertical-align: middle;
+        }
+
+        .detail-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .detail-table tr:hover td {
+            background: #f7fbf8;
+        }
+
+        .as-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+
+        .as-dot.saving {
+            background: #f59e0b;
+        }
+
+        .as-dot.saved {
+            background: #10b981;
+        }
+
+        .as-dot.error {
+            background: #ef4444;
+        }
+
+        /* ── Responsive ── */
         @media(max-width:900px) {
             .main-cols {
                 grid-template-columns: 1fr;
@@ -856,14 +980,23 @@
 
 @section('content')
 
+    {{-- Locked banner (shown when submitted) --}}
+    <div class="locked-banner" id="lockedBanner">
+        <svg viewBox="0 0 24 24">
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        This batch has been submitted and is locked for editing.
+    </div>
+
     <!-- Page Header -->
     <div class="form-page-header">
         <div>
-            <h2 id="pageTitle">Loading…</h2>
-            <p id="pageSubtitle">Record input lot details, output materials and power consumption for a BBSU cycle</p>
-            <div id="statusBadge" style="margin-top:6px"></div>
+            <h2 id="pageHeading">Battery Breaking &amp; Separation Unit Log</h2>
+            <p>Record input lot details, output materials and power consumption for a BBSU cycle</p>
         </div>
-        <div style="display:flex;gap:10px;" id="headerActions">
+        <div style="display:flex;gap:10px;align-items:center;">
+            <span class="status-pill pill-new" id="statusPill">New Record</span>
             <a href="{{ route('admin.mes.bbsu.index') }}" class="btn btn-outline btn-sm">
                 <svg viewBox="0 0 24 24">
                     <polyline points="15 18 9 12 15 6" />
@@ -873,12 +1006,11 @@
         </div>
     </div>
 
-    <div id="readonlyNotice" class="readonly-notice">🔒 This batch has been submitted and is locked from editing.</div>
     <div id="formAlert" class="form-alert"></div>
 
     <!-- ═══════════════════════════════════════
-             SECTION 1 — Primary Details
-        ════════════════════════════════════════ -->
+                         SECTION 1 — Primary Details
+                    ════════════════════════════════════════ -->
     <div class="form-card">
         <div class="form-section-head">
             <svg viewBox="0 0 24 24">
@@ -899,8 +1031,7 @@
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                             <polyline points="14 2 14 8 20 8" />
                         </svg>
-                        <input type="text" id="doc_no" class="no-icon" style="padding-left:38px;"
-                            oninput="triggerAutosave()">
+                        <input type="text" id="doc_no" style="padding-left:38px;" placeholder="Auto-generated" readonly>
                     </div>
                     <div class="error-msg" id="err_doc_no"></div>
                 </div>
@@ -912,7 +1043,7 @@
                             <circle cx="12" cy="12" r="10" />
                             <polyline points="12 6 12 12 16 14" />
                         </svg>
-                        <input type="datetime-local" id="start_time" required onchange="triggerAutosave()">
+                        <input type="datetime-local" id="start_time" required>
                     </div>
                     <div class="error-msg" id="err_start_time"></div>
                 </div>
@@ -924,7 +1055,7 @@
                             <circle cx="12" cy="12" r="10" />
                             <polyline points="12 6 12 12 16 14" />
                         </svg>
-                        <input type="datetime-local" id="end_time" required onchange="triggerAutosave()">
+                        <input type="datetime-local" id="end_time" required>
                     </div>
                     <div class="error-msg" id="err_end_time"></div>
                 </div>
@@ -938,7 +1069,7 @@
                             <line x1="8" y1="2" x2="8" y2="6" />
                             <line x1="3" y1="10" x2="21" y2="10" />
                         </svg>
-                        <input type="date" id="date" required onchange="triggerAutosave()">
+                        <input type="date" id="date" required>
                     </div>
                     <div class="error-msg" id="err_date"></div>
                 </div>
@@ -949,7 +1080,7 @@
                         <svg class="ico" viewBox="0 0 24 24">
                             <path d="M4 6h16M4 12h16M4 18h7" />
                         </svg>
-                        <select id="category" required onchange="triggerAutosave()">
+                        <select id="category" required>
                             <option value="">Select category...</option>
                             <option value="BBSU">BBSU</option>
                             <option value="MANUAL_CUTTING">Manual Cutting</option>
@@ -963,8 +1094,8 @@
     </div>
 
     <!-- ═══════════════════════════════════════
-             MAIN TWO-COLUMN AREA
-        ════════════════════════════════════════ -->
+                         MAIN TWO-COLUMN AREA
+                    ════════════════════════════════════════ -->
     <div class="main-cols">
 
         <!-- LEFT: Input Lots -->
@@ -984,8 +1115,9 @@
                             <tr>
                                 <th style="text-align:center;">SR</th>
                                 <th>Lot No</th>
-                                <th>QTY</th>
+                                <th>QTY (KG)</th>
                                 <th>Acid %</th>
+                                <th style="width:36px;text-align:center;">View</th>
                                 <th style="width:36px;"></th>
                             </tr>
                         </thead>
@@ -998,12 +1130,13 @@
                                 <td><input type="text" id="totalAcid" readonly class="out-input" placeholder="0.00"
                                         style="font-weight:700;color:var(--green);background:var(--green-light);"></td>
                                 <td></td>
+                                <td></td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
-                <div class="add-row-wrap">
-                    <button class="btn-add" id="btnAddRow" onclick="addInputRow()">
+                <div class="add-row-wrap" id="addRowWrap">
+                    <button class="btn-add" onclick="addInputRow()">
                         <svg viewBox="0 0 24 24">
                             <line x1="12" y1="5" x2="12" y2="19" />
                             <line x1="5" y1="12" x2="19" y2="12" />
@@ -1028,7 +1161,7 @@
                         <thead>
                             <tr>
                                 <th>O/P Material</th>
-                                <th>QTY</th>
+                                <th>QTY (KG)</th>
                                 <th>Yield %</th>
                             </tr>
                         </thead>
@@ -1043,8 +1176,8 @@
     <div style="height:20px;"></div>
 
     <!-- ═══════════════════════════════════════
-             SECTION: BBSU Power Consumption
-        ════════════════════════════════════════ -->
+                         SECTION: BBSU Power Consumption
+                    ════════════════════════════════════════ -->
     <div class="form-card">
         <div class="form-section-head">
             <svg viewBox="0 0 24 24">
@@ -1061,8 +1194,7 @@
                         <svg class="ico" viewBox="0 0 24 24">
                             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                         </svg>
-                        <input type="number" id="power_initial" step="0.01" placeholder="0.00"
-                            oninput="calcConsumption();triggerAutosave()">
+                        <input type="number" id="power_initial" step="0.01" placeholder="0.00" oninput="calcConsumption()">
                     </div>
                     <div class="error-msg" id="err_power_initial"></div>
                 </div>
@@ -1073,8 +1205,7 @@
                         <svg class="ico" viewBox="0 0 24 24">
                             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                         </svg>
-                        <input type="number" id="power_final" step="0.01" placeholder="0.00"
-                            oninput="calcConsumption();triggerAutosave()">
+                        <input type="number" id="power_final" step="0.01" placeholder="0.00" oninput="calcConsumption()">
                     </div>
                     <div class="error-msg" id="err_power_final"></div>
                 </div>
@@ -1095,25 +1226,24 @@
     </div>
 
     <!-- ═══════════════════════════════════════
-             STICKY FOOTER ACTIONS
-        ════════════════════════════════════════ -->
+                         STICKY FOOTER ACTIONS
+                    ════════════════════════════════════════ -->
     <div class="form-actions">
         <a href="{{ route('admin.mes.bbsu.index') }}" class="btn btn-outline btn-sm">Cancel</a>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <span id="autosaveStatus" style="font-size:12px;color:var(--text-muted);display:none">
-                <span class="as-dot" id="asDot"></span>
-                <span id="asText">Saving…</span>
-            </span>
-            <button type="button" class="btn btn-primary btn-sm" id="btnSave" onclick="saveForm()">
+        <div style="display:flex;gap:10px;align-items:center;">
+            {{-- Save Draft button — shown ONLY on CREATE page --}}
+            <button type="button" class="btn btn-primary btn-sm" id="btnSave" style="display:none;" onclick="saveForm()">
                 <svg viewBox="0 0 24 24">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"></path>
-                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                    <polyline points="7 3 7 8 15 8"></polyline>
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z" />
+                    <polyline points="17 21 17 13 7 13 7 21" />
+                    <polyline points="7 3 7 8 15 8" />
                 </svg>
-                <span id="btnSaveLabel">Create Record</span>
+                <span id="btnSaveLabel">Save</span>
             </button>
-            <button type="button" class="btn btn-outline btn-sm" id="btnSubmit" onclick="submitRecord()"
-                style="display:none">
+
+            {{-- Submit button — shown ONLY on EDIT page (draft status) --}}
+            <button type="button" class="btn btn-submit btn-sm" id="btnSubmit" style="display:none;"
+                onclick="submitBatch()">
                 <svg viewBox="0 0 24 24">
                     <polyline points="20 6 9 17 4 12" />
                 </svg>
@@ -1123,8 +1253,8 @@
     </div>
 
     <!-- ═══════════════════════════════════════
-             QTY POPUP MODAL
-        ════════════════════════════════════════ -->
+                         QTY POPUP MODAL
+                    ════════════════════════════════════════ -->
     <div class="modal-overlay" id="qtyModal">
         <div class="modal-box">
             <div class="modal-head">
@@ -1174,553 +1304,976 @@
         </div>
     </div>
 
+    <!-- ═══════════════════════════════════════
+                         LOT DETAIL MODAL
+                    ════════════════════════════════════════ -->
+    <div class="detail-modal-overlay" id="lotDetailModal">
+        <div class="detail-modal-box">
+            <div class="modal-head">
+                <h3>
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    Lot Assignment Details
+                </h3>
+                <button class="modal-close" onclick="closeLotDetailModal()">
+                    <svg viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="lotDetailContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline btn-sm" onclick="closeLotDetailModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
     <script>
-        // ─── State ────────────────────────────────────────────────────────
-        let rowCount = 0;
-        let activeRowIndex = null;
-        let lotOptions = [];
-        let isSubmitted = false;
-        let autosaveTimer;
+        (function () {
+            // ─── State ────────────────────────────────────────────────────────
+            let rowCount = 0;
+            // ── ID injected directly from Blade — no URL parsing needed ──
+            const BLADE_ITEM_ID = {{ isset($item_id) ? (int) $item_id : 'null' }};
+            const isCreate = BLADE_ITEM_ID === null;
+            const recordId = BLADE_ITEM_ID;
 
-        const PATH_PARTS = window.location.pathname.split('/').filter(Boolean);
-        const isCreate = PATH_PARTS[PATH_PARTS.length - 1] === 'create';
-        const recordId = isCreate ? null : PATH_PARTS[PATH_PARTS.length - 2];
+            let activeRowIndex = null;
+            let lotOptions = [];
+            let isLocked = false;
+            let currentBatchId = BLADE_ITEM_ID;  // always correct — comes from PHP, not URL
+            let autosaveTimer = null;
 
-        const outputMaterials = [
-            'METALLIC', 'PASTE', 'FINES', 'PP CHIPS', 'ABS CHIPS', 'SEPARATOR', 'BATTERY PLATE', 'TERMINALS', 'ACID'
-        ];
+            // 9 fixed BBSU output material codes — order = display order.
+            // Codes match material_code in the materials table.
+            // Labels & stock codes are fetched from DB at init via loadOutputMaterials().
+            const OUTPUT_KEYS = [
+                { code: '1007', key: 'metallic' },
+                { code: '1008', key: 'paste' },
+                { code: '1019', key: 'fines' },
+                { code: '1005', key: 'pp_chips' },
+                { code: '1023', key: 'abs_chips' },
+                { code: '1006', key: 'separator' },
+                { code: '1055', key: 'battery_plates' },
+                { code: '1057', key: 'terminals' },
+                { code: '1267', key: 'acid' },
+            ];
+            // Populated by loadOutputMaterials() — keyed by material_code
+            let outputMaterialInfo = {};
 
-        // ─── Helpers ──────────────────────────────────────────────────────
-        function showAlert(msg, type = 'error') {
-            const el = document.getElementById('formAlert');
-            el.className = `form-alert ${type}`;
-            el.textContent = msg;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            if (type === 'success') setTimeout(() => { el.className = 'form-alert'; el.textContent = ''; }, 4000);
-        }
+            // ─── Init ─────────────────────────────────────────────────────────
+            document.addEventListener('DOMContentLoaded', async () => {
+                document.getElementById('date').value = new Date().toISOString().slice(0, 10);
 
-        function clearAlert() {
-            const el = document.getElementById('formAlert');
-            el.className = 'form-alert';
-            el.textContent = '';
-        }
+                await loadOutputMaterials();   // fetch names/stock codes from DB first
+                buildOutputTable();
+                await loadLots();
 
-        function clearFieldErrors() {
-            document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
-        }
-
-        function showFieldErrors(errors) {
-            Object.entries(errors).forEach(([field, messages]) => {
-                const errEl = document.getElementById('err_' + field);
-                if (errEl) errEl.textContent = Array.isArray(messages) ? messages[0] : messages;
-            });
-        }
-
-        function setDot(state, text) {
-            document.getElementById('asDot').className = `as-dot ${state}`;
-            const txt = document.getElementById('asText');
-            if (txt) txt.textContent = text;
-        }
-
-        function setReadonly(ro) {
-            document.querySelectorAll('input, select, textarea').forEach(el => {
-                if (ro) el.setAttribute('disabled', true);
-                else el.removeAttribute('disabled');
-            });
-            ['btnSave', 'btnSubmit', 'btnAddRow'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.style.display = ro ? 'none' : '';
-            });
-            document.querySelectorAll('.delete-btn').forEach(b => b.style.display = ro ? 'none' : '');
-            if (ro) document.getElementById('readonlyNotice').style.display = 'block';
-        }
-
-        // ─── Autosave ─────────────────────────────────────────────────────
-        function setupAutosave() {
-            ['doc_no', 'start_time', 'end_time', 'date', 'category', 'power_initial', 'power_final'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.addEventListener('change', triggerAutosave);
-            });
-        }
-
-        function triggerAutosave() {
-            if (isCreate || isSubmitted) return;
-            setDot('saving', 'Saving…');
-            document.getElementById('autosaveStatus').style.display = 'inline';
-            clearTimeout(autosaveTimer);
-            autosaveTimer = setTimeout(() => saveForm(true), 2200);
-        }
-        function calculateYield() {
-            let totalInput = 0;
-
-            // ✅ Sum input quantities
-            document.querySelectorAll('.input-qty').forEach(el => {
-                totalInput += parseFloat(el.value) || 0;
-            });
-
-            let totalOutput = 0;
-
-            // ✅ Loop all output rows
-            document.querySelectorAll('.output-row').forEach(row => {
-                let qtyInput = row.querySelector('.output-qty');
-                let yieldInput = row.querySelector('.output-yield');
-
-                let qty = parseFloat(qtyInput.value) || 0;
-
-                totalOutput += qty;
-
-                let yieldVal = totalInput > 0 ? (qty / totalInput) * 100 : 0;
-
-                // ✅ Set yield %
-                yieldInput.value = yieldVal.toFixed(2);
-            });
-
-            // ✅ TOTAL YIELD %
-            let totalYield = totalInput > 0 ? (totalOutput / totalInput) * 100 : 0;
-            document.getElementById('total_yield').value = totalYield.toFixed(2);
-        }
-
-        // trigger on change
-        document.addEventListener('input', function (e) {
-            if (e.target.classList.contains('input-qty') || e.target.id === 'output') {
-                calculateYield();
-            }
-        });
-
-        // ─── Init ─────────────────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('date').value = new Date().toISOString().slice(0, 10);
-
-            await loadLots();
-            buildOutputTable();
-
-            if (isCreate) {
-                const res = await apiFetch('/bbsu-batches/generate-batch-no');
-                if (res?.ok) {
-                    const d = await res.json();
-                    document.getElementById('doc_no').value = d.batch_no ?? '';
+                if (isCreate) {
+                    await generateDocNo();
+                    addInputRow();
+                    updatePageUI('new', null);
                 } else {
-                    document.getElementById('doc_no').value = 'BBSU-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 9000) + 1000);
+                    await loadRecord();
                 }
-                document.getElementById('pageTitle').textContent = 'Create BBSU Batch';
-                document.getElementById('pageSubtitle').textContent = 'Record new BBSU batch log';
-                document.getElementById('breadcrumbTitle').textContent = 'Create Batch';
-                document.getElementById('btnSaveLabel').textContent = 'Create Batch';
-                addInputRow();
-            } else {
-                await loadRecord();
-                setupAutosave();
-            }
-        });
-
-        // ─── Load Lots from API ───────────────────────────────────────────
-        async function loadLots() {
-            const res = await apiFetch('/bbsu-batches/acid-test-lot-numbers');
-            if (!res || !res.ok) return;
-            const json = await res.json();
-            lotOptions = Array.isArray(json) ? json : (json.data?.data ?? json.data ?? []);
-        }
-
-        function buildLotOptions() {
-            const blank = '<option value="">Select lot...</option>';
-            if (!lotOptions.length) return blank;
-            return blank + lotOptions.map(l => `<option value="${l.lot_number}">${l.lot_number}</option>`).join('');
-        }
-
-        // ─── Input Rows ───────────────────────────────────────────────────
-        function addInputRow() {
-            rowCount++;
-            const tbody = document.getElementById('inputRowsBody');
-            const tr = document.createElement('tr');
-            tr.id = `row-${rowCount}`;
-            tr.dataset.rowIndex = rowCount;
-            tr.innerHTML = `
-                <td class="sr-cell">${rowCount}</td>
-                <td class="select-cell">
-                    <select class="row-select" id="lot_no_${rowCount}" onchange="onLotChange(${rowCount});triggerAutosave()">
-                        ${buildLotOptions()}
-                    </select>
-                </td>
-                <td>
-                    <button type="button" class="qty-btn" id="qty_btn_${rowCount}" onclick="openQtyModal(${rowCount})">
-                        <span id="qty_display_${rowCount}" style="color:var(--text-muted);font-size:13px;">Enter qty...</span>
-                        <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                    </button>
-                    <input type="hidden" id="qty_val_${rowCount}" value="">
-                </td>
-                <td>
-                    <input type="text" class="row-input" id="acid_${rowCount}" placeholder="0.00" oninput="recalcTotals();triggerAutosave()">
-                </td>
-                <td>
-                    ${rowCount > 1
-                    ? `<button class="delete-btn" onclick="removeRow(${rowCount})" title="Remove">
-                               <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                           </button>`
-                    : '<span></span>'}
-                </td>
-            `;
-            tbody.appendChild(tr);
-            tr.style.opacity = '0';
-            tr.style.transform = 'translateY(-6px)';
-            requestAnimationFrame(() => {
-                tr.style.transition = 'opacity 0.25s,transform 0.25s';
-                tr.style.opacity = '1';
-                tr.style.transform = 'translateY(0)';
             });
-        }
 
-        function removeRow(idx) {
-            const tr = document.getElementById(`row-${idx}`);
-            if (tr) {
+            // ─── Load output material info from materials table via API ────────
+            async function loadOutputMaterials() {
+                try {
+                    const codes = OUTPUT_KEYS.map(m => m.code).join(',');
+                    const res = await apiFetch(`/bbsu-batches/output-material-info?codes=${codes}`);
+                    if (!res?.ok) return;
+                    const json = await res.json();
+                    // json.data = [ { material_code, material_name, stock_code, ... }, ... ]
+                    (json.data ?? []).forEach(m => {
+                        outputMaterialInfo[m.material_code] = m;
+                    });
+                } catch { /* silently fall back to codes */ }
+            }
+
+            function getOutputLabel(code) {
+                const info = outputMaterialInfo[code];
+                if (!info) return code;
+                return info.secondary_name ?? info.material_name ?? code;
+            }
+
+            function getOutputStockCode(code) {
+                return outputMaterialInfo[code]?.stock_code ?? '';
+            }
+
+            // ─── Generate Doc No ─────────────────────────────────────────────
+            async function generateDocNo() {
+                try {
+                    const res = await apiFetch('/bbsu-batches/generate-batch-no');
+                    if (res?.ok) {
+                        const d = await res.json();
+                        document.getElementById('doc_no').value = d.batch_no || fallbackBatchNo();
+                    } else {
+                        document.getElementById('doc_no').value = fallbackBatchNo();
+                    }
+                } catch {
+                    document.getElementById('doc_no').value = fallbackBatchNo();
+                }
+            }
+            function fallbackBatchNo() {
+                return 'BBSU-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4);
+            }
+
+            // ─── Load Lots from API ───────────────────────────────────────────
+            async function loadLots() {
+                try {
+                    // Collect current lot numbers to include them even if available_qty is 0
+                    const currentLots = [];
+                    document.querySelectorAll('.row-select').forEach(sel => {
+                        if (sel.value) currentLots.push(sel.value);
+                    });
+                    const includeParam = currentLots.length ? `?include=${currentLots.join(',')}` : '';
+
+                    const res = await apiFetch(`/bbsu-batches/acid-test-lot-numbers${includeParam}`);
+                    if (!res?.ok) return;
+                    const json = await res.json();
+                    lotOptions = Array.isArray(json)
+                        ? json
+                        : (json.data?.data ?? json.data ?? []);
+                } catch { lotOptions = []; }
+            }
+
+            function buildLotDropdown() {
+                const blank = '<option value="">Select lot...</option>';
+                if (!lotOptions.length) return blank;
+                return blank + lotOptions.map(l =>
+                    `<option value="${l.lot_number}">${l.lot_number}</option>`
+                ).join('');
+            }
+
+            // ─── Input Rows ───────────────────────────────────────────────────
+            function addInputRow(data = null) {
+                if (isLocked) return;
+                rowCount++;
+                const idx = rowCount;
+                const lot = data?.lot_no || '';
+                const qty = data?.quantity || '';
+                const acid = data?.acid_percentage || '';
+                const breakdown = data?.material_breakdown ? JSON.stringify(data.material_breakdown) : '{}';
+
+                const tbody = document.getElementById('inputRowsBody');
+                const tr = document.createElement('tr');
+                tr.id = `row-${idx}`;
+                tr.dataset.rowIndex = idx;
+
+                tr.innerHTML = `
+                            <td class="sr-cell">${tbody.rows.length + 1}</td>
+                            <td class="select-cell">
+                                <select class="row-select" id="lot_no_${idx}" onchange="onLotChange(${idx})">
+                                    ${buildLotDropdown()}
+                                </select>
+                            </td>
+                            <td>
+                                <button type="button" class="qty-btn ${qty ? 'filled' : ''}" id="qty_btn_${idx}" onclick="openQtyModal(${idx})">
+                                    <span id="qty_display_${idx}" style="color:${qty ? 'var(--text)' : 'var(--text-muted)'};font-size:13px;">
+                                        ${qty ? parseFloat(qty).toFixed(2) + ' KG' : 'Click to assign...'}
+                                    </span>
+                                    <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                <input type="hidden" id="qty_val_${idx}" value="${qty}">
+                                <input type="hidden" id="qty_breakdown_${idx}" value='${breakdown}'>
+                                <input type="hidden" id="qty_material_names_${idx}" value='{}'>
+                            </td>
+                            <td>
+                                <input type="text" class="row-input" id="acid_${idx}"
+                                       placeholder="0.000" value="${acid}"
+                                       oninput="recalcTotals(); triggerAutosave();">
+                            </td>
+                            <td style="text-align:center;">
+                                <button type="button" class="view-btn" onclick="openLotDetailModal(${idx})" title="View assigned materials">
+                                    <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </td>
+                            <td>
+                                <button type="button" class="delete-btn" onclick="removeRow(${idx})" title="Remove">
+                                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                </button>
+                            </td>
+                        `;
+                tbody.appendChild(tr);
+
+                // Set selected lot if data provided
+                if (lot) {
+                    const sel = document.getElementById(`lot_no_${idx}`);
+                    if (sel) sel.value = lot;
+                }
+
+                // Animate in
+                tr.style.opacity = '0';
+                tr.style.transform = 'translateY(-6px)';
+                requestAnimationFrame(() => {
+                    tr.style.transition = 'opacity 0.25s,transform 0.25s';
+                    tr.style.opacity = '1';
+                    tr.style.transform = 'translateY(0)';
+                });
+
+                recalcTotals();
+            }
+
+            function removeRow(idx) {
+                const rows = document.querySelectorAll('#inputRowsBody tr');
+                if (rows.length <= 1) return;
+                const tr = document.getElementById(`row-${idx}`);
+                if (!tr) return;
                 tr.style.transition = 'opacity 0.2s';
                 tr.style.opacity = '0';
                 setTimeout(() => { tr.remove(); renumberRows(); recalcTotals(); triggerAutosave(); }, 200);
             }
-        }
 
-        function renumberRows() {
-            document.querySelectorAll('#inputRowsBody tr').forEach((tr, i) => {
-                const srCell = tr.querySelector('.sr-cell');
-                if (srCell) srCell.textContent = i + 1;
-            });
-        }
+            function renumberRows() {
+                document.querySelectorAll('#inputRowsBody tr').forEach((tr, i) => {
+                    const c = tr.querySelector('.sr-cell');
+                    if (c) c.textContent = i + 1;
+                });
+            }
 
-        function onLotChange(idx) {
-            const lotNo = document.getElementById(`lot_no_${idx}`)?.value;
-            const lot = lotOptions.find(l => l.lot_no === lotNo);
-            if (lot) {
-                document.getElementById(`acid_${idx}`).value = parseFloat(lot.acid_pct || 0).toFixed(2);
+            function onLotChange(idx) {
+                // acid % is filled after qty assignment from modal, not on lot select
                 recalcTotals();
-            }
-        }
-
-        function recalcTotals() {
-            let totalQty = 0, totalAcid = 0, acidCount = 0;
-            document.querySelectorAll('#inputRowsBody tr').forEach(tr => {
-                const idx = tr.dataset.rowIndex;
-                const qty = parseFloat(document.getElementById(`qty_val_${idx}`)?.value) || 0;
-                const acid = parseFloat(document.getElementById(`acid_${idx}`)?.value) || 0;
-                totalQty += qty;
-                if (acid > 0) { totalAcid += acid; acidCount++; }
-            });
-            document.getElementById('totalQty').value = totalQty.toFixed(2);
-            document.getElementById('totalAcid').value = acidCount ? (totalAcid / acidCount).toFixed(2) : '0.00';
-            calcOutputTotal();
-        }
-
-        // ─── QTY Modal ────────────────────────────────────────────────────
-        async function openQtyModal(rowIdx) {
-            activeRowIndex = rowIdx;
-            const lotNo = document.getElementById(`lot_no_${rowIdx}`)?.value;
-            if (!lotNo) { alert('Please select a Lot No first.'); return; }
-
-            document.getElementById('qtyModalBody').innerHTML = `
-                <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">Loading lot data...</td></tr>
-            `;
-            document.getElementById('qtyModal').classList.add('open');
-
-            const res = await apiFetch(`/bbsu-batches/acid-summary/${lotNo}`);
-            if (!res?.ok) {
-                document.getElementById('qtyModalBody').innerHTML = `
-                    <tr><td colspan="6" style="text-align:center;padding:24px;color:#dc2626;">Failed to load data for lot <strong>${lotNo}</strong>.</td></tr>
-                `;
-                return;
+                triggerAutosave();
             }
 
-            const json = await res.json();
-            const rows = json.data ?? [];
-
-            if (!rows.length) {
-                document.getElementById('qtyModalBody').innerHTML = `
-                    <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">No data found for lot <strong>${lotNo}</strong>.</td></tr>
-                `;
-                return;
-            }
-
-            const existing = document.getElementById(`qty_val_${rowIdx}`)?.value;
-            document.getElementById('qtyModalBody').innerHTML = rows.map((l, i) => `
-                <tr>
-                    <td><strong>${l.lot_no}</strong></td>
-                    <td>${l.material_description ?? '—'}</td>
-                    <td>${parseFloat(l.avg_acid_pct || 0).toFixed(2)}%</td>
-                    <td>${l.unit ?? 'KG'}</td>
-                    <td><span class="avail-badge">${parseFloat(l.net_weight || 0).toFixed(3)} ${l.unit ?? 'KG'}</span></td>
-                    <td>
-                        <input type="number" class="assign-input" id="assign_${i}"
-                            placeholder="0.00" step="0.01" min="0" max="${l.net_weight ?? ''}"
-                            data-lot="${l.lot_no}" data-ulab="${l.ulab_type}"
-                            value="${rows.length === 1 && existing ? existing : ''}">
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function closeQtyModal() {
-            document.getElementById('qtyModal').classList.remove('open');
-            activeRowIndex = null;
-        }
-
-        function confirmQtyAssign() {
-            if (activeRowIndex === null) return;
-            let assigned = 0, acidPct = 0;
-            document.querySelectorAll('#qtyModalBody .assign-input').forEach(inp => {
-                const qty = parseFloat(inp.value) || 0;
-                if (qty > 0) {
-                    assigned += qty;
-                    const row = inp.closest('tr');
-                    const acidCell = row.querySelectorAll('td')[2];
-                    const cellText = acidCell?.textContent?.replace('%', '').trim();
-                    acidPct = parseFloat(cellText) || 0;
-                }
-            });
-
-            document.getElementById(`qty_val_${activeRowIndex}`).value = assigned;
-            const display = document.getElementById(`qty_display_${activeRowIndex}`);
-            if (display) {
-                display.textContent = assigned ? assigned.toFixed(2) + ' KG' : 'Enter qty...';
-                display.style.color = assigned ? 'var(--text)' : 'var(--text-muted)';
-            }
-            const acidField = document.getElementById(`acid_${activeRowIndex}`);
-            if (acidField) acidField.value = acidPct.toFixed(2);
-
-            recalcTotals();
-            triggerAutosave();
-            closeQtyModal();
-        }
-
-        document.getElementById('qtyModal').addEventListener('click', function (e) {
-            if (e.target === this) closeQtyModal();
-        });
-
-        // ─── Output Table ─────────────────────────────────────────────────
-        function buildOutputTable() {
-            const tbody = document.getElementById('outputTableBody');
-            tbody.innerHTML = outputMaterials.map(mat => `
-                <tr>
-                    <td class="mat-name">${mat}</td>
-                    <td><input type="number" class="out-input" placeholder="0.00" step="0.01" oninput="calcOutputTotal();triggerAutosave()"></td>
-                    <td><input type="number" class="out-input" placeholder="0.00" step="0.01" oninput="triggerAutosave()"></td>
-                </tr>
-            `).join('') + `
-                <tr class="total-row">
-                    <td><strong>TOTAL</strong></td>
-                    <td><input type="text" class="out-input" id="outputTotalQty" readonly placeholder="0.00" style="font-weight:700;color:var(--green);background:var(--green-light);"></td>
-                    <td><input type="text" class="out-input" id="outputTotalYield" readonly placeholder="0.00" style="font-weight:700;color:var(--green);background:var(--green-light);"></td>
-                </tr>
-            `;
-        }
-
-        function calcOutputTotal() {
-            let total = 0;
-            document.querySelectorAll('#outputTableBody tr:not(.total-row)').forEach(tr => {
-                const qtyInput = tr.querySelectorAll('input')[0];
-                total += parseFloat(qtyInput?.value) || 0;
-            });
-            document.getElementById('outputTotalQty').value = total.toFixed(2);
-            const inputTotal = parseFloat(document.getElementById('totalQty')?.value) || 0;
-            document.getElementById('outputTotalYield').value = inputTotal
-                ? ((total / inputTotal) * 100).toFixed(1) + '%'
-                : '0.0%';
-        }
-
-        // ─── Power Consumption ────────────────────────────────────────────
-        function calcConsumption() {
-            const initial = parseFloat(document.getElementById('power_initial').value) || 0;
-            const final_ = parseFloat(document.getElementById('power_final').value) || 0;
-            document.getElementById('power_consumption').value = final_ >= initial ? (final_ - initial).toFixed(2) : '';
-        }
-
-        // ─── Build Payload ────────────────────────────────────────────────
-        function buildPayload() {
-            const batchNo = document.getElementById('doc_no').value?.trim();
-            const date = document.getElementById('date').value;
-            const category = document.getElementById('category').value;
-            const startTime = document.getElementById('start_time').value;
-            const endTime = document.getElementById('end_time').value;
-
-            const inputDetails = [];
-            document.querySelectorAll('#inputRowsBody tr').forEach((tr, i) => {
-                const idx = tr.dataset.rowIndex;
-                const lotNo = document.getElementById(`lot_no_${idx}`)?.value?.trim();
-                const qty = parseFloat(document.getElementById(`qty_val_${idx}`)?.value) || 0;
-                const acid = parseFloat(document.getElementById(`acid_${idx}`)?.value) || 0;
-                inputDetails.push({ lot_no: lotNo, quantity: qty, acid_percentage: acid });
-            });
-
-            const OUTPUT_KEYS = ['metallic', 'paste', 'fines', 'pp_chips', 'abs_chips', 'separator', 'battery_plates', 'terminals', 'acid'];
-            const outputMaterial = {};
-            document.querySelectorAll('#outputTableBody tr:not(.total-row)').forEach((tr, i) => {
-                const inputs = tr.querySelectorAll('input[type="number"]');
-                const key = OUTPUT_KEYS[i];
-                outputMaterial[`${key}_qty`] = parseFloat(inputs[0]?.value) || 0;
-                outputMaterial[`${key}_yield`] = parseFloat(inputs[1]?.value) || 0;
-            });
-
-            const initialPower = parseFloat(document.getElementById('power_initial').value) || 0;
-            const finalPower = parseFloat(document.getElementById('power_final').value) || 0;
-            const totalPower = parseFloat(document.getElementById('power_consumption').value) || 0;
-
-            return {
-                batch_no: batchNo,
-                doc_date: date,
-                category: category,
-                start_time: startTime,
-                end_time: endTime,
-                input_details: inputDetails,
-                output_material: outputMaterial,
-                power_consumption: { initial_power: initialPower, final_power: finalPower, total_power_consumption: totalPower },
-            };
-        }
-
-        // ─── Save ─────────────────────────────────────────────────────────
-        async function saveForm(silent = false) {
-            const payload = buildPayload();
-            const btn = document.getElementById('btnSave');
-            if (!silent) btn.disabled = true;
-
-            const method = isCreate ? 'POST' : 'PUT';
-            const endpoint = isCreate ? '/bbsu-batches' : `/bbsu-batches/${recordId}`;
-
-            const res = await apiFetch(endpoint, { method, body: JSON.stringify(payload) });
-            if (!silent) btn.disabled = false;
-            if (!res) return;
-
-            const data = await res.json();
-
-            if (res.ok && data.status === 'ok') {
-                if (!silent) {
-                    if (isCreate) {
-                        window.location.href = `{{ url('/admin/mes/bbsu') }}/${data.data.id}/edit`;
-                    } else {
-                        showAlert('Record saved successfully.', 'success');
-                    }
-                } else {
-                    setDot('saved', 'Autosaved at ' + new Date().toLocaleTimeString());
-                    setTimeout(() => document.getElementById('autosaveStatus').style.display = 'none', 4000);
-                }
-            } else if (res.status === 422) {
-                showFieldErrors(data.errors ?? {});
-                if (!silent) showAlert(data.message ?? 'Please fix the errors below.');
-            } else {
-                if (!silent) showAlert(data.message ?? 'Something went wrong.');
-            }
-        }
-
-        // ─── Submit & Lock ────────────────────────────────────────────────
-        async function submitRecord() {
-            if (!confirm('Submit this batch? It will be locked from further edits.')) return;
-            await saveForm(true);
-            const res = await apiFetch(`/bbsu-batches/${recordId}/submit`, { method: 'POST', body: '{}' });
-            if (res?.ok) {
-                showAlert('Batch submitted and locked.', 'success');
-                // setTimeout(() => window.location.href = '{{ route("admin.mes.bbsu.index") }}', 1400);
-            } else {
-                const d = await res?.json();
-                showAlert(d?.message ?? 'Submit failed.');
-            }
-        }
-        // async function submitRecord() {
-        //       if (!confirm('Submit this record? It will be locked from further edits.')) return;
-        //       await saveForm(true);
-        //       const res = await apiFetch(`/bbsu-batches/${recordId}/status`, {
-        //         method: 'PATCH', body: JSON.stringify({ status: 1 }),
-        //       });
-        //       if (res?.ok) {
-        //         showAlert('Submitted successfully.', 'success');
-        //         // setTimeout(() => window.location.href = '{{ route("admin.mes.bbsu.index") }}', 1500);
-        //       } else {
-        //         const d = await res?.json();
-        //         showAlert(d?.message ?? 'Submit failed.');
-        //       }
-        //     }
-
-        // ─── Load Record (edit mode) ──────────────────────────────────────
-        async function loadRecord() {
-            const res = await apiFetch(`/bbsu-batches/${recordId}`);
-            if (!res?.ok) { showAlert('Failed to load record.'); return; }
-
-            const { data } = await res.json();
-            isSubmitted = data.status === 1;
-
-            // Primary Details
-            document.getElementById('doc_no').value = data.batch_no ?? '';
-            document.getElementById('date').value = data.doc_date?.slice(0, 10) ?? '';
-            document.getElementById('category').value = data.category ?? '';
-            document.getElementById('start_time').value = formatForDatetimeLocal(data.start_time);
-            document.getElementById('end_time').value = formatForDatetimeLocal(data.end_time);
-
-            // Input Lots
-            document.getElementById('inputRowsBody').innerHTML = '';
-            rowCount = 0;
-            if (data.input_details?.length) {
-                data.input_details.forEach(detail => {
-                    addInputRow();
-                    const idx = rowCount;
-                    document.getElementById(`lot_no_${idx}`).value = detail.lot_no ?? '';
-                    document.getElementById(`acid_${idx}`).value = detail.acid_percentage ?? '';
-                    const qty = parseFloat(detail.quantity) || 0;
-                    document.getElementById(`qty_val_${idx}`).value = qty;
-                    const display = document.getElementById(`qty_display_${idx}`);
-                    if (display) {
-                        display.textContent = qty ? qty.toFixed(2) + ' KG' : 'Enter qty...';
-                        display.style.color = qty ? 'var(--text)' : 'var(--text-muted)';
+            function recalcTotals() {
+                let totalQty = 0;
+                // Weighted average acid% = Sum(qty × acid%) / Sum(qty)
+                let weightedAcidNum = 0, weightedAcidDen = 0;
+                document.querySelectorAll('#inputRowsBody tr').forEach(tr => {
+                    const i = tr.dataset.rowIndex;
+                    const qty = parseFloat(document.getElementById(`qty_val_${i}`)?.value) || 0;
+                    const acid = parseFloat(document.getElementById(`acid_${i}`)?.value) || 0;
+                    totalQty += qty;
+                    if (qty > 0 && acid > 0) {
+                        weightedAcidNum += qty * acid;
+                        weightedAcidDen += qty;
                     }
                 });
-                recalcTotals();
-            } else {
-                addInputRow();
-            }
-
-            // Output Materials
-            const om = data.output_material;
-            if (om) {
-                const OUTPUT_KEYS = ['metallic', 'paste', 'fines', 'pp_chips', 'abs_chips', 'separator', 'battery_plates', 'terminals', 'acid'];
-                document.querySelectorAll('#outputTableBody tr:not(.total-row)').forEach((tr, i) => {
-                    const inputs = tr.querySelectorAll('input[type="number"]');
-                    const key = OUTPUT_KEYS[i];
-                    if (inputs[0]) inputs[0].value = parseFloat(om[`${key}_qty`]) || '';
-                    if (inputs[1]) inputs[1].value = parseFloat(om[`${key}_yield`]) || '';
-                });
+                document.getElementById('totalQty').value = totalQty.toFixed(2);
+                // Show weighted avg acid% — formula: Sum(Qty*acid%) / Sum(qty)
+                document.getElementById('totalAcid').value = weightedAcidDen > 0
+                    ? (weightedAcidNum / weightedAcidDen).toFixed(3)
+                    : '0.000';
                 calcOutputTotal();
             }
 
-            // Power Consumption
-            const pc = data.power_consumption;
-            if (pc) {
-                document.getElementById('power_initial').value = parseFloat(pc.initial_power) || '';
-                document.getElementById('power_final').value = parseFloat(pc.final_power) || '';
-                document.getElementById('power_consumption').value = parseFloat(pc.total_power_consumption) || '';
+            // ─── QTY Modal ────────────────────────────────────────────────────
+            async function openQtyModal(rowIdx) {
+                if (isLocked) return;
+                activeRowIndex = rowIdx;
+
+                const lotNo = document.getElementById(`lot_no_${rowIdx}`)?.value;
+                if (!lotNo) { showAlert('Please select a Lot No first.', 'error'); return; }
+
+                // Show loading
+                document.getElementById('qtyModalBody').innerHTML = `
+                            <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">Loading lot data...</td></tr>`;
+                document.getElementById('qtyModal').classList.add('open');
+
+                try {
+                    // ── FIX: Call acidSummaryByLot which returns material_description from stockCondition ──
+                    const res = await apiFetch(`/bbsu-batches/acid-summary/${encodeURIComponent(lotNo)}`);
+
+                    if (!res?.ok) {
+                        document.getElementById('qtyModalBody').innerHTML = `
+                                    <tr><td colspan="6" style="text-align:center;padding:24px;color:#dc2626;">
+                                        Failed to load data for lot <strong>${lotNo}</strong>.
+                                    </td></tr>`;
+                        return;
+                    }
+
+                    const json = await res.json();
+                    const rows = json.data ?? [];
+
+                    if (!rows.length) {
+                        document.getElementById('qtyModalBody').innerHTML = `
+                                    <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">
+                                        No stock data found for lot <strong>${lotNo}</strong>.
+                                    </td></tr>`;
+                        return;
+                    }
+
+                    const existingQty = parseFloat(document.getElementById(`qty_val_${rowIdx}`)?.value) || 0;
+
+                    // ── Render rows — store acid_pct as data attribute for auto-fill ──
+                    document.getElementById('qtyModalBody').innerHTML = rows.map((l, i) => {
+                        const available = parseFloat(l.available_qty || 0);
+                        const isZero = available <= 0;
+                        const preVal = (rows.length === 1 && existingQty > 0) ? existingQty.toFixed(3) : '';
+                        const description = (l.material_description ?? '—').replace(/'/g, '&#39;');
+                        return `<tr>
+                                    <td><strong>${l.lot_no ?? lotNo}</strong></td>
+                                    <td>${l.material_description ?? '—'}</td>
+                                    <td>${parseFloat(l.avg_acid_pct || 0).toFixed(2)}%</td>
+                                    <td>${l.unit ?? 'KG'}</td>
+                                    <td><span class="avail-badge ${isZero ? 'zero' : ''}">${available.toFixed(3)} ${l.unit ?? 'KG'}</span></td>
+                                    <td>
+                                        <input type="number" class="assign-input" id="assign_${i}"
+                                            placeholder="0.00" step="0.001" min="0"
+                                            max="${available}"
+                                            data-acid="${parseFloat(l.avg_acid_pct || 0).toFixed(3)}"
+                                            data-available="${available}"
+                                            data-ulab="${l.ulab_type}"
+                                            data-description="${description}"
+                                            value="${preVal}"
+                                            ${isZero ? 'disabled' : ''}
+                                            oninput="capAssign(this)">
+                                    </td>
+                                </tr>`;
+                    }).join('');
+
+                } catch (e) {
+                    document.getElementById('qtyModalBody').innerHTML = `
+                                <tr><td colspan="6" style="text-align:center;padding:24px;color:#dc2626;">
+                                    Network error loading lot data.
+                                </td></tr>`;
+                }
             }
 
-            // Page UI
-            document.getElementById('pageTitle').textContent = 'Edit BBSU Batch';
-            document.getElementById('pageSubtitle').textContent = `Batch: ${data.batch_no}`;
-            document.getElementById('breadcrumbTitle').textContent = 'Edit Record';
-            document.getElementById('btnSaveLabel').textContent = 'Save Draft';
-
-            const badge = document.getElementById('statusBadge');
-            if (isSubmitted) {
-                badge.innerHTML = '<span class="badge badge-submitted">● Submitted</span>';
-                setReadonly(true);
-                document.getElementById('btnSubmit').style.display = 'none';
-            } else {
-                badge.innerHTML = '<span class="badge badge-draft">● Draft</span>';
-                document.getElementById('btnSubmit').style.display = 'inline-flex';
+            function capAssign(input) {
+                const max = parseFloat(input.dataset.available) || 0;
+                if (parseFloat(input.value) > max) input.value = max;
             }
-        }
 
-        function formatForDatetimeLocal(isoString) {
-            if (!isoString) return '';
-            const d = new Date(isoString);
-            const yyyy = d.getFullYear();
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            const hh = String(d.getHours()).padStart(2, '0');
-            const min = String(d.getMinutes()).padStart(2, '0');
-            return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
-        }
+            // ── FIX: confirmQtyAssign — weighted avg acid% from data-acid attributes ──
+            function confirmQtyAssign() {
+                if (activeRowIndex === null) return;
+
+                let totalAssigned = 0;
+                let weightedAcidNum = 0;
+                let weightedAcidDen = 0;
+                let breakdownObj = {};
+                let materialNamesObj = {}; // { ulab_type: { description, acid_pct, qty } }
+
+                document.querySelectorAll('#qtyModalBody .assign-input').forEach(inp => {
+                    const qty = parseFloat(inp.value) || 0;
+                    const acid = parseFloat(inp.dataset.acid) || 0;
+                    const ulab = inp.dataset.ulab;
+                    const description = inp.dataset.description || ulab || '';
+                    if (qty > 0) {
+                        totalAssigned += qty;
+                        weightedAcidNum += qty * acid;
+                        weightedAcidDen += qty;
+                        if (ulab) {
+                            breakdownObj[ulab] = qty;
+                            materialNamesObj[ulab] = {
+                                description: description,
+                                acid_pct: acid,
+                                qty: qty,
+                            };
+                        }
+                    }
+                });
+
+                // Update hidden qty value
+                const qtyVal = document.getElementById(`qty_val_${activeRowIndex}`);
+                const qtyDisplay = document.getElementById(`qty_display_${activeRowIndex}`);
+                const qtyBtn = document.getElementById(`qty_btn_${activeRowIndex}`);
+
+                if (qtyVal) qtyVal.value = totalAssigned.toFixed(4);
+                if (qtyDisplay) {
+                    qtyDisplay.textContent = totalAssigned > 0 ? totalAssigned.toFixed(3) + ' KG' : 'Click to assign...';
+                    qtyDisplay.style.color = totalAssigned > 0 ? 'var(--text)' : 'var(--text-muted)';
+                }
+                if (qtyBtn) qtyBtn.classList.toggle('filled', totalAssigned > 0);
+
+                const breakdownEl = document.getElementById(`qty_breakdown_${activeRowIndex}`);
+                if (breakdownEl) breakdownEl.value = JSON.stringify(breakdownObj);
+
+                // Store material names/details for view modal
+                const materialNamesEl = document.getElementById(`qty_material_names_${activeRowIndex}`);
+                if (materialNamesEl) materialNamesEl.value = JSON.stringify(materialNamesObj);
+
+                // ── FIX: Auto-fill Acid % using weighted average from data-acid ──
+                const acidField = document.getElementById(`acid_${activeRowIndex}`);
+                if (acidField) {
+                    const computedAcid = weightedAcidDen > 0
+                        ? (weightedAcidNum / weightedAcidDen).toFixed(3)
+                        : '0.000';
+                    acidField.value = computedAcid;
+                }
+
+                recalcTotals();
+                closeQtyModal();
+                triggerAutosave();
+            }
+
+            function closeQtyModal() {
+                document.getElementById('qtyModal').classList.remove('open');
+                activeRowIndex = null;
+            }
+
+            document.getElementById('qtyModal').addEventListener('click', function (e) {
+                if (e.target === this) closeQtyModal();
+            });
+
+            // ─── Lot Detail Modal (View button) ───────────────────────────────
+            function openLotDetailModal(rowIdx) {
+                const lotNo = document.getElementById(`lot_no_${rowIdx}`)?.value;
+                const qty = parseFloat(document.getElementById(`qty_val_${rowIdx}`)?.value) || 0;
+                const acid = document.getElementById(`acid_${rowIdx}`)?.value || '0.000';
+
+                let materialNamesRaw = '{}';
+                const mnEl = document.getElementById(`qty_material_names_${rowIdx}`);
+                if (mnEl && mnEl.value) materialNamesRaw = mnEl.value;
+
+                let breakdownRaw = '{}';
+                const bdEl = document.getElementById(`qty_breakdown_${rowIdx}`);
+                if (bdEl && bdEl.value) breakdownRaw = bdEl.value;
+
+                let materialNames = {};
+                let breakdown = {};
+                try { materialNames = JSON.parse(materialNamesRaw); } catch (e) { }
+                try { breakdown = JSON.parse(breakdownRaw); } catch (e) { }
+
+                const container = document.getElementById('lotDetailContent');
+
+                if (!lotNo) {
+                    container.innerHTML = `<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:16px 0;">No lot selected for this row.</p>`;
+                    document.getElementById('lotDetailModal').classList.add('open');
+                    return;
+                }
+
+                if (qty <= 0) {
+                    container.innerHTML = `
+                            <p style="color:var(--text-muted);font-size:13px;text-align:center;padding:16px 0;">
+                                No quantity has been assigned yet for lot <strong>${lotNo}</strong>.
+                            </p>`;
+                    document.getElementById('lotDetailModal').classList.add('open');
+                    return;
+                }
+
+                // Build detail rows
+                const ulabKeys = Object.keys(breakdown);
+                let rows = '';
+
+                if (ulabKeys.length > 0) {
+                    ulabKeys.forEach(ulab => {
+                        const assignedQty = parseFloat(breakdown[ulab] || 0);
+                        if (assignedQty <= 0) return;
+                        const info = materialNames[ulab] || {};
+                        const desc = info.description || ulab;
+                        const acidPct = parseFloat(info.acid_pct || 0);
+                        const showAcid = acidPct > 0;
+                        rows += `<tr>
+                                <td><strong>${lotNo}</strong></td>
+                                <td>${desc}</td>
+                                <td>${showAcid ? acidPct.toFixed(2) + '%' : '<span style="color:var(--text-muted);">—</span>'}</td>
+                                <td><strong style="color:var(--green);">${assignedQty.toFixed(3)} KG</strong></td>
+                            </tr>`;
+                    });
+                } else {
+                    // Fallback: no breakdown stored yet — show aggregate row
+                    rows = `<tr>
+                            <td><strong>${lotNo}</strong></td>
+                            <td><span style="color:var(--text-muted);">—</span></td>
+                            <td>${parseFloat(acid) > 0 ? parseFloat(acid).toFixed(3) + '%' : '<span style="color:var(--text-muted);">—</span>'}</td>
+                            <td><strong style="color:var(--green);">${qty.toFixed(3)} KG</strong></td>
+                        </tr>`;
+                }
+
+                container.innerHTML = `
+                        <table class="detail-table">
+                            <thead>
+                                <tr>
+                                    <th>Lot No</th>
+                                    <th>Material Name</th>
+                                    <th>Acid %</th>
+                                    <th>Assigned Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                            <tfoot>
+                                <tr style="background:var(--green-light);">
+                                    <td colspan="3" style="font-weight:700;color:var(--green);font-size:13px;padding:9px 14px;text-align:right;">TOTAL</td>
+                                    <td style="font-weight:700;color:var(--green);font-size:13px;padding:9px 14px;">${qty.toFixed(3)} KG</td>
+                                </tr>
+                            </tfoot>
+                        </table>`;
+
+                document.getElementById('lotDetailModal').classList.add('open');
+            }
+
+            function closeLotDetailModal() {
+                document.getElementById('lotDetailModal').classList.remove('open');
+            }
+
+            document.getElementById('lotDetailModal').addEventListener('click', function (e) {
+                if (e.target === this) closeLotDetailModal();
+            });
+
+            // ─── Load material names for view modal (edit mode) ───────────────
+            async function loadMaterialNamesForRow(rowIdx, lotNo) {
+                try {
+                    const res = await apiFetch(`/bbsu-batches/acid-summary/${encodeURIComponent(lotNo)}`);
+                    if (!res?.ok) return;
+                    const json = await res.json();
+                    const rows = json.data ?? [];
+
+                    // Build a lookup: ulab_type -> description + acid_pct
+                    const lookup = {};
+                    rows.forEach(r => {
+                        lookup[r.ulab_type] = {
+                            description: r.material_description || r.ulab_type,
+                            acid_pct: parseFloat(r.avg_acid_pct || 0),
+                        };
+                    });
+
+                    // Read existing breakdown for qty
+                    const bdEl = document.getElementById(`qty_breakdown_${rowIdx}`);
+                    let breakdown = {};
+                    try { breakdown = JSON.parse(bdEl?.value || '{}'); } catch (e) { }
+
+                    // Build materialNames
+                    const materialNames = {};
+                    Object.entries(breakdown).forEach(([ulab, qty]) => {
+                        const info = lookup[ulab] || { description: ulab, acid_pct: 0 };
+                        materialNames[ulab] = {
+                            description: info.description,
+                            acid_pct: info.acid_pct,
+                            qty: parseFloat(qty),
+                        };
+                    });
+
+                    const mnEl = document.getElementById(`qty_material_names_${rowIdx}`);
+                    if (mnEl) mnEl.value = JSON.stringify(materialNames);
+                } catch (e) { /* silent — view modal will show aggregate fallback */ }
+            }
+
+            // ─── Output Table ─────────────────────────────────────────────────
+            function buildOutputTable() {
+                const tbody = document.getElementById('outputTableBody');
+                tbody.innerHTML = OUTPUT_KEYS.map(mat => `
+                            <tr>
+                                <td class="mat-name">${getOutputLabel(mat.code)}</td>
+                                <td><input type="number" class="out-input" id="out_qty_${mat.key}"
+                                           placeholder="0.00" step="0.0001" oninput="calcOutputTotal(); triggerAutosave();"></td>
+                                <td><input type="number" class="out-input" id="out_yield_${mat.key}"
+                                           placeholder="0.00" readonly
+                                           style="background:#eef6f1;color:var(--green);font-weight:600;cursor:default;"></td>
+                            </tr>
+                        `).join('') + `
+                            <tr class="total-row">
+                                <td><strong>TOTAL</strong></td>
+                                <td><input type="text" class="out-input" id="outputTotalQty" readonly placeholder="0.00"
+                                           style="font-weight:700;color:var(--green);background:var(--green-light);"></td>
+                                <td><input type="text" class="out-input" id="outputTotalYield" readonly placeholder="0.00%"
+                                           style="font-weight:700;color:var(--green);background:var(--green-light);"></td>
+                            </tr>
+                        `;
+            }
+
+            function calcOutputTotal() {
+                let total = 0;
+                OUTPUT_KEYS.forEach(mat => {
+                    total += parseFloat(document.getElementById(`out_qty_${mat.key}`)?.value) || 0;
+                });
+                document.getElementById('outputTotalQty').value = total.toFixed(2);
+
+                // ── FIX: compute inputTotal directly from hidden qty_val fields ──
+                // Do NOT rely on the totalQty display field which may be stale.
+                let inputTotal = 0;
+                document.querySelectorAll('#inputRowsBody tr').forEach(tr => {
+                    const i = tr.dataset.rowIndex;
+                    inputTotal += parseFloat(document.getElementById(`qty_val_${i}`)?.value) || 0;
+                });
+                // Also sync the totalQty display field
+                const totalQtyEl = document.getElementById('totalQty');
+                if (totalQtyEl && inputTotal > 0) totalQtyEl.value = inputTotal.toFixed(2);
+
+                // Per-row yield % = (row_qty / total_input) * 100 — auto-calc, readonly
+                OUTPUT_KEYS.forEach(mat => {
+                    const rowQty = parseFloat(document.getElementById(`out_qty_${mat.key}`)?.value) || 0;
+                    const yieldEl = document.getElementById(`out_yield_${mat.key}`);
+                    if (yieldEl) {
+                        yieldEl.value = inputTotal > 0
+                            ? ((rowQty / inputTotal) * 100).toFixed(2)
+                            : '';
+                    }
+                });
+
+                // Total yield % = total_output / total_input * 100
+                document.getElementById('outputTotalYield').value = inputTotal
+                    ? ((total / inputTotal) * 100).toFixed(2) + '%'
+                    : '0.00%';
+            }
+
+            // ─── Power Consumption ────────────────────────────────────────────
+            function calcConsumption() {
+                const initial = parseFloat(document.getElementById('power_initial').value) || 0;
+                const final_ = parseFloat(document.getElementById('power_final').value) || 0;
+                document.getElementById('power_consumption').value =
+                    final_ >= initial ? (final_ - initial).toFixed(2) : '';
+                triggerAutosave();
+            }
+
+            // ─── Collect Payload ─────────────────────────────────────────────
+            function buildPayload() {
+                // Input details
+                const input_details = [];
+                document.querySelectorAll('#inputRowsBody tr').forEach(tr => {
+                    const idx = tr.dataset.rowIndex;
+                    const lot = document.getElementById(`lot_no_${idx}`)?.value;
+                    if (!lot) return;
+                    input_details.push({
+                        lot_no: lot,
+                        quantity: parseFloat(document.getElementById(`qty_val_${idx}`)?.value) || 0,
+                        acid_percentage: parseFloat(document.getElementById(`acid_${idx}`)?.value) || 0,
+                        material_breakdown: (document.getElementById(`qty_breakdown_${idx}`)?.value) ? JSON.parse(document.getElementById(`qty_breakdown_${idx}`).value) : null,
+                    });
+                });
+
+                // Output material — keyed by material_code, e.g. { "1007": { "qty": 120.5 }, ... }
+                const output_material = {};
+                OUTPUT_KEYS.forEach(mat => {
+                    output_material[mat.code] = {
+                        qty: parseFloat(document.getElementById(`out_qty_${mat.key}`)?.value) || 0,
+                    };
+                });
+
+                // Power
+                const initial = parseFloat(document.getElementById('power_initial').value) || 0;
+                const final_ = parseFloat(document.getElementById('power_final').value) || 0;
+
+                return {
+                    batch_no: document.getElementById('doc_no').value,
+                    doc_date: document.getElementById('date').value,
+                    category: document.getElementById('category').value,
+                    start_time: document.getElementById('start_time').value,
+                    end_time: document.getElementById('end_time').value,
+                    input_details,
+                    output_material,
+                    power_consumption: {
+                        initial_power: initial,
+                        final_power: final_,
+                        total_power_consumption: final_ >= initial ? parseFloat((final_ - initial).toFixed(2)) : 0,
+                    },
+                };
+            }
+
+            // ─── Validate Mandatory Fields ────────────────────────────────────
+            function validateMandatory(forSubmit = false) {
+                const errors = [];
+                clearFieldErrors();
+
+                const batchNo = document.getElementById('doc_no').value?.trim();
+                const date = document.getElementById('date').value;
+                const category = document.getElementById('category').value;
+                const start = document.getElementById('start_time').value;
+                const end = document.getElementById('end_time').value;
+
+                if (!batchNo) errors.push('Doc No is required.');
+                if (!date) { errors.push('Date is required.'); document.getElementById('err_date').textContent = 'Required'; }
+                if (!category) { errors.push('Category is required.'); document.getElementById('err_category').textContent = 'Required'; }
+                if (!start) { errors.push('Start Time is required.'); document.getElementById('err_start_time').textContent = 'Required'; }
+                if (!end) { errors.push('End Time is required.'); document.getElementById('err_end_time').textContent = 'Required'; }
+
+                // Input lots
+                let hasValidLot = false;
+                document.querySelectorAll('#inputRowsBody tr').forEach((tr, i) => {
+                    const idx = tr.dataset.rowIndex;
+                    const lot = document.getElementById(`lot_no_${idx}`)?.value;
+                    const qty = parseFloat(document.getElementById(`qty_val_${idx}`)?.value) || 0;
+                    if (lot && qty > 0) hasValidLot = true;
+                    if (lot && qty <= 0) errors.push(`Input row ${i + 1}: Quantity must be assigned.`);
+                });
+                // Replaced output material validations: All output fields are entirely optional
+
+                if (forSubmit) {
+                    // Extra checks for submit
+                    const init = parseFloat(document.getElementById('power_initial').value);
+                    const final = parseFloat(document.getElementById('power_final').value);
+                    if (!init || init <= 0) { errors.push('Initial power reading is required.'); document.getElementById('err_power_initial').textContent = 'Required'; }
+                    if (!final || final <= 0) { errors.push('Final power reading is required.'); document.getElementById('err_power_final').textContent = 'Required'; }
+                }
+
+                return errors;
+            }
+
+            // ─── Save Draft ───────────────────────────────────────────────────
+            async function saveForm(silent = false) {
+                if (!silent) {
+                    clearAlert();
+                    clearFieldErrors();
+                }
+
+                const btn = document.getElementById('btnSave');
+                if (!silent) { btn.disabled = true; document.getElementById('btnSaveLabel').textContent = 'Saving...'; }
+
+                const method = isCreate ? 'POST' : 'PUT';
+                const endpoint = isCreate ? '/bbsu-batches' : `/bbsu-batches/${currentBatchId}`;
+
+                try {
+                    const res = await apiFetch(endpoint, { method, body: JSON.stringify(buildPayload()) });
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        // After create → redirect to INDEX LIST (not edit page)
+                        if (isCreate) {
+                            window.location.href = `{{ route('admin.mes.bbsu.index') }}`;
+                            return;
+                        }
+                        currentBatchId = data.data?.id || currentBatchId;
+                        if (!silent) {
+                            showAlert('Record saved as draft successfully.', 'success');
+                            updatePageUI('draft', data.data);
+                        } else {
+                            setDot('saved');
+                            document.getElementById('asText').textContent = 'Saved ' + new Date().toLocaleTimeString();
+                        }
+                    } else if (res.status === 422) {
+                        showFieldErrors(data.errors ?? {});
+                        if (!silent) showAlert(data.message ?? 'Please fix the errors below.', 'error');
+                    } else {
+                        if (!silent) showAlert(data.message ?? 'Something went wrong.', 'error');
+                    }
+                } catch (e) {
+                    if (!silent) showAlert('Network error: ' + e.message, 'error');
+                    else setDot('error');
+                }
+
+                if (!silent) { btn.disabled = false; document.getElementById('btnSaveLabel').textContent = 'Save Draft'; }
+            }
+
+            // ─── Submit Batch ─────────────────────────────────────────────────
+            async function submitBatch() {
+                // Guard — must have a saved batch ID
+                if (!currentBatchId) {
+                    showAlert('No batch ID found. Please save the draft first.', 'error');
+                    return;
+                }
+
+                // Validate mandatory fields before submitting
+                const errors = validateMandatory(true);
+                if (errors.length) {
+                    showAlert('Please fix the following before submitting:\n• ' + errors.join('\n• '), 'error');
+                    return;
+                }
+
+                if (!confirm('Submit and lock this batch? This cannot be undone.')) return;
+
+                const btn = document.getElementById('btnSubmit');
+                btn.disabled = true;
+                btn.innerHTML = `<svg style="animation:spin .8s linear infinite;width:14px;height:14px;stroke:currentColor;fill:none;" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg> Submitting...`;
+
+                try {
+                    // ONLY call PATCH /status — no data re-save, no unique validation triggered
+                    const url = `/bbsu-batches/${currentBatchId}/status`;
+                    console.log('[BBSU] Submitting batch ID:', currentBatchId, 'URL:', url);
+
+                    const res = await apiFetch(url, {
+                        method: 'PATCH',
+                        body: JSON.stringify({ status: 1 }),
+                    });
+
+                    if (!res) {
+                        showAlert('No response from server. Check your connection.', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Submit &amp; Lock`;
+                        return;
+                    }
+
+                    const d = await res.json();
+                    console.log('[BBSU] Status update response:', res.status, d);
+
+                    if (res.ok && d.status === 'ok') {
+                        showAlert('Batch submitted successfully!', 'success');
+                        setTimeout(() => {
+                            window.location.href = '{{ route('admin.mes.bbsu.index') }}';
+                        }, 1200);
+                    } else {
+                        showAlert(d.message || 'Failed to submit batch.', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Submit &amp; Lock`;
+                    }
+                } catch (e) {
+                    showAlert('Network error: ' + e.message, 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Submit &amp; Lock`;
+                }
+            }
+
+            // ─── Autosave (edit/draft only) — silent background save ─────────
+            function triggerAutosave() {
+                if (isCreate || isLocked || !currentBatchId) return;
+                clearTimeout(autosaveTimer);
+                // autosaveTimer = setTimeout(() => saveForm(true), 2500);
+            }
+
+            function setDot(state) {
+                // No-op if autosave indicator not present — kept for silent save path
+            }
+
+            // ─── Load Existing Record (edit mode) ────────────────────────────
+            async function loadRecord() {
+                try {
+                    const res = await apiFetch(`/bbsu-batches/${recordId}`);
+                    if (!res?.ok) { showAlert('Failed to load record.', 'error'); return; }
+                    const { data } = await res.json();
+
+                    // Primary fields
+                    document.getElementById('doc_no').value = data.batch_no ?? '';
+                    document.getElementById('date').value = data.doc_date?.slice(0, 10) ?? '';
+                    document.getElementById('category').value = data.category ?? '';
+                    document.getElementById('start_time').value = formatForDatetimeLocal(data.start_time);
+                    document.getElementById('end_time').value = formatForDatetimeLocal(data.end_time);
+
+                    // Input lots
+                    document.getElementById('inputRowsBody').innerHTML = '';
+                    rowCount = 0;
+                    if (data.input_details?.length) {
+                        data.input_details.forEach(detail => addInputRow(detail));
+                        // Populate material names for view modal from API (for edit mode)
+                        data.input_details.forEach((detail, i) => {
+                            const rowIdx = i + 1; // rowCount increments from 1 in addInputRow
+                            if (detail.lot_no && detail.material_breakdown) {
+                                loadMaterialNamesForRow(rowIdx, detail.lot_no);
+                            }
+                        });
+                    } else {
+                        addInputRow();
+                    }
+                    recalcTotals();
+
+                    // Output materials — new structure: array of { material_code, qty, yield_pct }
+                    if (data.output_materials?.length) {
+                        // Build a lookup: code -> row
+                        const omByCode = {};
+                        data.output_materials.forEach(row => { omByCode[row.material_code] = row; });
+                        OUTPUT_KEYS.forEach(mat => {
+                            const row = omByCode[mat.code];
+                            const qEl = document.getElementById(`out_qty_${mat.key}`);
+                            const yEl = document.getElementById(`out_yield_${mat.key}`);
+                            if (qEl) qEl.value = row ? (parseFloat(row.qty) || '') : '';
+                            if (yEl) yEl.value = row ? (parseFloat(row.yield_pct) || '') : '';
+                        });
+                        calcOutputTotal();
+                    }
+
+                    // Power consumption
+                    if (data.power_consumption) {
+                        document.getElementById('power_initial').value = parseFloat(data.power_consumption.initial_power) || '';
+                        document.getElementById('power_final').value = parseFloat(data.power_consumption.final_power) || '';
+                        document.getElementById('power_consumption').value = parseFloat(data.power_consumption.total_power_consumption) || '';
+                    }
+
+                    currentBatchId = data.id;
+                    updatePageUI(data.status, data);
+
+                } catch (e) {
+                    showAlert('Error loading record: ' + e.message, 'error');
+                }
+            }
+
+            // ─── Update Page UI based on status ──────────────────────────────
+            function updatePageUI(status, data) {
+                // Normalise: DB stores 0=draft, 1=submitted; create state = 'new'
+                const isDraft = (status === 'draft' || status === 0 || status === '0');
+                const isSubmitted = (status === 'submitted' || status === 1 || status === '1');
+                const isNew = (status === 'new' || status === 'create');
+
+                isLocked = isSubmitted;
+
+                // Status pill
+                const pill = document.getElementById('statusPill');
+                if (isNew) { pill.textContent = 'New Record'; pill.className = 'status-pill pill-new'; }
+                else if (isDraft) { pill.textContent = 'Draft'; pill.className = 'status-pill pill-draft'; }
+                else { pill.textContent = 'Submitted'; pill.className = 'status-pill pill-submitted'; }
+
+                // Locked banner
+                if (isLocked) document.getElementById('lockedBanner').classList.add('show');
+
+                // ── Button visibility rules ──────────────────────────────────
+                // CREATE page  → Show "Save Draft" only
+                // EDIT page    → Show "Submit & Lock" and "Save Draft"
+                // SUBMITTED    → No buttons
+                document.getElementById('btnSave').style.display = (isNew || isDraft) ? '' : 'none';
+                document.getElementById('btnSubmit').style.display = isDraft ? '' : 'none';
+
+                // Add row button / lock inputs when submitted
+                if (isLocked) {
+                    const aw = document.getElementById('addRowWrap');
+                    if (aw) aw.style.display = 'none';
+                    // Hide delete buttons when locked
+                    document.querySelectorAll('.delete-btn').forEach(el => el.style.display = 'none');
+                    document.querySelectorAll('input, select, button.qty-btn, button.btn-add, button.delete-btn').forEach(el => {
+                        el.setAttribute('disabled', true);
+                    });
+                }
+
+                // Breadcrumb + heading
+                document.getElementById('breadcrumbTitle').textContent = isNew ? 'Create Record' : (isLocked ? 'View Record' : 'Edit Record');
+                document.getElementById('pageHeading').textContent = isLocked ? 'BBSU Batch (Submitted)' : 'Battery Breaking & Separation Unit Log';
+            }
+
+            // ─── Helpers ──────────────────────────────────────────────────────
+            function showAlert(msg, type = 'error') {
+                const el = document.getElementById('formAlert');
+                el.className = `form-alert ${type}`;
+                el.textContent = msg;
+                el.style.display = 'block';
+                if (type === 'success') setTimeout(() => el.style.display = 'none', 3500);
+                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            function clearAlert() {
+                const el = document.getElementById('formAlert');
+                el.className = 'form-alert';
+                el.textContent = '';
+                el.style.display = 'none';
+            }
+
+            function clearFieldErrors() {
+                document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
+            }
+
+            function showFieldErrors(errors) {
+                Object.entries(errors).forEach(([field, messages]) => {
+                    const errEl = document.getElementById('err_' + field);
+                    if (errEl) errEl.textContent = Array.isArray(messages) ? messages[0] : messages;
+                });
+            }
+
+            function formatForDatetimeLocal(isoString) {
+                if (!isoString) return '';
+                const d = new Date(isoString);
+                const pad = n => String(n).padStart(2, '0');
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            }
+
+            // ── Spin keyframe ──
+            const styleEl = document.createElement('style');
+            styleEl.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+            document.head.appendChild(styleEl);
+
+            // ── Expose to window for inline onclick ──
+            window.addInputRow = addInputRow;
+            window.removeRow = removeRow;
+            window.openQtyModal = openQtyModal;
+            window.closeQtyModal = closeQtyModal;
+            window.confirmQtyAssign = confirmQtyAssign;
+            window.capAssign = capAssign;
+            window.onLotChange = onLotChange;
+            window.calcConsumption = calcConsumption;
+            window.saveForm = saveForm;
+            window.submitBatch = submitBatch;
+            window.calcOutputTotal = calcOutputTotal;
+            window.recalcTotals = recalcTotals;
+            window.triggerAutosave = triggerAutosave;
+            window.openLotDetailModal = openLotDetailModal;
+            window.closeLotDetailModal = closeLotDetailModal;
+
+        })();
     </script>
 @endpush

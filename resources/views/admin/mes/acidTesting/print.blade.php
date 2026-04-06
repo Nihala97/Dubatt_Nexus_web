@@ -184,11 +184,11 @@ Variables: $test (AcidTesting with details + supplier), $company (Company)
 
         // Net avg acid % = (total drained / total initial) * 100
         $netAvgAcid = $totalInitial > 0
-            ? round(($totalDrained / $totalInitial) * 100, 2)
+            ? round(($totalWtDiff / $totalInitial) * 100, 2)
             : 0;
 
         $docPrefix = ($company->document_prefix ?? 'DBR') . '/PWM-';
-        $minRows = 5;   // minimum blank rows to always show
+        $minRows = 1;   // minimum blank rows to always show
     @endphp
 
     <table class="wrap">
@@ -286,7 +286,8 @@ Variables: $test (AcidTesting with details + supplier), $company (Company)
                         <td class="lbl" style="border-bottom:none;line-height:1.4">IN HOUSE<br>WEIGHBRIDGE<br>WEIGHT
                         </td>
                         <td style="border-right:none;border-bottom:none">
-                            {{ number_format((float) ($test->received_qty ?? 0)) }} KG</td>
+                            {{ number_format((float) ($test->received_qty ?? 0)) }} KG
+                        </td>
                     </tr>
                 </table>
             </td>
@@ -334,8 +335,8 @@ Variables: $test (AcidTesting with details + supplier), $company (Company)
                                 <td>{{ number_format((float) ($row->gross_weight ?? 0), 2) }}</td>
                                 <td>{{ number_format($avgPF, 2) }}</td>
                                 <td>{{ number_format((float) ($row->net_weight ?? 0), 2) }}</td>
-                                <td>{{ $row->ulab_type ?? ($row->remarks ?? '') }}{{ $row->stock_code ? ' [' . $row->stock_code . ']' : '' }}
-                                </td>
+                                <!-- <td>{{ $row->ulab_type ?? ($row->remarks ?? '') }}{{ $row->stock_code ? ' [' . $row->stock_code . ']' : '' }} -->
+                                <td>{{ $row->remarks }}</td>
                             </tr>
                         @endforeach
 
@@ -399,7 +400,8 @@ Variables: $test (AcidTesting with details + supplier), $company (Company)
                                 <td>{{ number_format((float) ($row->weight_difference ?? max(0, ($row->initial_weight ?? 0) - ($row->drained_weight ?? 0))), 2) }}
                                 </td>
                                 <td>{{ number_format((float) ($row->avg_acid_pct ?? 0), 2) }}</td>
-                                <td style="font-weight:700;font-size:10.5px">{{ $row->stock_code ?? '—' }}</td>
+                                <!-- <td style="font-weight:700;font-size:10.5px">{{ $row->stock_code ?? '—' }}</td> -->
+                                <td style="font-weight:700;font-size:10.5px">{{ $row->ulab_type }}</td>
                                 <td>{{ $row->remarks ?? '' }}</td>
                             </tr>
                         @endforeach
