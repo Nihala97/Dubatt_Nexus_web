@@ -1873,6 +1873,21 @@
     // BUILD PAYLOAD
     // ════════════════════════════════════════════════════════════════
     function buildPayload() {
+      // Add validation for required fields
+      const avgPalletWeight = parseFloat(document.getElementById('avg_pallet_weight').value);
+      const foreignMaterialWeight = parseFloat(document.getElementById('foreign_material_weight').value);
+
+      if (!avgPalletWeight || avgPalletWeight <= 0) {
+        showAlert('Avg Pallet Weight (KG) is required and must be greater than 0.');
+        document.getElementById('avg_pallet_weight').focus();
+        return null;
+      }
+
+      if (!foreignMaterialWeight || foreignMaterialWeight < 0) {
+        showAlert('Foreign Material Weight (KG) is required and cannot be negative.');
+        document.getElementById('foreign_material_weight').focus();
+        return null;
+      }
       const lotNo = document.getElementById('lot_no').value;
       if (!lotNo) {
         showAlert('Please select a Lot No before saving.');
