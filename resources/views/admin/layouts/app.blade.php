@@ -579,6 +579,31 @@
                 <span class="nav-label">Refining</span>
             </a>
 
+            <div class="nav-section-label" style="margin-top:8px;">Reports &amp; Dashboard</div>
+
+            <a href="{{ route('admin.reports.materialInward') }}"
+                class="nav-item {{ request()->routeIs('admin.reports.materialInward') ? 'active' : '' }}">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10 9 9 9 8 9" />
+                </svg>
+                <span>Material Inward</span>
+            </a>
+
+            <a href="{{ route('admin.reports.acidTestStatus') }}"
+                class="nav-item {{ request()->routeIs('admin.reports.acidTestStatus') ? 'active' : '' }}">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 11l3 3L22 4" />
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                </svg>
+                <span>Acid Test Status</span>
+            </a>
+
             <div class="nav-section-label" style="margin-top:8px;">Masters</div>
 
             <a href="{{ route('admin.mes.supplier.index') }}" data-label="Supplier"
@@ -792,13 +817,13 @@
                 showToast(data.message ?? 'Failed to delete.', 'error');
                 btn.disabled = false;
             }
-            }
-            function showToast(message, type = 'success') {
+        }
+        function showToast(message, type = 'success') {
             const existing = document.getElementById('_toast');
             if (existing) existing.remove();
 
-            const bg    = type === 'success' ? '#166534' : '#991b1b';
-            const icon  = type === 'success'
+            const bg = type === 'success' ? '#166534' : '#991b1b';
+            const icon = type === 'success'
                 ? `<polyline points="20 6 9 17 4 12"/>`
                 : `<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>`;
 
@@ -827,10 +852,10 @@
             }, 3500);
         }
 
-            /* ─────────────────────────────────────────────
-            showConfirm(message) → Promise<boolean>
-            ───────────────────────────────────────────── */
-            function showConfirm(message) {
+        /* ─────────────────────────────────────────────
+        showConfirm(message) → Promise<boolean>
+        ───────────────────────────────────────────── */
+        function showConfirm(message) {
             return new Promise(resolve => {
                 const overlay = document.createElement('div');
                 overlay.id = '_confirmOverlay';
@@ -905,30 +930,30 @@
 
                 // Hover effects
                 const cancelBtn = overlay.querySelector('#_confirmCancel');
-                const okBtn     = overlay.querySelector('#_confirmOk');
+                const okBtn = overlay.querySelector('#_confirmOk');
 
                 cancelBtn.onmouseenter = () => { cancelBtn.style.borderColor = 'var(--green)'; cancelBtn.style.color = 'var(--green)'; };
                 cancelBtn.onmouseleave = () => { cancelBtn.style.borderColor = 'var(--border,#e5e7eb)'; cancelBtn.style.color = 'var(--text,#111)'; };
-                okBtn.onmouseenter     = () => { okBtn.style.background = '#dc2626'; };
-                okBtn.onmouseleave     = () => { okBtn.style.background = '#ef4444'; };
+                okBtn.onmouseenter = () => { okBtn.style.background = '#dc2626'; };
+                okBtn.onmouseleave = () => { okBtn.style.background = '#ef4444'; };
 
                 function close(result) {
                     overlay.style.animation = '_fadeOut .15s ease forwards';
                     setTimeout(() => { overlay.remove(); resolve(result); }, 150);
                 }
 
-                okBtn.onclick     = () => close(true);
+                okBtn.onclick = () => close(true);
                 cancelBtn.onclick = () => close(false);
-                overlay.onclick   = e => { if (e.target === overlay) close(false); };
+                overlay.onclick = e => { if (e.target === overlay) close(false); };
 
                 document.addEventListener('keydown', function esc(e) {
                     if (e.key === 'Escape') { close(false); document.removeEventListener('keydown', esc); }
                 });
             });
-            }
+        }
 
-            /* ── Keyframe animations (injected once) ── */
-            if (!document.getElementById('_utilStyles')) {
+        /* ── Keyframe animations (injected once) ── */
+        if (!document.getElementById('_utilStyles')) {
             const s = document.createElement('style');
             s.id = '_utilStyles';
             s.textContent = `
@@ -939,7 +964,7 @@
                 @keyframes _slideUp  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
             `;
             document.head.appendChild(s);
-            }
+        }
     </script>
 
     {{-- ── PWA Boot ── --}}

@@ -158,6 +158,7 @@ Route::middleware('auth:sanctum')->group(function () {
           Route::get('/generate-batch-no', [BbsuBatchController::class, 'generateBatchNo']);
           Route::get('/acid-test-lot-numbers', [BbsuBatchController::class, 'acidTestLotNumbers']);
           Route::get('/acid-summary/{lotNo}', [BbsuBatchController::class, 'acidSummaryByLot']);
+          Route::get('/acid-summary-all', [BbsuBatchController::class, 'acidSummaryAllLots']);
           Route::get('/reports/acid-summary', [BbsuBatchController::class, 'acidSummary']);
           Route::get('/output-material-info', [BbsuBatchController::class, 'outputMaterialInfo']);
           Route::post('/{id}/submit', [BbsuBatchController::class, 'submit']);
@@ -170,6 +171,7 @@ Route::middleware('auth:sanctum')->group(function () {
      Route::prefix('smelting-batches')->middleware('module:smelting')->group(function () {
           Route::get('/', [SmeltingBatchController::class, 'index']);
           Route::get('/generate-batch-no', [SmeltingBatchController::class, 'generateBatchNo']);
+          Route::get('/bbsu-lots/all', [SmeltingBatchController::class, 'getAllBbsuLots']);
           Route::get('/bbsu-lots/{materialId}', [SmeltingBatchController::class, 'getBbsuLots']);
           Route::post('/', [SmeltingBatchController::class, 'store']);
           Route::get('/{id}', [SmeltingBatchController::class, 'show']);
@@ -184,6 +186,7 @@ Route::middleware('auth:sanctum')->group(function () {
      Route::prefix('refining')->middleware('module:refining')->group(function () {
 
           Route::get('/generate-batch-no', [RefiningBatchController::class, 'generateBatchNo']);
+          Route::get('/smelting-lots', [RefiningBatchController::class, 'getAllSmeltingLots']);
           Route::get('/smelting-lots/{materialId}', [RefiningBatchController::class, 'getSmeltingLots']);
           Route::get('/process-names', [RefiningBatchController::class, 'getProcessNames']);
 
@@ -209,5 +212,22 @@ Route::middleware('auth:sanctum')->group(function () {
           Route::put('/{id}', [SupplierBatchController::class, 'update']);
           Route::delete('/{id}', [SupplierBatchController::class, 'destroy']);
      });
-});
+     Route::prefix('reports')->name('reports.')->group(function () {
 
+          Route::get('material-inward/filters', [\App\Http\Controllers\Api\ReportController::class, 'materialInwardFilters'])
+               ->name('materialInward.filters');
+
+          // ↓ FIXED: was '/reports/material-inward/dashboard' → now 'material-inward/dashboard'
+          Route::get('material-inward/dashboard', [\App\Http\Controllers\Api\ReportController::class, 'materialInwardDashboard'])
+               ->name('materialInward.dashboard');
+
+          Route::get('material-inward', [\App\Http\Controllers\Api\ReportController::class, 'materialInward'])
+               ->name('materialInward');
+
+          Route::get('acid-test-status', [\App\Http\Controllers\Api\ReportController::class, 'acidTestStatus'])
+               ->name('acidTestStatus');
+          Route::get('acid-test-status/filters', [\App\Http\Controllers\Api\ReportController::class, 'acidTestStatusFilters'])
+               ->name('acidTestStatus.filters');
+
+     });
+});

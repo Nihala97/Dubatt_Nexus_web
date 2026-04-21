@@ -745,10 +745,10 @@
         }
 
         .lot-table .avail-pill {
-            /* display: inline-flex; mk changed */ 
+            /* display: inline-flex; mk changed */
             align-items: center;
             gap: 5px;
-            padding: 3px 10px;    
+            padding: 3px 10px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 700
@@ -1420,22 +1420,27 @@
         </div>
         <div class="card-body" style="padding:0">
 
-            {{-- Table: label col + 3 value cols --}}
+            {{-- Table: label col + value cols --}}
             <table style="width:100%;border-collapse:collapse">
                 <colgroup>
-                    <col style="width:180px">
-                    <col>
-                    <col>
-                    <col>
-                    <col style="width:38%">
+                    <col style="width:120px"> {{-- Row label (Initial / Final / Consumption) --}}
+                    <col> {{-- LPG (KG) — flex --}}
+                    <col style="width:90px"> {{-- LPG (LTR) — narrow auto col --}}
+                    <col> {{-- LPG 2 (KG) — flex --}}
+                    <col style="width:90px"> {{-- LPG 2 (LTR) — narrow auto col --}}
+                    <col> {{-- Electricity — flex --}}
+                    <col style="width:32%"> {{-- Liquid Oxygen — right panel --}}
                 </colgroup>
 
                 {{-- Column headers --}}
                 <thead>
                     <tr>
+                        {{-- Label --}}
                         <th
                             style="padding:10px 16px;background:var(--gl);border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--txtmu)">
                         </th>
+
+                        {{-- LPG (KG) --}}
                         <th
                             style="padding:10px 16px;background:var(--gl);border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);text-align:left">
                             <div style="display:flex;align-items:center;gap:7px">
@@ -1444,20 +1449,76 @@
                                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
                                     <path d="M12 6v6l4 2" />
                                 </svg>
-                                <span
-                                    style="font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g)">LPG</span>
+                                <div>
+                                    <span
+                                        style="font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g)">LPG</span>
+                                    <span
+                                        style="font-size:9px;padding:1px 5px;border-radius:3px;background:#fef9c3;color:#854d0e;font-weight:700;margin-left:4px">KG</span>
+                                </div>
                             </div>
                         </th>
-                        <!-- Add after the LPG <th> block, before the Electricity <th> -->
-                        <th style="padding:10px 16px;background:var(--gl);border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);text-align:left">
+
+                        {{-- LPG (LTR) — AUTO --}}
+                        <th
+                            style="padding:10px 16px;background:#f0fdf4;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);text-align:left">
                             <div style="display:flex;align-items:center;gap:7px">
-                                <svg style="width:13px;height:13px;stroke:var(--g);fill:none;stroke-width:2" viewBox="0 0 24 24">
+                                <svg style="width:13px;height:13px;stroke:#16a34a;fill:none;stroke-width:2"
+                                    viewBox="0 0 24 24">
                                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
                                     <path d="M12 6v6l4 2" />
                                 </svg>
-                                <span style="font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g)">LPG 2</span>
+                                <div>
+                                    <span
+                                        style="font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#16a34a">LPG</span>
+                                    <span
+                                        style="font-size:9px;padding:1px 5px;border-radius:3px;background:#dcfce7;color:#166534;font-weight:700;margin-left:4px">LTR</span>
+                                    <div style="font-size:8.5px;color:var(--txtmu);font-weight:400;margin-top:1px">KG × 1.98
+                                    </div>
+                                </div>
                             </div>
                         </th>
+
+                        {{-- LPG 2 (KG) --}}
+                        <th
+                            style="padding:10px 16px;background:var(--gl);border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);text-align:left">
+                            <div style="display:flex;align-items:center;gap:7px">
+                                <svg style="width:13px;height:13px;stroke:var(--g);fill:none;stroke-width:2"
+                                    viewBox="0 0 24 24">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
+                                    <path d="M12 6v6l4 2" />
+                                </svg>
+                                <div>
+                                    <span
+                                        style="font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g)">LPG
+                                        2</span>
+                                    <span
+                                        style="font-size:9px;padding:1px 5px;border-radius:3px;background:#fef9c3;color:#854d0e;font-weight:700;margin-left:4px">KG</span>
+                                </div>
+                            </div>
+                        </th>
+
+                        {{-- LPG 2 (LTR) — AUTO --}}
+                        <th
+                            style="padding:10px 16px;background:#f0fdf4;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);text-align:left">
+                            <div style="display:flex;align-items:center;gap:7px">
+                                <svg style="width:13px;height:13px;stroke:#16a34a;fill:none;stroke-width:2"
+                                    viewBox="0 0 24 24">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
+                                    <path d="M12 6v6l4 2" />
+                                </svg>
+                                <div>
+                                    <span
+                                        style="font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#16a34a">LPG
+                                        2</span>
+                                    <span
+                                        style="font-size:9px;padding:1px 5px;border-radius:3px;background:#dcfce7;color:#166534;font-weight:700;margin-left:4px">LTR</span>
+                                    <div style="font-size:8.5px;color:var(--txtmu);font-weight:400;margin-top:1px">KG × 1.98
+                                    </div>
+                                </div>
+                            </div>
+                        </th>
+
+                        {{-- Electricity --}}
                         <th
                             style="padding:10px 16px;background:var(--gl);border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);text-align:left">
                             <div style="display:flex;align-items:center;gap:7px">
@@ -1469,6 +1530,8 @@
                                     style="font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g)">Electricity</span>
                             </div>
                         </th>
+
+                        {{-- Liquid Oxygen --}}
                         <th
                             style="padding:10px 16px;background:var(--gl);border-bottom:1px solid var(--bdr);text-align:left">
                             <div style="display:flex;align-items:center;gap:7px">
@@ -1487,37 +1550,76 @@
 
                 <tbody>
 
-                    {{-- Row 1: Initial / Flow NM³ --}}
+                    {{-- Row 1: Initial --}}
                     <tr>
                         <td
                             style="padding:10px 16px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr);background:var(--gxl)">
                             <span
                                 style="font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--txtm)">Initial</span>
                         </td>
+
+                        {{-- LPG Initial (KG input) --}}
                         <td style="padding:8px 12px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr)">
-                            <div class="iw"><svg class="ico" viewBox="0 0 24 24">
+                            <div class="iw">
+                                <svg class="ico" viewBox="0 0 24 24">
                                     <line x1="22" y1="12" x2="2" y2="12" />
                                 </svg>
                                 <input type="number" id="lpg_initial" step="0.001" placeholder="0.000"
                                     oninput="calcConsumption('lpg');triggerAutosave()">
                             </div>
                         </td>
+
+                        {{-- LPG Initial LTR (auto display) --}}
+                        <td
+                            style="padding:8px 12px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr);background:#f0fdf4">
+                            <div style="display:flex;align-items:center;gap:6px">
+                                <svg style="width:12px;height:12px;stroke:#16a34a;fill:none;stroke-width:2;flex-shrink:0"
+                                    viewBox="0 0 24 24">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                                <span id="lpg_initial_ltr_display"
+                                    style="font-size:13px;font-weight:600;color:#15803d">—</span>
+                                <span style="font-size:9px;color:#16a34a;font-weight:600">LTR</span>
+                            </div>
+                        </td>
+
+                        {{-- LPG 2 Initial (KG input) --}}
                         <td style="padding:8px 12px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr)">
-                            <div class="iw"><svg class="ico" viewBox="0 0 24 24">
+                            <div class="iw">
+                                <svg class="ico" viewBox="0 0 24 24">
                                     <line x1="22" y1="12" x2="2" y2="12" />
                                 </svg>
                                 <input type="number" id="lpg2_initial" step="0.001" placeholder="0.000"
                                     oninput="calcConsumption('lpg2');triggerAutosave()">
                             </div>
                         </td>
+
+                        {{-- LPG 2 Initial LTR (auto display) --}}
+                        <td
+                            style="padding:8px 12px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr);background:#f0fdf4">
+                            <div style="display:flex;align-items:center;gap:6px">
+                                <svg style="width:12px;height:12px;stroke:#16a34a;fill:none;stroke-width:2;flex-shrink:0"
+                                    viewBox="0 0 24 24">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                                <span id="lpg2_initial_ltr_display"
+                                    style="font-size:13px;font-weight:600;color:#15803d">—</span>
+                                <span style="font-size:9px;color:#16a34a;font-weight:600">LTR</span>
+                            </div>
+                        </td>
+
+                        {{-- Electricity Initial --}}
                         <td style="padding:8px 12px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr)">
-                            <div class="iw"><svg class="ico" viewBox="0 0 24 24">
+                            <div class="iw">
+                                <svg class="ico" viewBox="0 0 24 24">
                                     <line x1="22" y1="12" x2="2" y2="12" />
                                 </svg>
                                 <input type="number" id="electricity_initial" step="0.001" placeholder="0.000"
                                     oninput="calcConsumption('electricity');triggerAutosave()">
                             </div>
                         </td>
+
+                        {{-- Liquid Oxygen Initial --}}
                         <td style="padding:8px 12px;border-bottom:1px solid var(--bdr)">
                             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
                                 <div>
@@ -1526,7 +1628,8 @@
                                         FLOW (NM³) <span
                                             style="font-size:9px;padding:1px 5px;border-radius:3px;background:#e0f2fe;color:#0369a1;font-weight:700">MANUAL</span>
                                     </div>
-                                    <div class="iw"><svg class="ico" viewBox="0 0 24 24">
+                                    <div class="iw">
+                                        <svg class="ico" viewBox="0 0 24 24">
                                             <path d="M12 2v20M2 12h20" />
                                         </svg>
                                         <input type="number" id="oxygen_flow_nm3" step="0.001" placeholder="0.000"
@@ -1540,7 +1643,8 @@
                                             style="font-size:9px;padding:1px 5px;border-radius:3px;background:#dcfce7;color:#166534;font-weight:700">AUTO</span>
                                         <span style="font-size:9px;color:var(--txtmu);font-weight:400">= NM³ × 1.429</span>
                                     </div>
-                                    <div class="iw"><svg class="ico" viewBox="0 0 24 24">
+                                    <div class="iw">
+                                        <svg class="ico" viewBox="0 0 24 24">
                                             <path d="M12 2v20M2 12h20" />
                                         </svg>
                                         <input type="number" id="oxygen_flow_kg" step="0.001" placeholder="Auto" readonly
@@ -1551,37 +1655,76 @@
                         </td>
                     </tr>
 
-                    {{-- Row 2: Final / Flow Time --}}
+                    {{-- Row 2: Final --}}
                     <tr>
                         <td
                             style="padding:10px 16px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr);background:var(--gxl)">
                             <span
                                 style="font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--txtm)">Final</span>
                         </td>
+
+                        {{-- LPG Final (KG input) --}}
                         <td style="padding:8px 12px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr)">
-                            <div class="iw"><svg class="ico" viewBox="0 0 24 24">
+                            <div class="iw">
+                                <svg class="ico" viewBox="0 0 24 24">
                                     <line x1="22" y1="12" x2="2" y2="12" />
                                 </svg>
                                 <input type="number" id="lpg_final" step="0.001" placeholder="0.000"
                                     oninput="calcConsumption('lpg');triggerAutosave()">
                             </div>
                         </td>
+
+                        {{-- LPG Final LTR (auto display) --}}
+                        <td
+                            style="padding:8px 12px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr);background:#f0fdf4">
+                            <div style="display:flex;align-items:center;gap:6px">
+                                <svg style="width:12px;height:12px;stroke:#16a34a;fill:none;stroke-width:2;flex-shrink:0"
+                                    viewBox="0 0 24 24">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                                <span id="lpg_final_ltr_display"
+                                    style="font-size:13px;font-weight:600;color:#15803d">—</span>
+                                <span style="font-size:9px;color:#16a34a;font-weight:600">LTR</span>
+                            </div>
+                        </td>
+
+                        {{-- LPG 2 Final (KG input) --}}
                         <td style="padding:8px 12px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr)">
-                            <div class="iw"><svg class="ico" viewBox="0 0 24 24">
+                            <div class="iw">
+                                <svg class="ico" viewBox="0 0 24 24">
                                     <line x1="22" y1="12" x2="2" y2="12" />
                                 </svg>
                                 <input type="number" id="lpg2_final" step="0.001" placeholder="0.000"
                                     oninput="calcConsumption('lpg2');triggerAutosave()">
                             </div>
                         </td>
+
+                        {{-- LPG 2 Final LTR (auto display) --}}
+                        <td
+                            style="padding:8px 12px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr);background:#f0fdf4">
+                            <div style="display:flex;align-items:center;gap:6px">
+                                <svg style="width:12px;height:12px;stroke:#16a34a;fill:none;stroke-width:2;flex-shrink:0"
+                                    viewBox="0 0 24 24">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                                <span id="lpg2_final_ltr_display"
+                                    style="font-size:13px;font-weight:600;color:#15803d">—</span>
+                                <span style="font-size:9px;color:#16a34a;font-weight:600">LTR</span>
+                            </div>
+                        </td>
+
+                        {{-- Electricity Final --}}
                         <td style="padding:8px 12px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr)">
-                            <div class="iw"><svg class="ico" viewBox="0 0 24 24">
+                            <div class="iw">
+                                <svg class="ico" viewBox="0 0 24 24">
                                     <line x1="22" y1="12" x2="2" y2="12" />
                                 </svg>
                                 <input type="number" id="electricity_final" step="0.001" placeholder="0.000"
                                     oninput="calcConsumption('electricity');triggerAutosave()">
                             </div>
                         </td>
+
+                        {{-- Liquid Oxygen Final --}}
                         <td style="padding:8px 12px;border-bottom:1px solid var(--bdr)">
                             <div style="max-width:50%">
                                 <div
@@ -1589,7 +1732,8 @@
                                     FLOW TIME (HR) <span
                                         style="font-size:9px;padding:1px 5px;border-radius:3px;background:#e0f2fe;color:#0369a1;font-weight:700">MANUAL</span>
                                 </div>
-                                <div class="iw"><svg class="ico" viewBox="0 0 24 24">
+                                <div class="iw">
+                                    <svg class="ico" viewBox="0 0 24 24">
                                         <circle cx="12" cy="12" r="10" />
                                         <polyline points="12 6 12 12 16 14" />
                                     </svg>
@@ -1606,41 +1750,77 @@
                             <span
                                 style="font-size:10.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--g)">Consumption</span>
                         </td>
+
+                        {{-- LPG Consumption (KG) --}}
                         <td style="padding:10px 12px;border-right:1px solid var(--bdr)">
-                            <div style="display:flex;align-items:center;justify-content:space-between">
-                                <span style="font-size:10px;font-weight:700;color:var(--g);letter-spacing:.5px">TOTAL</span>
-                                <span style="font-size:15px;font-weight:700;color:var(--g)"
-                                    id="lpg_consumption_display">—</span>
-                            </div>
+                            <div
+                                style="font-size:9px;font-weight:700;color:var(--txtmu);letter-spacing:.5px;margin-bottom:4px">
+                                TOTAL (KG)</div>
+                            <span style="font-size:15px;font-weight:700;color:var(--g)"
+                                id="lpg_consumption_display">—</span>
                             <input type="hidden" id="lpg_consumption">
                         </td>
-                        <td style="padding:10px 12px;border-right:1px solid var(--bdr)">
-                            <div style="display:flex;align-items:center;justify-content:space-between">
-                                <span style="font-size:10px;font-weight:700;color:var(--g);letter-spacing:.5px">TOTAL</span>
-                                <span style="font-size:15px;font-weight:700;color:var(--g)"
-                                    id="lpg2_consumption_display">—</span>
+
+                        {{-- LPG Consumption (LTR) — AUTO --}}
+                        <td style="padding:10px 12px;border-right:1px solid var(--bdr);background:#f0fdf4">
+                            <div
+                                style="font-size:9px;font-weight:700;color:#16a34a;letter-spacing:.5px;margin-bottom:4px;display:flex;align-items:center;gap:4px">
+                                TOTAL (LTR)
+                                <span
+                                    style="font-size:9px;padding:1px 5px;border-radius:3px;background:#dcfce7;color:#166534;font-weight:700">AUTO</span>
                             </div>
+                            <span style="font-size:15px;font-weight:700;color:#15803d"
+                                id="lpg_consumption_ltr_display">—</span>
+                            <input type="hidden" id="lpg_consumption_ltr">
+                        </td>
+
+                        {{-- LPG 2 Consumption (KG) --}}
+                        <td style="padding:10px 12px;border-right:1px solid var(--bdr)">
+                            <div
+                                style="font-size:9px;font-weight:700;color:var(--txtmu);letter-spacing:.5px;margin-bottom:4px">
+                                TOTAL (KG)</div>
+                            <span style="font-size:15px;font-weight:700;color:var(--g)"
+                                id="lpg2_consumption_display">—</span>
                             <input type="hidden" id="lpg2_consumption">
                         </td>
-                        <td style="padding:10px 12px;border-right:1px solid var(--bdr)">
-                            <div style="display:flex;align-items:center;justify-content:space-between">
-                                <span style="font-size:10px;font-weight:700;color:var(--g);letter-spacing:.5px">TOTAL</span>
-                                <span style="font-size:15px;font-weight:700;color:var(--g)"
-                                    id="electricity_consumption_display">—</span>
+
+                        {{-- LPG 2 Consumption (LTR) — AUTO --}}
+                        <td style="padding:10px 12px;border-right:1px solid var(--bdr);background:#f0fdf4">
+                            <div
+                                style="font-size:9px;font-weight:700;color:#16a34a;letter-spacing:.5px;margin-bottom:4px;display:flex;align-items:center;gap:4px">
+                                TOTAL (LTR)
+                                <span
+                                    style="font-size:9px;padding:1px 5px;border-radius:3px;background:#dcfce7;color:#166534;font-weight:700">AUTO</span>
                             </div>
+                            <span style="font-size:15px;font-weight:700;color:#15803d"
+                                id="lpg2_consumption_ltr_display">—</span>
+                            <input type="hidden" id="lpg2_consumption_ltr">
+                        </td>
+
+                        {{-- Electricity Consumption --}}
+                        <td style="padding:10px 12px;border-right:1px solid var(--bdr)">
+                            <div
+                                style="font-size:9px;font-weight:700;color:var(--txtmu);letter-spacing:.5px;margin-bottom:4px">
+                                TOTAL</div>
+                            <span style="font-size:15px;font-weight:700;color:var(--g)"
+                                id="electricity_consumption_display">—</span>
                             <input type="hidden" id="electricity_consumption">
                         </td>
+
+                        {{-- Liquid Oxygen Consumption --}}
                         <td style="padding:10px 12px">
                             <div style="display:flex;align-items:center;gap:16px">
                                 <div style="flex:1">
                                     <div
                                         style="font-size:9.5px;font-weight:700;color:var(--txtmu);letter-spacing:.5px;margin-bottom:4px;display:flex;align-items:center;gap:5px">
-                                        CONSUMPTION (KG) <span
+                                        CONSUMPTION (KG)
+                                        <span
                                             style="font-size:9px;padding:1px 5px;border-radius:3px;background:#dcfce7;color:#166534;font-weight:700">AUTO</span>
                                         <span style="font-size:9px;color:var(--txtmu);font-weight:400">= Time ×
                                             Flow(KG)</span>
                                     </div>
-                                    <div class="iw"><svg class="ico" viewBox="0 0 24 24">
+                                    <div class="iw">
+                                        <svg class="ico" viewBox="0 0 24 24">
                                             <line x1="22" y1="12" x2="2" y2="12" />
                                         </svg>
                                         <input type="number" id="oxygen_consumption" step="0.001" placeholder="Auto"
@@ -1837,8 +2017,6 @@
         let autosaveTimer;
         let itemsList = [];  // all materials from DB
         let processNames = [];  // from API
-        // Output block state (per output type: 'fg' or 'dross')
-        // Each entry: { rowIndex, blocks: [{qty}] }
         let outputModal = { type: null, rowIndex: null, blocks: [] };
         const OUTPUT_MAX_ROWS = 11;
 
@@ -2018,9 +2196,9 @@
             list.innerHTML = filtered.map(item => {
                 const sel = String(item.value) === String(current);
                 return `<div class="sdd-item${sel ? ' selected' : ''}" onclick="sddSelect('${sddActiveField}','${item.value}')">
-                  <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                  <span>${item.label}</span>
-                </div>`;
+                                          <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                                          <span>${item.label}</span>
+                                        </div>`;
             }).join('');
         }
 
@@ -2088,8 +2266,8 @@
             document.getElementById('lpg_final').value = data.lpg_final ?? '';
             document.getElementById('lpg2_initial').value = data.lpg2_initial ?? '';
             document.getElementById('lpg2_final').value = data.lpg2_final ?? '';
-// then recalc:
- 
+            // then recalc:
+
             document.getElementById('electricity_initial').value = data.electricity_initial ?? '';
             document.getElementById('electricity_final').value = data.electricity_final ?? '';
             document.getElementById('oxygen_flow_nm3').value = data.oxygen_flow_nm3 ?? '';
@@ -2150,29 +2328,29 @@
             tr.dataset.rowIndex = i;
             tr.dataset.smtSelections = data.smelting_selections ? JSON.stringify(data.smelting_selections) : '';
             tr.innerHTML = `
-                <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-                <td style="position:relative;min-width:160px">
-                  <div class="sdd" id="sdd_rm_id_${i}">
-                    <div class="sdd-trigger" onclick="toggleSdd('rm_id_'+${i})">
-                      <span class="sdd-trigger-text placeholder" id="sdd_rm_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                      <svg class="sdd-clear" onclick="clearSdd('rm_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                      <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <input type="hidden" id="rm_id_${i}" onchange="onRawMaterialChange(${i});triggerAutosave()">
-                  </div>
-                </td>
-                <td>
-                  <input type="number" class="ri" id="rm_qty_${i}"
-                    value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
-                    onclick="onRawQtyClick(${i})" onfocus="onRawQtyFocus(${i})"
-                    oninput="recalcRawTotals();triggerAutosave()"
-                    style="min-width:90px;cursor:pointer" title="Click to assign from smelting batch">
-                  <input type="hidden" id="rm_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
-                  <input type="hidden" id="rm_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
-                </td>
-                <td><button class="del-btn" onclick="removeRow('rrow-${i}',recalcRawTotals)" title="Remove">
-                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                </button></td>`;
+                                        <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                                        <td style="position:relative;min-width:160px">
+                                          <div class="sdd" id="sdd_rm_id_${i}">
+                                            <div class="sdd-trigger" onclick="toggleSdd('rm_id_'+${i})">
+                                              <span class="sdd-trigger-text placeholder" id="sdd_rm_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                                              <svg class="sdd-clear" onclick="clearSdd('rm_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                              <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                                            </div>
+                                            <input type="hidden" id="rm_id_${i}" onchange="onRawMaterialChange(${i});triggerAutosave()">
+                                          </div>
+                                        </td>
+                                        <td>
+                                          <input type="number" class="ri" id="rm_qty_${i}"
+                                            value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
+                                            onclick="onRawQtyClick(${i})" onfocus="onRawQtyFocus(${i})"
+                                            oninput="recalcRawTotals();triggerAutosave()"
+                                            style="min-width:90px;cursor:pointer" title="Click to assign from smelting batch">
+                                          <input type="hidden" id="rm_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
+                                          <input type="hidden" id="rm_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
+                                        </td>
+                                        <td><button class="del-btn" onclick="removeRow('rrow-${i}',recalcRawTotals)" title="Remove">
+                                          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                        </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             // init searchable dropdown after DOM insertion
@@ -2211,29 +2389,29 @@
             tr.dataset.rowIndex = i;
             tr.dataset.smtSelections = data.smelting_selections ? JSON.stringify(data.smelting_selections) : '';
             tr.innerHTML = `
-                <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-                <td style="position:relative;min-width:160px">
-                  <div class="sdd" id="sdd_ch_id_${i}">
-                    <div class="sdd-trigger" onclick="toggleSdd('ch_id_'+${i})">
-                      <span class="sdd-trigger-text placeholder" id="sdd_ch_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                      <svg class="sdd-clear" onclick="clearSdd('ch_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                      <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <input type="hidden" id="ch_id_${i}" onchange="onChemMaterialChange(${i});triggerAutosave()">
-                  </div>
-                </td>
-                <td>
-                  <input type="number" class="ri" id="ch_qty_${i}"
-                    value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
-                    onclick="onChemQtyClick(${i})" onfocus="onChemQtyFocus(${i})"
-                    oninput="recalcChemTotals();triggerAutosave()"
-                    style="min-width:90px;cursor:pointer" title="Click to assign from smelting batch">
-                  <input type="hidden" id="ch_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
-                  <input type="hidden" id="ch_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
-                </td>
-                <td><button class="del-btn" onclick="removeRow('crow-${i}',recalcChemTotals)" title="Remove">
-                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                </button></td>`;
+                                        <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                                        <td style="position:relative;min-width:160px">
+                                          <div class="sdd" id="sdd_ch_id_${i}">
+                                            <div class="sdd-trigger" onclick="toggleSdd('ch_id_'+${i})">
+                                              <span class="sdd-trigger-text placeholder" id="sdd_ch_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                                              <svg class="sdd-clear" onclick="clearSdd('ch_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                              <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                                            </div>
+                                            <input type="hidden" id="ch_id_${i}" onchange="onChemMaterialChange(${i});triggerAutosave()">
+                                          </div>
+                                        </td>
+                                        <td>
+                                          <input type="number" class="ri" id="ch_qty_${i}"
+                                            value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
+                                            onclick="onChemQtyClick(${i})" onfocus="onChemQtyFocus(${i})"
+                                            oninput="recalcChemTotals();triggerAutosave()"
+                                            style="min-width:90px;cursor:pointer" title="Click to assign from smelting batch">
+                                          <input type="hidden" id="ch_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
+                                          <input type="hidden" id="ch_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
+                                        </td>
+                                        <td><button class="del-btn" onclick="removeRow('crow-${i}',recalcChemTotals)" title="Remove">
+                                          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                        </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initMaterialSdd(`ch_id_${i}`, data.chemical_id ?? null);
@@ -2321,17 +2499,17 @@
                 tr.dataset.smtNo = lot.batch_no;
                 tr.dataset.availableQty = lot.available_qty;
                 tr.innerHTML = `
-                  <td><span class="smt-tag">${lot.batch_no}</span></td>
-                  <td style="font-size:12.5px;font-weight:600">${lot.secondary_name}</td>
-                  <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
-                  <td><span class="lot-table avail-pill ${pillClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
-                  <td>
-                    <input type="number" class="assign-input" id="smt_assign_${lot.smelting_batch_id}"
-                      placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
-                      ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
-                      oninput="onSmtAssignInput(${lot.smelting_batch_id}, ${lot.available_qty})"
-                      onclick="event.stopPropagation()">
-                  </td>`;
+                                          <td><span class="smt-tag">${lot.batch_no}</span></td>
+                                          <td style="font-size:12.5px;font-weight:600">${lot.secondary_name}</td>
+                                          <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
+                                          <td><span class="lot-table avail-pill ${pillClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
+                                          <td>
+                                            <input type="number" class="assign-input" id="smt_assign_${lot.smelting_batch_id}"
+                                              placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
+                                              ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
+                                              oninput="onSmtAssignInput(${lot.smelting_batch_id}, ${lot.available_qty})"
+                                              onclick="event.stopPropagation()">
+                                          </td>`;
                 tr.addEventListener('click', e => {
                     if (e.target.tagName === 'INPUT') return;
                     const inp = document.getElementById(`smt_assign_${lot.smelting_batch_id}`);
@@ -2426,29 +2604,29 @@
             tr.id = `prow-${i}`;
             tr.dataset.rowIndex = i;
             tr.innerHTML = `
-                <td style="position:relative;min-width:160px">
-                  <div class="sdd" id="sdd_proc_name_${i}">
-                    <div class="sdd-trigger" onclick="toggleSdd('proc_name_'+${i})">
-                      <span class="sdd-trigger-text placeholder" id="sdd_proc_name_${i}_label" data-placeholder="Select process…">Select process…</span>
-                      <svg class="sdd-clear" onclick="clearSdd('proc_name_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                      <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <input type="hidden" id="proc_name_${i}" onchange="triggerAutosave()">
-                  </div>
-                </td>
-                <td><button class="proc-btn proc-start" onclick="setProcTime(${i},'start')">START</button></td>
-                <td style="padding:4px 4px"><input type="time" class="ri" id="proc_start_${i}"
-                  value="${data.start_time ? data.start_time.slice(11, 16) : ''}"
-                  oninput="calcProcTime(${i});triggerAutosave()" style="min-width:90px"></td>
-                <td><button class="proc-btn proc-end" onclick="setProcTime(${i},'end')">END</button></td>
-                <td style="padding:4px 4px"><input type="time" class="ri" id="proc_end_${i}"
-                  value="${data.end_time ? data.end_time.slice(11, 16) : ''}"
-                  oninput="calcProcTime(${i});triggerAutosave()" style="min-width:90px"></td>
-                <td><input type="text" class="ri ro" id="proc_total_${i}" readonly placeholder="0 min"
-                  style="min-width:70px;font-weight:700;color:var(--g);background:var(--gxl)"></td>
-                <td><button class="del-btn" onclick="removeRow('prow-${i}',calcTotalProcessTime)" title="Remove">
-                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                </button></td>`;
+                                        <td style="position:relative;min-width:160px">
+                                          <div class="sdd" id="sdd_proc_name_${i}">
+                                            <div class="sdd-trigger" onclick="toggleSdd('proc_name_'+${i})">
+                                              <span class="sdd-trigger-text placeholder" id="sdd_proc_name_${i}_label" data-placeholder="Select process…">Select process…</span>
+                                              <svg class="sdd-clear" onclick="clearSdd('proc_name_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                              <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                                            </div>
+                                            <input type="hidden" id="proc_name_${i}" onchange="triggerAutosave()">
+                                          </div>
+                                        </td>
+                                        <td><button class="proc-btn proc-start" onclick="setProcTime(${i},'start')">START</button></td>
+                                        <td style="padding:4px 4px"><input type="time" class="ri" id="proc_start_${i}"
+                                          value="${data.start_time ? data.start_time.slice(11, 16) : ''}"
+                                          oninput="calcProcTime(${i});triggerAutosave()" style="min-width:90px"></td>
+                                        <td><button class="proc-btn proc-end" onclick="setProcTime(${i},'end')">END</button></td>
+                                        <td style="padding:4px 4px"><input type="time" class="ri" id="proc_end_${i}"
+                                          value="${data.end_time ? data.end_time.slice(11, 16) : ''}"
+                                          oninput="calcProcTime(${i});triggerAutosave()" style="min-width:90px"></td>
+                                        <td><input type="text" class="ri ro" id="proc_total_${i}" readonly placeholder="0 min"
+                                          style="min-width:70px;font-weight:700;color:var(--g);background:var(--gxl)"></td>
+                                        <td><button class="del-btn" onclick="removeRow('prow-${i}',calcTotalProcessTime)" title="Remove">
+                                          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                        </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initProcessSdd(`proc_name_${i}`, data.refining_process ?? '');
@@ -2532,26 +2710,26 @@
             tr.dataset.rowIndex = i;
             tr.dataset.outputBlocks = data.output_blocks ? JSON.stringify(data.output_blocks) : '';
             tr.innerHTML = `
-                <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-                <td style="position:relative;min-width:160px">
-                  <div class="sdd" id="sdd_fg_id_${i}">
-                    <div class="sdd-trigger" onclick="toggleSdd('fg_id_'+${i})">
-                      <span class="sdd-trigger-text placeholder" id="sdd_fg_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                      <svg class="sdd-clear" onclick="clearSdd('fg_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                      <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <input type="hidden" id="fg_id_${i}" onchange="onFGMaterialChange(${i});triggerAutosave()">
-                  </div>
-                </td>
-                <td>
-                  <input type="number" class="ri" id="fg_qty_${i}"
-                    value="${data.total_qty ?? ''}" step="0.001" placeholder="Click to enter blocks…"
-                    onclick="openOutputModal('fg', ${i})" readonly
-                    style="min-width:90px;cursor:pointer;background:var(--gxl)" title="Click to enter block weights">
-                </td>
-                <td><button class="del-btn" onclick="removeRow('fgrow-${i}',recalcFGTotals)" title="Remove">
-                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                </button></td>`;
+                                        <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                                        <td style="position:relative;min-width:160px">
+                                          <div class="sdd" id="sdd_fg_id_${i}">
+                                            <div class="sdd-trigger" onclick="toggleSdd('fg_id_'+${i})">
+                                              <span class="sdd-trigger-text placeholder" id="sdd_fg_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                                              <svg class="sdd-clear" onclick="clearSdd('fg_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                              <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                                            </div>
+                                            <input type="hidden" id="fg_id_${i}" onchange="onFGMaterialChange(${i});triggerAutosave()">
+                                          </div>
+                                        </td>
+                                        <td>
+                                          <input type="number" class="ri" id="fg_qty_${i}"
+                                            value="${data.total_qty ?? ''}" step="0.001" placeholder="Click to enter blocks…"
+                                            onclick="openOutputModal('fg', ${i})" readonly
+                                            style="min-width:90px;cursor:pointer;background:var(--gxl)" title="Click to enter block weights">
+                                        </td>
+                                        <td><button class="del-btn" onclick="removeRow('fgrow-${i}',recalcFGTotals)" title="Remove">
+                                          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                        </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initMaterialSdd(`fg_id_${i}`, data.material_id ?? null);
@@ -2586,26 +2764,26 @@
             tr.dataset.rowIndex = i;
             tr.dataset.outputBlocks = data.output_blocks ? JSON.stringify(data.output_blocks) : '';
             tr.innerHTML = `
-                <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-                <td style="position:relative;min-width:160px">
-                  <div class="sdd" id="sdd_dr_id_${i}">
-                    <div class="sdd-trigger" onclick="toggleSdd('dr_id_'+${i})">
-                      <span class="sdd-trigger-text placeholder" id="sdd_dr_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                      <svg class="sdd-clear" onclick="clearSdd('dr_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                      <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <input type="hidden" id="dr_id_${i}" onchange="onDrossMaterialChange(${i});triggerAutosave()">
-                  </div>
-                </td>
-                <td>
-                  <input type="number" class="ri" id="dr_qty_${i}"
-                    value="${data.total_qty ?? ''}" step="0.001" placeholder="Click to enter blocks…"
-                    onclick="openOutputModal('dross', ${i})" readonly
-                    style="min-width:90px;cursor:pointer;background:var(--gxl)" title="Click to enter block weights">
-                </td>
-                <td><button class="del-btn" onclick="removeRow('drow-${i}',recalcDrossTotals)" title="Remove">
-                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                </button></td>`;
+                                        <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                                        <td style="position:relative;min-width:160px">
+                                          <div class="sdd" id="sdd_dr_id_${i}">
+                                            <div class="sdd-trigger" onclick="toggleSdd('dr_id_'+${i})">
+                                              <span class="sdd-trigger-text placeholder" id="sdd_dr_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                                              <svg class="sdd-clear" onclick="clearSdd('dr_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                              <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                                            </div>
+                                            <input type="hidden" id="dr_id_${i}" onchange="onDrossMaterialChange(${i});triggerAutosave()">
+                                          </div>
+                                        </td>
+                                        <td>
+                                          <input type="number" class="ri" id="dr_qty_${i}"
+                                            value="${data.total_qty ?? ''}" step="0.001" placeholder="Click to enter blocks…"
+                                            onclick="openOutputModal('dross', ${i})" readonly
+                                            style="min-width:90px;cursor:pointer;background:var(--gxl)" title="Click to enter block weights">
+                                        </td>
+                                        <td><button class="del-btn" onclick="removeRow('drow-${i}',recalcDrossTotals)" title="Remove">
+                                          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                        </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initMaterialSdd(`dr_id_${i}`, data.material_id ?? null);
@@ -2673,18 +2851,18 @@
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid var(--bdr)';
                 tr.innerHTML = `
-                  <td style="padding:5px 14px;font-size:12.5px;font-weight:700;color:var(--g);text-align:right;
-                             background:var(--gxl);width:80px;border-right:1px solid var(--bdr)">${i + 1}</td>
-                  <td style="padding:4px 10px">
-                    <input type="number" step="0.001" min="0" placeholder="0.000"
-                      value="${qty}"
-                      style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:6px;
-                             font-family:'Outfit',sans-serif;font-size:13px;text-align:right;
-                             background:var(--white);outline:none;transition:border-color .15s"
-                      oninput="onOutputQtyInput(this,${i})"
-                      onfocus="this.style.borderColor='var(--g)'"
-                      onblur="this.style.borderColor='var(--bdr)'">
-                  </td>`;
+                                          <td style="padding:5px 14px;font-size:12.5px;font-weight:700;color:var(--g);text-align:right;
+                                                     background:var(--gxl);width:80px;border-right:1px solid var(--bdr)">${i + 1}</td>
+                                          <td style="padding:4px 10px">
+                                            <input type="number" step="0.001" min="0" placeholder="0.000"
+                                              value="${qty}"
+                                              style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:6px;
+                                                     font-family:'Outfit',sans-serif;font-size:13px;text-align:right;
+                                                     background:var(--white);outline:none;transition:border-color .15s"
+                                              oninput="onOutputQtyInput(this,${i})"
+                                              onfocus="this.style.borderColor='var(--g)'"
+                                              onblur="this.style.borderColor='var(--bdr)'">
+                                          </td>`;
                 tbody.appendChild(tr);
             }
             recalcOutputTotal();
@@ -2754,6 +2932,57 @@
             } else {
                 if (display) display.textContent = '—';
                 if (hidden) hidden.value = '';
+            }
+
+            updateAllLtr();
+        }
+        function updateLtrDisplay(inputId, displayId) {
+            const kg = parseFloat(document.getElementById(inputId)?.value);
+            const el = document.getElementById(displayId);
+            if (!el) return;
+            if (!isNaN(kg) && kg >= 0) {
+                el.textContent = (kg * 1.98).toFixed(3);
+            } else {
+                el.textContent = '—';
+            }
+        }
+
+        /**
+         * Override / extend calcConsumption to also update LTR displays.
+         * Hook into your existing calcConsumption() — add these calls at the end of it,
+         * OR call updateAllLtr() after every calcConsumption() call.
+         */
+        function updateAllLtr() {
+            updateLtrDisplay('lpg_initial', 'lpg_initial_ltr_display');
+            updateLtrDisplay('lpg_final', 'lpg_final_ltr_display');
+            updateLtrDisplay('lpg2_initial', 'lpg2_initial_ltr_display');
+            updateLtrDisplay('lpg2_final', 'lpg2_final_ltr_display');
+
+            // Consumption row — read from the hidden inputs (set by calcConsumption)
+            const lpgKg = parseFloat(document.getElementById('lpg_consumption')?.value);
+            const lpg2Kg = parseFloat(document.getElementById('lpg2_consumption')?.value);
+
+            const lpgLtrEl = document.getElementById('lpg_consumption_ltr_display');
+            const lpg2LtrEl = document.getElementById('lpg2_consumption_ltr_display');
+            const lpgHidden = document.getElementById('lpg_consumption_ltr');
+            const lpg2Hidden = document.getElementById('lpg2_consumption_ltr');
+
+            if (!isNaN(lpgKg) && lpgKg >= 0) {
+                const v = (lpgKg * 1.98).toFixed(3);
+                if (lpgLtrEl) lpgLtrEl.textContent = v;
+                if (lpgHidden) lpgHidden.value = v;
+            } else {
+                if (lpgLtrEl) lpgLtrEl.textContent = '—';
+                if (lpgHidden) lpgHidden.value = '';
+            }
+
+            if (!isNaN(lpg2Kg) && lpg2Kg >= 0) {
+                const v = (lpg2Kg * 1.98).toFixed(3);
+                if (lpg2LtrEl) lpg2LtrEl.textContent = v;
+                if (lpg2Hidden) lpg2Hidden.value = v;
+            } else {
+                if (lpg2LtrEl) lpg2LtrEl.textContent = '—';
+                if (lpg2Hidden) lpg2Hidden.value = '';
             }
         }
 

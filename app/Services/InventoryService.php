@@ -1,18 +1,5 @@
 <?php
-// ══════════════════════════════════════════════════════════════════
-// FILE: app/Services/InventoryService.php
-//
-// WHAT THIS SERVICE DOES:
-//  • stockIn()  — adds qty to a material's available_qty + writes ledger row
-//  • stockOut() — subtracts qty + writes ledger row
-//  • revertTransaction() — creates REVERSE ledger rows (audit trail kept)
-//  • getAvailableQty() — simple helper to read current balance
-//  • getLedgerForMaterial() — returns full ledger history for popup/reports
-//
-// RULE: Ledger rows are ONLY written when a batch/doc is SUBMITTED.
-//       (Callers — controllers — must only call stockIn/stockOut from
-//        their submit() method, never from store() or update().)
-// ══════════════════════════════════════════════════════════════════
+
 namespace App\Services;
 
 use App\Models\Material;
@@ -36,7 +23,7 @@ class InventoryService
     }
 
     // ── Stock OUT ───────────────────────────────────────────────────
-    // Call ONLY from a submit() method.
+    // Call ONLY from a submit() method, never from store()/update().
     public function stockOut(
         int $materialId,
         float $qty,
@@ -48,9 +35,8 @@ class InventoryService
         return $this->recordTransaction($materialId, 0, $qty, $processType, $processId, $docNo, $userId);
     }
 
-    // ── Revert ──────────────────────────────────────────────────────
+    // ── Revert ALL entries for a process ────────────────────────────
     // Creates OPPOSITE reversal rows — never deletes existing ledger rows.
-    // Call when a submitted batch needs to be un-submitted or corrected.
     public function revertTransaction(string $processType, int $processId, ?int $userId = null): void
     {
         DB::beginTransaction();
@@ -64,14 +50,57 @@ class InventoryService
                 // Flip IN↔OUT to create the reversal
                 $this->recordTransaction(
                     $ledger->material_id,
-                    (float) $ledger->out_qty,   // was an OUT → now bring back IN
-                    (float) $ledger->in_qty,    // was an IN  → now take back OUT
+                    (float) $ledger->out_qty,   // was OUT → bring back IN
+                    (float) $ledger->in_qty,    // was IN  → take back OUT
                     $processType . '_REVERT',
                     $processId,
                     $ledger->doc_no,
                     $userId
                 );
+                // Mark original row inactive so it won't be double-reverted
+                $ledger->update(['is_active' => false]);
             }
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    // ── Revert a SINGLE dross ledger entry by its ID ─────────────────
+    // Used by syncDrossStock() to revert one material's dross entry
+    // when its qty changes or its row is deleted.
+    // Marks the original ledger row is_active=false to prevent
+    // double-revert on subsequent saves.
+    public function revertDrossEntry(int $ledgerId, ?int $userId = null): void
+    {
+        DB::beginTransaction();
+        try {
+            $ledger = StockLedger::where('id', $ledgerId)
+                ->where('is_active', true)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$ledger) {
+                // Already reverted — nothing to do
+                DB::commit();
+                return;
+            }
+
+            // Post the reversal
+            $this->recordTransaction(
+                $ledger->material_id,
+                (float) $ledger->out_qty,   // flip IN↔OUT
+                (float) $ledger->in_qty,
+                $ledger->process_type . '_REVERT',
+                $ledger->process_id,
+                $ledger->doc_no,
+                $userId
+            );
+
+            // Mark original inactive so it can't be reverted twice
+            $ledger->update(['is_active' => false]);
 
             DB::commit();
         } catch (Exception $e) {
@@ -88,8 +117,6 @@ class InventoryService
     }
 
     // ── Get full ledger history for a material ──────────────────────
-    // Used by the QTY popup in Smelting & Refining forms.
-    // Returns rows with: process_type, doc_no, in_qty, out_qty, balance_qty, created_at
     public function getLedgerForMaterial(int $materialId, ?string $processType = null): \Illuminate\Support\Collection
     {
         return StockLedger::where('material_id', $materialId)
@@ -117,7 +144,6 @@ class InventoryService
         try {
             // Lock the material row to prevent race conditions
             $material = Material::where('id', $materialId)->lockForUpdate()->firstOrFail();
-
             $currentBalance = (float) $material->available_qty;
             $newBalance = round($currentBalance + $inQty - $outQty, 3);
 

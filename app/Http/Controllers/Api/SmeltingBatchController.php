@@ -618,4 +618,61 @@ class SmeltingBatchController extends Controller
             ],
         ]);
     }
+
+
+    public function getAllBbsuLots(Request $request): JsonResponse
+    {
+        // Get all materials with available_qty > 0
+        $materials = \App\Models\Material::where('available_qty', '>', 0)
+            ->orderBy('material_name')
+            ->get();
+
+        if ($materials->isEmpty()) {
+            return response()->json([
+                'status' => 'ok',
+                'data' => [],
+                'message' => 'No BBSU lots available.',
+            ]);
+        }
+
+        $bbsuLots = $materials->map(function ($material) {
+            $availableQty = (float) $material->available_qty;
+
+            // Get recent ledger entries for each material (optional - remove if not needed)
+            // $ledger = StockLedger::where('material_id', $material->id)
+            //     ->where('is_active', true)
+            //     ->where('in_qty', '>', 0)
+            //     ->orderByDesc('created_at')
+            //     ->limit(5)
+            //     ->get(['process_type', 'doc_no', 'in_qty', 'balance_qty', 'created_at'])
+            //     ->map(fn($r) => [
+            //         'source' => $r->process_type,
+            //         'doc_no' => $r->doc_no,
+            //         'in_qty' => (float) $r->in_qty,
+            //         'created_at' => optional($r->created_at)->format('d-m-Y H:i'),
+            //     ]);
+
+            return [
+                'bbsu_batch_id' => $material->id,
+                'batch_no' => 'STOCK-' . $material->id,
+                'material_id' => $material->id,
+                'material_name' => $material->material_name ?? $material->name ?? 'Unknown',
+                'material_unit' => $material->unit ?? 'KG',
+                'output_qty' => $availableQty,
+                'already_used_qty' => 0,
+                'available_qty' => $availableQty,
+                // 'ledger' => $ledger, // Optional: remove if not needed for performance
+            ];
+        });
+
+        return response()->json([
+            'status' => 'ok',
+            'data' => $bbsuLots,
+            'total' => $bbsuLots->count(),
+            'message' => 'BBSU lots retrieved successfully.',
+        ]);
+    }
+
+
+
 }

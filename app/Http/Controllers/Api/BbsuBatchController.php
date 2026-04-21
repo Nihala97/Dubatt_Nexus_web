@@ -216,6 +216,140 @@ class BbsuBatchController extends Controller
         ]);
     }
 
+    public function acidSummaryAllLots(): JsonResponse
+    {
+        // Get all unique lot numbers from AcidTesting
+        $allLots = AcidTesting::pluck('lot_number');
+
+        if ($allLots->isEmpty()) {
+            return response()->json([
+                'message' => 'No acid tests found.',
+                'data' => [],
+            ], 404);
+        }
+
+        // Get ALL used quantities grouped by lot_no in one query
+        $usedQtyByLot = DB::table('bbsu_input_details')
+            ->join('bbsu_batches', 'bbsu_batches.id', '=', 'bbsu_input_details.bbsu_batch_id')
+            ->where('bbsu_batches.is_active', true)
+            ->where('bbsu_input_details.is_active', true)
+            ->whereIn('bbsu_input_details.lot_no', $allLots)
+            ->groupBy('bbsu_input_details.lot_no')
+            ->select('bbsu_input_details.lot_no', DB::raw('SUM(bbsu_input_details.quantity) as total_used'))
+            ->pluck('total_used', 'lot_no');
+
+        // Get ALL material breakdowns grouped by lot_no in one query
+        $allBreakdowns = DB::table('bbsu_input_details')
+            ->join('bbsu_batches', 'bbsu_batches.id', '=', 'bbsu_input_details.bbsu_batch_id')
+            ->where('bbsu_batches.is_active', true)
+            ->where('bbsu_input_details.is_active', true)
+            ->whereIn('bbsu_input_details.lot_no', $allLots)
+            ->select('bbsu_input_details.lot_no', 'bbsu_input_details.material_breakdown')
+            ->get()
+            ->groupBy('lot_no');
+
+        // Get ALL acid test percentage details in one query
+        $acidTestIds = AcidTesting::whereIn('lot_number', $allLots)->pluck('id', 'lot_number');
+        $allDetails = AcidTestPercentageDetail::whereIn('acid_test_id', $acidTestIds->values())
+            ->where('is_active', true)
+            ->get()
+            ->groupBy('acid_test_id');
+
+        // Get ALL receivings in one query
+        $allReceivings = \App\Models\Receiving::whereIn('lot_no', $allLots)
+            ->pluck('unit', 'lot_no'); // you can extend this if you need lot_no display too
+
+        $allAcidTests = AcidTesting::whereIn('lot_number', $allLots)->get()->keyBy('lot_number');
+
+        $finalResult = [];
+
+        foreach ($allLots as $lotNo) {
+            $acidTest = $allAcidTests[$lotNo] ?? null;
+            if (!$acidTest)
+                continue;
+
+            $data = $allDetails[$acidTest->id] ?? collect();
+            if ($data->isEmpty())
+                continue;
+
+            $unit = $allReceivings[$lotNo] ?? 'KG';
+            $usedQty = (float) ($usedQtyByLot[$lotNo] ?? 0);
+            $totalNet = (float) $data->sum('net_weight');
+            $totalAvailable = max(0, $totalNet - $usedQty);
+            $netAvgPct = (float) ($acidTest->net_avg_acid_pct ?? 0);
+
+            // Parse material breakdowns for this lot
+            $usedByUlab = [];
+            $lotBreakdowns = $allBreakdowns[$lotNo] ?? collect();
+            foreach ($lotBreakdowns as $row) {
+                $decoded = json_decode($row->material_breakdown, true);
+                if (is_array($decoded)) {
+                    foreach ($decoded as $u => $q) {
+                        $usedByUlab[$u] = ($usedByUlab[$u] ?? 0) + $q;
+                    }
+                }
+            }
+
+            $result = collect();
+
+            // ── 1. Group ALL Acid Pallets together as ONE row ──
+            $acidRows = $data->filter(fn($r) => (float) $r->avg_acid_pct > 0);
+            if ($acidRows->isNotEmpty()) {
+                $condition = $this->resolveConditionByPct($netAvgPct);
+                $stockCode = $condition?->stock_code ?? '5';
+                $description = $condition?->description ?? 'ULAB - ACID PRESENT';
+
+                $rowNet = (float) $acidRows->sum('net_weight');
+                $thisMaterialUsed = (float) ($usedByUlab[$stockCode] ?? 0);
+                $rowAvail = max(0, $rowNet - $thisMaterialUsed);
+
+                $result->push([
+                    'ulab_type' => $stockCode,
+                    'material_description' => $description,
+                    'lot_no' => $lotNo,
+                    'unit' => $unit,
+                    'avg_acid_pct' => round($netAvgPct, 3),
+                    'net_weight' => round($rowNet, 3),
+                    'available_qty' => round($rowAvail, 3),
+                    'used_qty' => round($thisMaterialUsed, 3),
+                ]);
+            }
+
+            // ── 2. Group Non-Acid (Dry) Pallets by their respective ulab_type ──
+            $dryGroups = $data->filter(fn($r) => !((float) $r->avg_acid_pct > 0))->groupBy('ulab_type');
+            foreach ($dryGroups as $ulabType => $rows) {
+                $rowNet = (float) $rows->sum('net_weight');
+                $thisMaterialUsed = (float) ($usedByUlab[$ulabType] ?? 0);
+                $rowAvail = max(0, $rowNet - $thisMaterialUsed);
+                $description = $rows->first()?->remarks ?? $ulabType;
+
+                $result->push([
+                    'ulab_type' => $ulabType,
+                    'material_description' => $description,
+                    'lot_no' => $lotNo,
+                    'unit' => $unit,
+                    'avg_acid_pct' => 0.0,
+                    'net_weight' => round($rowNet, 3),
+                    'available_qty' => round($rowAvail, 3),
+                    'used_qty' => round($thisMaterialUsed, 3),
+                ]);
+            }
+
+            $finalResult[] = [
+                'lot_no' => $lotNo,
+                'total_net' => round($totalNet, 3),
+                'used_qty' => round($usedQty, 3),
+                'available_qty' => round($totalAvailable, 3),
+                'data' => $result,
+            ];
+        }
+
+        return response()->json([
+            'message' => 'Acid summary for all lots retrieved successfully.',
+            'data' => $finalResult,
+        ]);
+    }
+
     // ══════════════════════════════════════════════════════════════════════════
     //  UPDATE
     // ══════════════════════════════════════════════════════════════════════════
@@ -458,34 +592,34 @@ class BbsuBatchController extends Controller
         }
 
         $result = collect();
-        $netAvgPct = (float)($acidTest->net_avg_acid_pct ?? 0);
+        $netAvgPct = (float) ($acidTest->net_avg_acid_pct ?? 0);
 
         // ── 1. Group ALL Acid Pallets together as ONE row ──
-        $acidRows = $data->filter(fn($r) => (float)$r->avg_acid_pct > 0);
+        $acidRows = $data->filter(fn($r) => (float) $r->avg_acid_pct > 0);
         if ($acidRows->isNotEmpty()) {
             // Resolve the common category for the whole batch
             $condition = $this->resolveConditionByPct($netAvgPct);
             $stockCode = $condition?->stock_code ?? '5';
             $description = $condition?->description ?? 'ULAB - ACID PRESENT';
 
-            $rowNet = (float) $acidRows->sum('net_weight'); 
+            $rowNet = (float) $acidRows->sum('net_weight');
             $thisMaterialUsed = (float) ($usedByUlab[$stockCode] ?? 0);
             $rowAvail = max(0, $rowNet - $thisMaterialUsed);
 
             $result->push([
-                'ulab_type'            => $stockCode,
+                'ulab_type' => $stockCode,
                 'material_description' => $description,
-                'lot_no'               => $lotNoDisplay,
-                'unit'                 => $unit,
-                'avg_acid_pct'         => round($netAvgPct, 3),
-                'net_weight'           => round($rowNet, 3),
-                'available_qty'        => round($rowAvail, 3),
-                'used_qty'             => round($thisMaterialUsed, 3),
+                'lot_no' => $lotNoDisplay,
+                'unit' => $unit,
+                'avg_acid_pct' => round($netAvgPct, 3),
+                'net_weight' => round($rowNet, 3),
+                'available_qty' => round($rowAvail, 3),
+                'used_qty' => round($thisMaterialUsed, 3),
             ]);
         }
 
         // ── 2. Group Non-Acid (Dry) Pallets by their respective ulab_type ──
-        $dryGroups = $data->filter(fn($r) => !((float)$r->avg_acid_pct > 0))->groupBy('ulab_type');
+        $dryGroups = $data->filter(fn($r) => !((float) $r->avg_acid_pct > 0))->groupBy('ulab_type');
         foreach ($dryGroups as $ulabType => $rows) {
             $rowNet = (float) $rows->sum('net_weight');
             $thisMaterialUsed = (float) ($usedByUlab[$ulabType] ?? 0);
@@ -494,23 +628,23 @@ class BbsuBatchController extends Controller
             $description = $rows->first()?->remarks ?? $ulabType;
 
             $result->push([
-                'ulab_type'            => $ulabType,
+                'ulab_type' => $ulabType,
                 'material_description' => $description,
-                'lot_no'               => $lotNoDisplay,
-                'unit'                 => $unit,
-                'avg_acid_pct'         => 0.0,
-                'net_weight'           => round($rowNet, 3),
-                'available_qty'        => round($rowAvail, 3),
-                'used_qty'             => round($thisMaterialUsed, 3),
+                'lot_no' => $lotNoDisplay,
+                'unit' => $unit,
+                'avg_acid_pct' => 0.0,
+                'net_weight' => round($rowNet, 3),
+                'available_qty' => round($rowAvail, 3),
+                'used_qty' => round($thisMaterialUsed, 3),
             ]);
         }
 
         return response()->json([
-            'message'       => 'Acid summary for lot ' . $lotNo . ' retrieved successfully.',
-            'total_net'     => round($totalNet, 3),
-            'used_qty'      => round((float) $usedQty, 3),
+            'message' => 'Acid summary for lot ' . $lotNo . ' retrieved successfully.',
+            'total_net' => round($totalNet, 3),
+            'used_qty' => round((float) $usedQty, 3),
             'available_qty' => round($totalAvailable, 3),
-            'data'          => $result,
+            'data' => $result,
         ]);
     }
 
@@ -522,7 +656,7 @@ class BbsuBatchController extends Controller
         $conditions = \App\Models\AcidStockCondition::where('is_active', true)
             ->where(function ($q) {
                 $q->where('min_pct', '>', 0)
-                  ->orWhere('max_pct', '>', 0);
+                    ->orWhere('max_pct', '>', 0);
             })
             ->orderByRaw('CAST(min_pct AS DECIMAL(10,4)) ASC')
             ->get();
@@ -530,8 +664,10 @@ class BbsuBatchController extends Controller
         foreach ($conditions as $condition) {
             $min = (float) $condition->min_pct;
             $max = (float) $condition->max_pct;
-            if ($acidPct < $min) continue;
-            if ($max > 0 && $acidPct > $max) continue;
+            if ($acidPct < $min)
+                continue;
+            if ($max > 0 && $acidPct > $max)
+                continue;
             return $condition;
         }
         return null;
