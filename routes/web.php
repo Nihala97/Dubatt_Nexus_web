@@ -84,5 +84,10 @@ Route::prefix('admin/reports')->name('admin.reports.')->group(function () {
     Route::get('acid-test-status', [\App\Http\Controllers\Web\ReportWebController::class, 'acidTestStatus'])
         ->name('acidTestStatus');
 
-    // Add future report web routes here — same controller, new method:
+});
+Route::prefix('admin/settings')->name('admin.settings.')->group(function () {
+    Route::get('users', [\App\Http\Controllers\Web\AdminWebController::class, 'users'])->name('users');
+    Route::get('roles', [\App\Http\Controllers\Web\AdminWebController::class, 'roles'])->name('roles');
+    Route::get('profiles', [\App\Http\Controllers\Web\AdminWebController::class, 'profiles'])->name('profiles');
+    Route::get('modules', [\App\Http\Controllers\Web\AdminWebController::class, 'modules'])->name('modules');
 });

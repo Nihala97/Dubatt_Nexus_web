@@ -535,7 +535,7 @@
 
             <div class="nav-section-label" style="margin-top:8px;">MES Modules</div>
 
-            <a href="{{ route('admin.mes.receiving.index') }}" data-label="Receiving"
+            <a href="{{ route('admin.mes.receiving.index') }}" data-label="Receiving" data-permission="receiving"
                 class="nav-item {{ request()->routeIs('admin.mes.receiving.*') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path
@@ -545,7 +545,7 @@
                 <span class="nav-label">Receiving</span>
             </a>
 
-            <a href="{{ route('admin.mes.acidTesting.index') }}" data-label="Acid Test"
+            <a href="{{ route('admin.mes.acidTesting.index') }}" data-label="Acid Test" data-permission="acid_testing"
                 class="nav-item {{ request()->routeIs('admin.mes.acidTesting.*') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11" />
@@ -553,7 +553,7 @@
                 <span class="nav-label">Acid Test</span>
             </a>
 
-            <a href="{{ route('admin.mes.bbsu.index') }}" data-label="BBSU"
+            <a href="{{ route('admin.mes.bbsu.index') }}" data-label="BBSU" data-permission="bbsu"
                 class="nav-item {{ request()->routeIs('admin.mes.bbsu.*') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 6h18M3 12h18M3 18h18" />
@@ -561,7 +561,7 @@
                 <span class="nav-label">BBSU</span>
             </a>
 
-            <a href="{{ route('admin.mes.smelting.index') }}" data-label="Smelting"
+            <a href="{{ route('admin.mes.smelting.index') }}" data-label="Smelting" data-permission="smelting"
                 class="nav-item {{ request()->routeIs('admin.mes.smelting.*') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" />
@@ -570,7 +570,7 @@
                 <span class="nav-label">Smelting</span>
             </a>
 
-            <a href="{{ route('admin.mes.refining.index') }}" data-label="Refining"
+            <a href="{{ route('admin.mes.refining.index') }}" data-label="Refining" data-permission="refining"
                 class="nav-item {{ request()->routeIs('admin.mes.refining.*') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon
@@ -581,7 +581,7 @@
 
             <div class="nav-section-label" style="margin-top:8px;">Reports &amp; Dashboard</div>
 
-            <a href="{{ route('admin.reports.materialInward') }}"
+            <a href="{{ route('admin.reports.materialInward') }}" data-permission="report_material_inward"
                 class="nav-item {{ request()->routeIs('admin.reports.materialInward') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -594,7 +594,7 @@
                 <span>Material Inward</span>
             </a>
 
-            <a href="{{ route('admin.reports.acidTestStatus') }}"
+            <a href="{{ route('admin.reports.acidTestStatus') }}" data-permission="report_acid_test_status"
                 class="nav-item {{ request()->routeIs('admin.reports.acidTestStatus') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -606,7 +606,7 @@
 
             <div class="nav-section-label" style="margin-top:8px;">Masters</div>
 
-            <a href="{{ route('admin.mes.supplier.index') }}" data-label="Supplier"
+            <a href="{{ route('admin.mes.supplier.index') }}" data-label="Supplier" data-permission="suppliers"
                 class="nav-item {{ request()->routeIs('admin.mes.supplier.*') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -616,7 +616,7 @@
                 <span class="nav-label">Suppliers</span>
             </a>
 
-            <a href="{{ route('admin.mes.material.index') }}" data-label="Material"
+            <a href="{{ route('admin.mes.material.index') }}" data-label="Material" data-permission="materials"
                 class="nav-item {{ request()->routeIs('admin.mes.material.*') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path
@@ -624,6 +624,54 @@
                 </svg>
                 <span class="nav-label">Materials</span>
             </a>
+            {{-- ── SETTINGS ─────────────────────────────────────────────────── --}}
+            <div id="settingsMenu" style="display: none;">
+                <div class="nav-section-label" style="margin-top:8px;">Settings</div>
+
+
+                <a href="{{ route('admin.settings.users') }}"
+                    class="nav-item {{ request()->routeIs('admin.settings.users') ? 'active' : '' }}">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    <span>Users</span>
+                </a>
+
+                <a href="{{ route('admin.settings.roles') }}"
+                    class="nav-item {{ request()->routeIs('admin.settings.roles') ? 'active' : '' }}">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                    <span>Roles</span>
+                </a>
+
+                <a href="{{ route('admin.settings.profiles') }}"
+                    class="nav-item {{ request()->routeIs('admin.settings.profiles') ? 'active' : '' }}">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    <span>Profiles</span>
+                </a>
+
+                <a href="{{ route('admin.settings.modules') }}"
+                    class="nav-item {{ request()->routeIs('admin.settings.modules') ? 'active' : '' }}">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7" />
+                        <rect x="14" y="3" width="7" height="7" />
+                        <rect x="14" y="14" width="7" height="7" />
+                        <rect x="3" y="14" width="7" height="7" />
+                    </svg>
+                    <span>Modules</span>
+                </a>
+            </div>
         </nav>
 
         <div class="sidebar-footer">
@@ -696,6 +744,81 @@
             document.getElementById('sidebarAvatar').textContent = _user.name ? _user.name.charAt(0).toUpperCase() : '?';
             document.getElementById('sidebarName').textContent = _user.name ?? 'User';
             document.getElementById('sidebarRole').textContent = _user.role ?? '—';
+        }
+
+        // ── Permissions System ─────────────────────────────────────
+        window.userPermissions = JSON.parse(localStorage.getItem('user_permissions') || '[]');
+
+        /**
+         * Fetch latest user info and permissions
+         */
+        async function loadUserPermissions() {
+            try {
+                const res = await apiFetch('/auth/me');
+                if (!res || !res.ok) return;
+                const json = await res.json();
+                if (json.status === 'ok') {
+                    // Update user info in storage
+                    localStorage.setItem('auth_user', JSON.stringify(json.data));
+                    // Update permissions in storage
+                    const perms = json.data.permissions || [];
+                    localStorage.setItem('user_permissions', JSON.stringify(perms));
+                    window.userPermissions = perms;
+
+                    // If full_access is true, we store a special flag
+                    if (json.data.full_access) {
+                        localStorage.setItem('is_admin', '1');
+                    } else {
+                        localStorage.removeItem('is_admin');
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load permissions:', e);
+            }
+        }
+
+        /**
+         * Check if user has permission for a module/action
+         * @param {string} moduleSlug 
+         * @param {string} action 'can_view','can_create','can_edit','can_delete'
+         */
+        function can(moduleSlug, action = 'can_view') {
+            // Admins always have access
+            if (localStorage.getItem('is_admin') === '1') return true;
+
+            const perm = window.userPermissions.find(p => p.module === moduleSlug);
+            if (!perm) return false;
+
+            return !!perm[action];
+        }
+
+        function enforceUIPermissions() {
+            document.querySelectorAll('[data-permission]').forEach(el => {
+                const parts = el.getAttribute('data-permission').split(',');
+                const mod = parts[0];
+                const act = parts[1] || 'can_view';
+                
+                if (!can(mod, act)) {
+                    el.style.display = 'none';
+                } else {
+                    el.style.display = '';
+                }
+            });
+
+            // Handle Settings Menu visibility for Admins
+            if (localStorage.getItem('is_admin') === '1') {
+                const settingsMenu = document.getElementById('settingsMenu');
+                if (settingsMenu) settingsMenu.style.display = 'block';
+            }
+        }
+
+        // Initial load
+        if (_token) {
+            loadUserPermissions().then(() => {
+                enforceUIPermissions();
+            });
+        } else {
+            enforceUIPermissions();
         }
 
         // ── Global API helper ───────────────────────────────────────

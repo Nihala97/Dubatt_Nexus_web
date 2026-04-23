@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\Schema;
 
 class User extends Authenticatable
 {
@@ -26,20 +27,16 @@ class User extends Authenticatable
         'last_login_at',
     ];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ['password', 'remember_token'];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'last_login_at'     => 'datetime',
-        'is_active'         => 'boolean',
-        'password'          => 'hashed',
+        'last_login_at' => 'datetime',
+        'is_active' => 'boolean',
+        'password' => 'hashed',
     ];
 
-    // ─── Role Helpers ──────────────────────────────────────────────
-
+    // ─── Role helpers ──────────────────────────────────────────────
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
@@ -55,39 +52,44 @@ class User extends Authenticatable
         return $this->role === 'normal';
     }
 
-    /**
-     * Admin and Management have access to everything.
-     * Normal users need an explicit permission record.
-     */
+    // ─── Module Access Logic (FIXED) ───────────────────────────────
     public function canAccessModule(string $moduleSlug, string $action = 'can_view'): bool
     {
+        // ✅ ADMIN / MANAGEMENT → FULL ACCESS (NO DB CHECK)
         if ($this->isAdmin() || $this->isManagement()) {
             return true;
         }
 
+        // ❌ If table doesn't exist → avoid crash
+        if (!Schema::hasTable('user_module_permissions')) {
+            return false;
+        }
+
+        // ✅ Normal users → check permissions
         return $this->modulePermissions()
-            ->whereHas('module', fn($q) => $q->where('slug', $moduleSlug)->where('is_active', true))
+            ->whereHas('module', function ($q) use ($moduleSlug) {
+                $q->where('slug', $moduleSlug)
+                    ->where('is_active', true);
+            })
             ->where($action, true)
             ->exists();
     }
 
     // ─── Relationships ─────────────────────────────────────────────
 
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'user_roles');
+    }
+
+    public function profiles()
+    {
+        return $this->belongsToMany(Profile::class, 'user_profiles');
+    }
+
     public function modulePermissions()
     {
         return $this->hasMany(UserModulePermission::class);
-    }
-
-    public function permittedModules()
-    {
-        return $this->hasManyThrough(
-            Module::class,
-            UserModulePermission::class,
-            'user_id',
-            'id',
-            'id',
-            'module_id'
-        );
     }
 
     public function createdBy()

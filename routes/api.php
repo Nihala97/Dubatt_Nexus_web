@@ -66,21 +66,21 @@ Route::middleware('auth:sanctum')->group(function () {
      // ═══════════════════════════════════════════════════════════
 
      // ── Suppliers (reference data) ────────────────────────────────────
-     Route::prefix('suppliers')->group(function () {
+     Route::prefix('suppliers')->middleware('module:suppliers')->group(function () {
           Route::get('/', [SupplierBatchController::class, 'index']);
           Route::get('/{id}', [SupplierBatchController::class, 'show']);
-          Route::post('/', [SupplierBatchController::class, 'store']);
-          Route::put('/{id}', [SupplierBatchController::class, 'update']);
-          Route::delete('/{id}', [SupplierBatchController::class, 'destroy']);
+          Route::post('/', [SupplierBatchController::class, 'store'])->middleware('module:suppliers,can_create');
+          Route::put('/{id}', [SupplierBatchController::class, 'update'])->middleware('module:suppliers,can_edit');
+          Route::delete('/{id}', [SupplierBatchController::class, 'destroy'])->middleware('module:suppliers,can_delete');
      });
 
      // ── Materials (reference data) ────────────────────────────────────
-     Route::prefix('materials')->group(function () {
+     Route::prefix('materials')->middleware('module:materials')->group(function () {
           Route::get('/', [MaterialBatchController::class, 'index']);
           Route::get('/{id}', [MaterialBatchController::class, 'show']);
-          Route::post('/', [MaterialBatchController::class, 'store']);
-          Route::put('/{id}', [MaterialBatchController::class, 'update']);
-          Route::delete('/{id}', [MaterialBatchController::class, 'destroy']);
+          Route::post('/', [MaterialBatchController::class, 'store'])->middleware('module:materials,can_create');
+          Route::put('/{id}', [MaterialBatchController::class, 'update'])->middleware('module:materials,can_edit');
+          Route::delete('/{id}', [MaterialBatchController::class, 'destroy'])->middleware('module:materials,can_delete');
      });
 
 
@@ -115,7 +115,7 @@ Route::middleware('auth:sanctum')->group(function () {
      // ── Acid Testing ──────────────────────────────────────────────────
      // ── Acid Testing ──────────────────────────────────────────────
      // IMPORTANT: all static/named routes BEFORE the /{id} wildcard
-     Route::prefix('acid-testings')->middleware('module:acid-testing')->group(function () {
+     Route::prefix('acid-testings')->middleware('module:acid_testing')->group(function () {
           Route::get('/', [AcidTestingController::class, 'index']);
           Route::get('/stock-conditions', [AcidTestingController::class, 'stockConditions']);
           Route::get('/available-lots', [AcidTestingController::class, 'availableLots']);
@@ -123,13 +123,13 @@ Route::middleware('auth:sanctum')->group(function () {
           Route::get('/{id}', [AcidTestingController::class, 'show']);
           Route::get('/{id}/print', [AcidTestingController::class, 'printView']);
           Route::post('/', [AcidTestingController::class, 'store'])
-               ->middleware('module:acid-testing,can_create');
+               ->middleware('module:acid_testing,can_create');
           Route::put('/{id}', [AcidTestingController::class, 'update'])
-               ->middleware('module:acid-testing,can_edit');
+               ->middleware('module:acid_testing,can_edit');
           Route::patch('/{id}/status', [AcidTestingController::class, 'updateStatus'])
-               ->middleware('module:acid-testing,can_edit');
+               ->middleware('module:acid_testing,can_edit');
           Route::delete('/{id}', [AcidTestingController::class, 'destroy'])
-               ->middleware('module:acid-testing,can_delete');
+               ->middleware('module:acid_testing,can_delete');
      });
      // Route::prefix('acid-testings')->middleware('module:acid-testing')->group(function () {
      //      Route::get('/',                  [AcidTestingController::class, 'index']);
@@ -151,9 +151,9 @@ Route::middleware('auth:sanctum')->group(function () {
      // });
 
      // ── BBSU ──────────────────────────────────────────────────────
-     Route::prefix('bbsu-batches')->group(function () {
+     Route::prefix('bbsu-batches')->middleware('module:bbsu')->group(function () {
           Route::get('/', [BbsuBatchController::class, 'index']);
-          Route::post('/', [BbsuBatchController::class, 'store']);
+          Route::post('/', [BbsuBatchController::class, 'store'])->middleware('module:bbsu,can_create');
           // ⚠ Static-prefix routes MUST come before /{bbsu_batch} wildcard
           Route::get('/generate-batch-no', [BbsuBatchController::class, 'generateBatchNo']);
           Route::get('/acid-test-lot-numbers', [BbsuBatchController::class, 'acidTestLotNumbers']);
@@ -161,11 +161,11 @@ Route::middleware('auth:sanctum')->group(function () {
           Route::get('/acid-summary-all', [BbsuBatchController::class, 'acidSummaryAllLots']);
           Route::get('/reports/acid-summary', [BbsuBatchController::class, 'acidSummary']);
           Route::get('/output-material-info', [BbsuBatchController::class, 'outputMaterialInfo']);
-          Route::post('/{id}/submit', [BbsuBatchController::class, 'submit']);
+          Route::post('/{id}/submit', [BbsuBatchController::class, 'submit'])->middleware('module:bbsu,can_edit');
           Route::get('/{bbsu_batch}', [BbsuBatchController::class, 'show']);
-          Route::put('/{bbsu_batch}', [BbsuBatchController::class, 'update']);
-          Route::delete('/{bbsu_batch}', [BbsuBatchController::class, 'destroy']);
-          Route::patch('/{bbsu_batch}/status', [BbsuBatchController::class, 'updateStatus']);
+          Route::put('/{bbsu_batch}', [BbsuBatchController::class, 'update'])->middleware('module:bbsu,can_edit');
+          Route::delete('/{bbsu_batch}', [BbsuBatchController::class, 'destroy'])->middleware('module:bbsu,can_delete');
+          Route::patch('/{bbsu_batch}/status', [BbsuBatchController::class, 'updateStatus'])->middleware('module:bbsu,can_edit');
      });
      // ── Smelting ──────────────────────────────────────────────────
      Route::prefix('smelting-batches')->middleware('module:smelting')->group(function () {
@@ -215,19 +215,58 @@ Route::middleware('auth:sanctum')->group(function () {
      Route::prefix('reports')->name('reports.')->group(function () {
 
           Route::get('material-inward/filters', [\App\Http\Controllers\Api\ReportController::class, 'materialInwardFilters'])
+               ->middleware('module:report_material_inward')
                ->name('materialInward.filters');
 
           // ↓ FIXED: was '/reports/material-inward/dashboard' → now 'material-inward/dashboard'
           Route::get('material-inward/dashboard', [\App\Http\Controllers\Api\ReportController::class, 'materialInwardDashboard'])
+               ->middleware('module:report_material_inward')
                ->name('materialInward.dashboard');
 
           Route::get('material-inward', [\App\Http\Controllers\Api\ReportController::class, 'materialInward'])
+               ->middleware('module:report_material_inward')
                ->name('materialInward');
 
           Route::get('acid-test-status', [\App\Http\Controllers\Api\ReportController::class, 'acidTestStatus'])
+               ->middleware('module:report_acid_test_status')
                ->name('acidTestStatus');
           Route::get('acid-test-status/filters', [\App\Http\Controllers\Api\ReportController::class, 'acidTestStatusFilters'])
+               ->middleware('module:report_acid_test_status')
                ->name('acidTestStatus.filters');
 
      });
+     Route::prefix('admin')->name('admin.')->group(function () {
+
+          // ── Users ────────────────────────────────────────────────────
+          Route::get('users', [\App\Http\Controllers\Api\AdminController::class, 'userIndex'])->name('users.index');
+          Route::post('users', [\App\Http\Controllers\Api\AdminController::class, 'userStore'])->name('users.store');
+          Route::get('users/{id}', [\App\Http\Controllers\Api\AdminController::class, 'userShow'])->name('users.show');
+          Route::put('users/{id}', [\App\Http\Controllers\Api\AdminController::class, 'userUpdate'])->name('users.update');
+          Route::delete('users/{id}', [\App\Http\Controllers\Api\AdminController::class, 'userDestroy'])->name('users.destroy');
+          Route::patch('users/{id}/toggle-status', [\App\Http\Controllers\Api\AdminController::class, 'userToggleStatus'])->name('users.toggleStatus');
+          Route::get('users/{id}/permissions', [\App\Http\Controllers\Api\AdminController::class, 'userPermissions'])->name('users.permissions');
+          Route::put('users/{id}/permissions', [\App\Http\Controllers\Api\AdminController::class, 'userUpdatePermissions'])->name('users.permissions.update');
+          Route::post('users/{id}/apply-profile', [\App\Http\Controllers\Api\AdminController::class, 'applyProfileToUser'])->name('users.applyProfile');
+
+          // ── Roles ────────────────────────────────────────────────────
+          Route::get('roles', [\App\Http\Controllers\Api\AdminController::class, 'roleIndex'])->name('roles.index');
+          Route::post('roles', [\App\Http\Controllers\Api\AdminController::class, 'roleStore'])->name('roles.store');
+          Route::put('roles/{id}', [\App\Http\Controllers\Api\AdminController::class, 'roleUpdate'])->name('roles.update');
+          Route::delete('roles/{id}', [\App\Http\Controllers\Api\AdminController::class, 'roleDestroy'])->name('roles.destroy');
+
+          // ── Profiles ─────────────────────────────────────────────────
+          Route::get('profiles', [\App\Http\Controllers\Api\AdminController::class, 'profileIndex'])->name('profiles.index');
+          Route::get('profiles/{id}', [\App\Http\Controllers\Api\AdminController::class, 'profileShow'])->name('profiles.show');
+          Route::post('profiles', [\App\Http\Controllers\Api\AdminController::class, 'profileStore'])->name('profiles.store');
+          Route::put('profiles/{id}', [\App\Http\Controllers\Api\AdminController::class, 'profileUpdate'])->name('profiles.update');
+          Route::delete('profiles/{id}', [\App\Http\Controllers\Api\AdminController::class, 'profileDestroy'])->name('profiles.destroy');
+          Route::put('profiles/{id}/permissions', [\App\Http\Controllers\Api\AdminController::class, 'profileUpdatePermissions'])->name('profiles.permissions.update');
+
+          // ── Modules ──────────────────────────────────────────────────
+          Route::get('modules', [\App\Http\Controllers\Api\AdminController::class, 'moduleIndex'])->name('modules.index');
+          Route::post('modules', [\App\Http\Controllers\Api\AdminController::class, 'moduleStore'])->name('modules.store');
+          Route::put('modules/{id}', [\App\Http\Controllers\Api\AdminController::class, 'moduleUpdate'])->name('modules.update');
+          Route::delete('modules/{id}', [\App\Http\Controllers\Api\AdminController::class, 'moduleDestroy'])->name('modules.destroy');
+     });
+
 });

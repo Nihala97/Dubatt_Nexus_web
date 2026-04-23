@@ -713,7 +713,7 @@
                 </svg>
                 Back to Dashboard
             </a>
-            <a href="{{ route('admin.mes.acidTesting.create') }}" class="btn btn-primary">
+            <a href="{{ route('admin.mes.acidTesting.create') }}" class="btn btn-primary" data-permission="acid_testing,can_create">
                 <svg viewBox="0 0 24 24">
                     <line x1="12" y1="5" x2="12" y2="19" />
                     <line x1="5" y1="12" x2="19" y2="12" />
@@ -946,7 +946,7 @@
                                 {{-- EDIT (draft only) --}}
                                 @if(!$isSubmitted)
                                     <a href="{{ route('admin.mes.acidTesting.edit', $test->id) }}" class="action-btn"
-                                        title="Edit Record">
+                                        title="Edit Record" data-permission="acid_testing,can_edit">
                                         <svg viewBox="0 0 24 24">
                                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
@@ -968,7 +968,7 @@
 
                                 {{-- DELETE (draft only) --}}
                                 @if(!$isSubmitted)
-                                    <button id="del-{{ $test->id }}" class="action-btn danger"
+                                    <button id="del-{{ $test->id }}" class="action-btn danger" data-permission="acid_testing,can_delete"
                                         onclick="deleteBatch({{ $test->id }}, '{{ $test->lot_number }}', '/acid-testings/{{ $test->id }}')"
                                         title="Delete">
                                         {{ $test->status }}
@@ -996,7 +996,7 @@
                                 <p>{{ request('search') || $activeFilters ? 'Try adjusting your filters.' : 'Create your first acid test record to get started.' }}
                                 </p>
                                 @if(!request('search') && !$activeFilters)
-                                    <a href="{{ route('admin.mes.acidTesting.create') }}" class="btn btn-primary">
+                                    <a href="{{ route('admin.mes.acidTesting.create') }}" class="btn btn-primary" data-permission="acid_testing,can_create">
                                         <svg viewBox="0 0 24 24">
                                             <line x1="12" y1="5" x2="12" y2="19" />
                                             <line x1="5" y1="12" x2="19" y2="12" />

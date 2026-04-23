@@ -1,19 +1,21 @@
 <?php
-
+// ─────────────────────────────────────────────────────────────────
+// app/Http/Middleware/CheckModulePermission.php
+//
+// Usage in routes:
+//   Route::get('...')->middleware('module:acid_testing,can_view');
+//   Route::post('...')->middleware('module:acid_testing,can_create');
+//   Route::put('...')->middleware('module:acid_testing,can_edit');
+//   Route::delete('...')->middleware('module:acid_testing,can_delete');
+// ─────────────────────────────────────────────────────────────────
 namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Usage in routes:
- *   ->middleware('module:receiving')
- *   ->middleware('module:receiving,can_create')
- */
 class CheckModulePermission
 {
-    public function handle(Request $request, Closure $next, string $moduleSlug, string $action = 'can_view'): Response
+    public function handle(Request $request, Closure $next, string $moduleSlug, string $action = 'can_view')
     {
         $user = $request->user();
 
@@ -21,14 +23,16 @@ class CheckModulePermission
             return response()->json(['status' => 'error', 'message' => 'Unauthenticated.'], 401);
         }
 
-        if (!$user->is_active) {
-            return response()->json(['status' => 'error', 'message' => 'Account disabled.'], 403);
+        // Admin and Management always pass — no permission check needed
+        if ($user->isAdmin() || $user->isManagement()) {
+            return $next($request);
         }
 
+        // Normal users: check their module permission
         if (!$user->canAccessModule($moduleSlug, $action)) {
             return response()->json([
-                'status'  => 'error',
-                'message' => "You do not have {$action} access to the {$moduleSlug} module.",
+                'status' => 'error',
+                'message' => "You don't have {$action} permission for this module.",
             ], 403);
         }
 
