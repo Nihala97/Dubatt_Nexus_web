@@ -17,7 +17,7 @@ class SmeltingBatch extends Model
 
     protected $fillable = [
         'batch_no',
-        'charge_no', 
+        'charge_no',
         'rotary_no',
         'date',
         'start_time',
@@ -32,6 +32,7 @@ class SmeltingBatch extends Model
         'rotary_power_consumption',
         'output_material',
         'output_qty',
+        'remarks',
         'status',
         'is_active',
         'created_by',
@@ -39,19 +40,19 @@ class SmeltingBatch extends Model
     ];
 
     protected $casts = [
-        'date'                     => 'date',
-        'start_time'               => 'datetime',
-        'end_time'                 => 'datetime',
-        'lpg_consumption'          => 'decimal:3',
-        'o2_consumption'           => 'decimal:3',
-        'id_fan_initial'           => 'decimal:3',
-        'id_fan_final'             => 'decimal:3',
-        'id_fan_consumption'       => 'decimal:3',
-        'rotary_power_initial'     => 'decimal:3',
-        'rotary_power_final'       => 'decimal:3',
+        'date' => 'date',
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
+        'lpg_consumption' => 'decimal:3',
+        'o2_consumption' => 'decimal:3',
+        'id_fan_initial' => 'decimal:3',
+        'id_fan_final' => 'decimal:3',
+        'id_fan_consumption' => 'decimal:3',
+        'rotary_power_initial' => 'decimal:3',
+        'rotary_power_final' => 'decimal:3',
         'rotary_power_consumption' => 'decimal:3',
-        'output_qty'               => 'decimal:3',
-        'is_active'                => 'boolean',
+        'output_qty' => 'decimal:3',
+        'is_active' => 'boolean',
     ];
 
     public function rawMaterials(): HasMany

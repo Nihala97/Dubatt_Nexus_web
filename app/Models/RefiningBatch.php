@@ -28,6 +28,7 @@ class RefiningBatch extends Model
         'oxygen_flow_time',
         'oxygen_consumption',
         'total_process_time',
+        'remarks',
         'status',
         'is_active',
         'created_by',

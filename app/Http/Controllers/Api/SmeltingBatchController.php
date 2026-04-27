@@ -118,6 +118,7 @@ class SmeltingBatchController extends Controller
                 'rotary_power_consumption' => $this->calcDiff($request->rotary_power_final, $request->rotary_power_initial),
                 'output_material' => $request->output_material,
                 'output_qty' => $request->output_qty,
+                'remarks' => $request->remarks ?? null,
                 'status' => 0,
                 'is_active' => true,
                 'created_by' => $userId,
@@ -192,6 +193,7 @@ class SmeltingBatchController extends Controller
                 'rotary_power_consumption' => $this->calcDiff($request->rotary_power_final ?? $batch->rotary_power_final, $request->rotary_power_initial ?? $batch->rotary_power_initial),
                 'output_material' => $request->output_material ?? $batch->output_material,
                 'output_qty' => $request->output_qty ?? $batch->output_qty,
+                'remarks' => $request->remarks ?? $batch->remarks,
                 'updated_by' => $userId,
             ]);
 
@@ -241,7 +243,8 @@ class SmeltingBatchController extends Controller
                 'rotary_power_initial',
                 'rotary_power_final',
                 'output_material',
-                'output_qty'
+                'output_qty',
+                'remarks',
             ];
 
             $updates = ['updated_by' => $userId];

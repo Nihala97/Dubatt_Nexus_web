@@ -604,6 +604,19 @@
                 <span>Acid Test Status</span>
             </a>
 
+            <a href="{{ route('admin.reports.bbsu') }}" data-permission="report_bbsu"
+                class="nav-item {{ request()->routeIs('admin.reports.bbsu') ? 'active' : '' }}">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect>
+                    <line x1="23" y1="10" x2="23" y2="14"></line>
+                    <line x1="6" y1="9" x2="6" y2="15"></line>
+                    <line x1="10" y1="9" x2="10" y2="15"></line>
+                    <line x1="14" y1="9" x2="14" y2="15"></line>
+                </svg>
+                <span>BBSU Dashboard</span>
+            </a>
+
             <div class="nav-section-label" style="margin-top:8px;">Masters</div>
 
             <a href="{{ route('admin.mes.supplier.index') }}" data-label="Supplier" data-permission="suppliers"
@@ -797,7 +810,7 @@
                 const parts = el.getAttribute('data-permission').split(',');
                 const mod = parts[0];
                 const act = parts[1] || 'can_view';
-                
+
                 if (!can(mod, act)) {
                     el.style.display = 'none';
                 } else {

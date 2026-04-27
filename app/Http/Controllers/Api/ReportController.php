@@ -417,4 +417,413 @@ class ReportController extends Controller
             'data' => compact('suppliers', 'materials', 'categories'),
         ]);
     }
+
+    public function bbsuFilters()
+    {
+        $categories = DB::table('bbsu_batches')
+            ->where('is_active', 1)
+            ->whereNotNull('category')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category');
+
+        return response()->json([
+            'status' => 'ok',
+            'data' => ['categories' => $categories],
+        ]);
+    }
+    public function bbsuDashboard(Request $request)
+    {
+        try {
+            $now = Carbon::now();
+            $thisYear = $now->year;
+            $thisMonth = $now->month;
+            $lastMonthDate = $now->copy()->subMonth();
+            $lastMonth = $lastMonthDate->month;
+            $lastMonthYear = $lastMonthDate->year;
+
+            // ── Helper: base input query ───────────────────────────────
+            $inputBase = fn() => DB::table('bbsu_input_details as bi')
+                ->join('bbsu_batches as bb', 'bb.id', '=', 'bi.bbsu_batch_id')
+                ->where('bb.is_active', 1)
+                ->where('bi.is_active', 1);
+
+            // ── 1. PRODUCTION SCORECARDS ───────────────────────────────
+
+            // Last month total
+            $lastMonthTotal = $inputBase()
+                ->whereMonth('bb.doc_date', $lastMonth)
+                ->whereYear('bb.doc_date', $lastMonthYear)
+                ->sum('bi.quantity');
+
+            // Last month by category
+            $lastMonthByCategory = $inputBase()
+                ->whereMonth('bb.doc_date', $lastMonth)
+                ->whereYear('bb.doc_date', $lastMonthYear)
+                ->select('bb.category', DB::raw('SUM(bi.quantity) as total_qty'), DB::raw('COUNT(DISTINCT bb.id) as batch_count'))
+                ->groupBy('bb.category')
+                ->orderByDesc('total_qty')
+                ->get();
+
+            // Current month total
+            $currentMonthTotal = $inputBase()
+                ->whereMonth('bb.doc_date', $thisMonth)
+                ->whereYear('bb.doc_date', $thisYear)
+                ->sum('bi.quantity');
+
+            // Current month by category
+            $currentMonthByCategory = $inputBase()
+                ->whereMonth('bb.doc_date', $thisMonth)
+                ->whereYear('bb.doc_date', $thisYear)
+                ->select('bb.category', DB::raw('SUM(bi.quantity) as total_qty'), DB::raw('COUNT(DISTINCT bb.id) as batch_count'))
+                ->groupBy('bb.category')
+                ->orderByDesc('total_qty')
+                ->get();
+
+            // This year total
+            $yearTotal = $inputBase()
+                ->whereYear('bb.doc_date', $thisYear)
+                ->sum('bi.quantity');
+
+            // ── 2. AVG HR / MT & AVG ACID (current month) ─────────────
+
+            $powerRow = DB::table('bbsu_power_consumption as bp')
+                ->join('bbsu_batches as bb', 'bb.id', '=', 'bp.bbsu_batch_id')
+                ->whereMonth('bb.doc_date', $thisMonth)
+                ->whereYear('bb.doc_date', $thisYear)
+                ->where('bb.is_active', 1)
+                ->where('bp.is_active', 1)
+                ->selectRaw('SUM(bp.total_power_consumption) as total_power')
+                ->first();
+
+            $avgHrPerMT = ($currentMonthTotal > 0 && $powerRow?->total_power)
+                ? round($powerRow->total_power / $currentMonthTotal, 4)
+                : 0;
+
+            $avgAcidPct = round(
+                (float) $inputBase()
+                    ->whereMonth('bb.doc_date', $thisMonth)
+                    ->whereYear('bb.doc_date', $thisYear)
+                    ->avg('bi.acid_percentage'),
+                2
+            );
+
+            // ── 3. OUTPUT MATERIAL TOTALS (current month) ─────────────
+            //    Shows totals per material_code (Paste, Metallic, Fines, PP/ABS Chips…)
+
+            $outputMaterials = DB::table('bbsu_output_materials as bo')
+                ->join('bbsu_batches as bb', 'bb.id', '=', 'bo.bbsu_batch_id')
+                ->whereMonth('bb.doc_date', $thisMonth)
+                ->whereYear('bb.doc_date', $thisYear)
+                ->where('bb.is_active', 1)
+                ->where('bo.is_active', 1)
+                ->select('bo.material_code', DB::raw('SUM(bo.qty) as total_qty'))
+                ->groupBy('bo.material_code')
+                ->orderBy('bo.material_code')
+                ->get();
+
+            // ── 4. LAST DAY BATCHES (most recent doc_date in batches) ─
+            $lastDocDate = DB::table('bbsu_batches')
+                ->where('is_active', 1)
+                ->max('doc_date');
+
+            $lastDayBatches = collect();
+            $lastDayDate = '';
+
+            if ($lastDocDate) {
+                $lastDayDate = Carbon::parse($lastDocDate)->format('d M Y');
+                $lastDayBatches = DB::table('bbsu_batches as bb')
+                    ->leftJoin('bbsu_input_details as bi', function ($j) {
+                        $j->on('bi.bbsu_batch_id', '=', 'bb.id')->where('bi.is_active', 1);
+                    })
+                    ->leftJoin('bbsu_power_consumption as bp', function ($j) {
+                        $j->on('bp.bbsu_batch_id', '=', 'bb.id')->where('bp.is_active', 1);
+                    })
+                    ->where('bb.doc_date', $lastDocDate)
+                    ->where('bb.is_active', 1)
+                    ->select(
+                        'bb.batch_no',
+                        'bb.category',
+                        'bb.start_time',
+                        'bb.end_time',
+                        DB::raw('SUM(bi.quantity)                  as total_input'),
+                        DB::raw('AVG(bi.acid_percentage)           as avg_acid'),
+                        DB::raw('MAX(bp.total_power_consumption)   as total_hrs')
+                    )
+                    ->groupBy('bb.id', 'bb.batch_no', 'bb.category', 'bb.start_time', 'bb.end_time')
+                    ->orderBy('bb.start_time')
+                    ->get();
+            }
+
+            // ── 5. Labels ─────────────────────────────────────────────
+            $monthLabel = $now->format('F Y');
+            $lastMonthLabel = $lastMonthDate->format('F Y');
+
+            return response()->json([
+                'status' => 'ok',
+                'data' => [
+                    'last_month_total' => round($lastMonthTotal, 2),
+                    'last_month_label' => $lastMonthLabel,
+                    'last_month_by_category' => $lastMonthByCategory,
+                    'current_month_total' => round($currentMonthTotal, 2),
+                    'current_month_by_category' => $currentMonthByCategory,
+                    'year_total' => round($yearTotal, 2),
+                    'avg_hr_per_mt' => $avgHrPerMT,
+                    'avg_acid_pct' => $avgAcidPct,
+                    'output_materials' => $outputMaterials,
+                    'last_day_batches' => $lastDayBatches,
+                    'last_day_date' => $lastDayDate,
+                    'month_label' => $monthLabel,
+                    '_debug' => [
+                        'current_month_input_mt' => $currentMonthTotal,
+                        'total_power_hrs' => $powerRow?->total_power ?? 0,
+                        'month' => $thisMonth,
+                        'year' => $thisYear,
+                    ],
+                ],
+            ]);
+
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('BBSU Dashboard error', [
+                'msg' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+                'data' => [
+                    'last_month_total' => 0,
+                    'last_month_by_category' => [],
+                    'current_month_total' => 0,
+                    'current_month_by_category' => [],
+                    'year_total' => 0,
+                    'avg_hr_per_mt' => 0,
+                    'avg_acid_pct' => 0,
+                    'output_materials' => [],
+                    'last_day_batches' => [],
+                    'last_day_date' => '',
+                    'month_label' => now()->format('F Y'),
+                    '_debug' => ['error' => $e->getMessage()],
+                ],
+            ], 200);
+        }
+    }
+    public function bbsuChart(Request $request)
+    {
+        $mode = $request->input('mode', 'weekly');  // 'weekly' | 'daily'
+        $months = min((int) $request->input('months', 1), 3);
+        $now = Carbon::now();
+        $datasets = [];
+
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $target = $now->copy()->subMonths($i);
+            $monthStart = $target->copy()->startOfMonth();
+            $monthEnd = $target->copy()->endOfMonth();
+            $label = $target->format('M Y');
+
+            if ($mode === 'weekly') {
+                $buckets = [];
+                $cur = $monthStart->copy();
+                $wk = 1;
+                while ($cur->lte($monthEnd)) {
+                    $wEnd = $cur->copy()->endOfWeek()->min($monthEnd);
+                    $qty = DB::table('bbsu_input_details as bi')
+                        ->join('bbsu_batches as bb', 'bb.id', '=', 'bi.bbsu_batch_id')
+                        ->whereBetween('bb.doc_date', [$cur->toDateString(), $wEnd->toDateString()])
+                        ->where('bb.is_active', 1)->where('bi.is_active', 1)
+                        ->sum('bi.quantity');
+                    $buckets["Week $wk"] = round($qty, 2);
+                    $cur = $wEnd->copy()->addDay();
+                    $wk++;
+                }
+                $datasets[] = ['label' => $label, 'data' => $buckets];
+            } else {
+                // Daily
+                $buckets = [];
+                $cur = $monthStart->copy();
+                while ($cur->lte($monthEnd)) {
+                    $qty = DB::table('bbsu_input_details as bi')
+                        ->join('bbsu_batches as bb', 'bb.id', '=', 'bi.bbsu_batch_id')
+                        ->where('bb.doc_date', $cur->toDateString())
+                        ->where('bb.is_active', 1)->where('bi.is_active', 1)
+                        ->sum('bi.quantity');
+                    $buckets[$cur->format('d')] = round($qty, 2);
+                    $cur->addDay();
+                }
+                $datasets[] = ['label' => $label, 'data' => $buckets];
+            }
+        }
+
+        // Avg hours per day (current month only, for the bar chart)
+        $avgHoursPerDay = DB::table('bbsu_batches as bb')
+            ->join('bbsu_power_consumption as bp', 'bp.bbsu_batch_id', '=', 'bb.id')
+            ->whereMonth('bb.doc_date', $now->month)
+            ->whereYear('bb.doc_date', $now->year)
+            ->where('bb.is_active', 1)->where('bp.is_active', 1)
+            ->selectRaw('DAY(bb.doc_date) as day, AVG(bp.total_power_consumption) as avg_hrs')
+            ->groupBy(DB::raw('DAY(bb.doc_date)'))
+            ->orderBy('day')
+            ->get();
+
+        return response()->json([
+            'status' => 'ok',
+            'mode' => $mode,
+            'datasets' => $datasets,
+            'avg_hours_per_day' => $avgHoursPerDay,
+        ]);
+    }
+    public function bbsuReport(Request $request)
+    {
+        $allowedSorts = ['doc_date', 'batch_no', 'category', 'start_time', 'end_time', 'total_input_qty', 'avg_acid_pct', 'total_power_hrs'];
+        $sortBy = in_array($request->sort_by, $allowedSorts) ? $request->sort_by : 'doc_date';
+        $sortDir = $request->sort_dir === 'asc' ? 'asc' : 'desc';
+        $perPage = min((int) ($request->per_page ?? 50), 500);
+
+        $query = DB::table('bbsu_batches as bb')
+            ->leftJoin('bbsu_input_details as bi', function ($j) {
+                $j->on('bi.bbsu_batch_id', '=', 'bb.id')->where('bi.is_active', 1);
+            })
+            ->leftJoin('bbsu_power_consumption as bp', function ($j) {
+                $j->on('bp.bbsu_batch_id', '=', 'bb.id')->where('bp.is_active', 1);
+            })
+            ->where('bb.is_active', 1)
+            ->select(
+                'bb.id',
+                'bb.batch_no',
+                'bb.doc_date',
+                'bb.category',
+                'bb.start_time',
+                'bb.end_time',
+                'bb.status',
+                DB::raw('SUM(bi.quantity)                  as total_input_qty'),
+                DB::raw('AVG(bi.acid_percentage)           as avg_acid_pct'),
+                DB::raw('MAX(bp.initial_power)             as initial_power'),
+                DB::raw('MAX(bp.final_power)               as final_power'),
+                DB::raw('MAX(bp.total_power_consumption)   as total_power_hrs')
+            )
+            ->groupBy('bb.id', 'bb.batch_no', 'bb.doc_date', 'bb.category', 'bb.start_time', 'bb.end_time', 'bb.status');
+
+        // Filters
+        if ($request->filled('date_from'))
+            $query->whereDate('bb.doc_date', '>=', $request->date_from);
+        if ($request->filled('date_to'))
+            $query->whereDate('bb.doc_date', '<=', $request->date_to);
+        if ($request->filled('category'))
+            $query->where('bb.category', $request->category);
+        if ($request->filled('batch_no'))
+            $query->where('bb.batch_no', 'like', '%' . $request->batch_no . '%');
+        if ($request->filled('status'))
+            $query->where('bb.status', $request->status);
+
+        // Sorting — only native SQL columns can be ordered directly
+        $nativeSorts = ['doc_date', 'batch_no', 'category', 'start_time', 'end_time'];
+        if (in_array($sortBy, $nativeSorts)) {
+            $query->orderBy('bb.' . $sortBy, $sortDir);
+        } else {
+            $query->orderBy($sortBy, $sortDir);  // aggregate alias — works in MySQL
+        }
+
+        $paginated = $query->paginate($perPage);
+
+        // Attach output materials per batch row
+        $batchIds = collect($paginated->items())->pluck('id')->toArray();
+        $outputMats = DB::table('bbsu_output_materials')
+            ->whereIn('bbsu_batch_id', $batchIds)
+            ->where('is_active', 1)
+            ->get()
+            ->groupBy('bbsu_batch_id');
+
+        $statusMap = [0 => 'Pending', 1 => 'In Progress', 2 => 'Completed', 3 => 'Cancelled'];
+
+        $rows = collect($paginated->items())->map(function ($r) use ($outputMats, $statusMap) {
+            return [
+                'id' => $r->id,
+                'batch_no' => $r->batch_no,
+                'doc_date' => $r->doc_date
+                    ? Carbon::parse($r->doc_date)->format('d/m/Y') : '—',
+                'doc_date_raw' => $r->doc_date,
+                'category' => $r->category ?? '—',
+                'start_time' => $r->start_time
+                    ? Carbon::parse($r->start_time)->format('H:i') : '—',
+                'end_time' => $r->end_time
+                    ? Carbon::parse($r->end_time)->format('H:i') : '—',
+                'status' => (int) ($r->status ?? 0),
+                'status_label' => $statusMap[$r->status] ?? '—',
+                'total_input_qty' => round((float) ($r->total_input_qty ?? 0), 3),
+                'avg_acid_pct' => round((float) ($r->avg_acid_pct ?? 0), 2),
+                'initial_power' => round((float) ($r->initial_power ?? 0), 3),
+                'final_power' => round((float) ($r->final_power ?? 0), 3),
+                'total_power_hrs' => round((float) ($r->total_power_hrs ?? 0), 3),
+                'output_materials' => ($outputMats[$r->id] ?? collect())->map(fn($m) => [
+                    'material_code' => $m->material_code,
+                    'qty' => round((float) $m->qty, 3),
+                    'yield_pct' => round((float) $m->yield_pct, 2),
+                ])->values(),
+            ];
+        });
+
+        return response()->json([
+            'status' => 'ok',
+            'data' => $rows,
+            'meta' => [
+                'total' => $paginated->total(),
+                'per_page' => $paginated->perPage(),
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+            ],
+        ]);
+    }
+    public function bbsuDrilldown(Request $request)
+    {
+        $date = $request->input('date');
+        if (!$date) {
+            return response()->json(['status' => 'error', 'message' => 'Date required'], 422);
+        }
+
+        $batches = DB::table('bbsu_batches as bb')
+            ->leftJoin('bbsu_input_details as bi', 'bi.bbsu_batch_id', '=', 'bb.id')
+            ->leftJoin('bbsu_power_consumption as bp', 'bp.bbsu_batch_id', '=', 'bb.id')
+            ->where('bb.doc_date', $date)
+            ->where('bb.is_active', 1)
+            ->select(
+                'bb.id',
+                'bb.batch_no',
+                'bb.category',
+                'bb.start_time',
+                'bb.end_time',
+                DB::raw('SUM(bi.quantity)                as total_input'),
+                DB::raw('AVG(bi.acid_percentage)         as avg_acid'),
+                DB::raw('MAX(bp.total_power_consumption) as total_hrs')
+            )
+            ->groupBy('bb.id', 'bb.batch_no', 'bb.category', 'bb.start_time', 'bb.end_time')
+            ->orderBy('bb.start_time')
+            ->get();
+
+        $batchIds = $batches->pluck('id')->toArray();
+        $outputMats = DB::table('bbsu_output_materials')
+            ->whereIn('bbsu_batch_id', $batchIds)
+            ->where('is_active', 1)
+            ->select('bbsu_batch_id', 'material_code', 'qty', 'yield_pct')
+            ->get()
+            ->groupBy('bbsu_batch_id');
+
+        foreach ($batches as $batch) {
+            $batch->start_time = $batch->start_time
+                ? Carbon::parse($batch->start_time)->format('H:i') : '—';
+            $batch->end_time = $batch->end_time
+                ? Carbon::parse($batch->end_time)->format('H:i') : '—';
+            $batch->total_input = round((float) ($batch->total_input ?? 0), 3);
+            $batch->avg_acid = round((float) ($batch->avg_acid ?? 0), 2);
+            $batch->total_hrs = round((float) ($batch->total_hrs ?? 0), 3);
+            $batch->output_materials = ($outputMats[$batch->id] ?? collect())->values();
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'date' => Carbon::parse($date)->format('d M Y'),
+            'batches' => $batches,
+        ]);
+    }
+
+
 }

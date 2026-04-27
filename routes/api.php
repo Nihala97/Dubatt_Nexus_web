@@ -167,6 +167,8 @@ Route::middleware('auth:sanctum')->group(function () {
           Route::delete('/{bbsu_batch}', [BbsuBatchController::class, 'destroy'])->middleware('module:bbsu,can_delete');
           Route::patch('/{bbsu_batch}/status', [BbsuBatchController::class, 'updateStatus'])->middleware('module:bbsu,can_edit');
      });
+
+
      // ── Smelting ──────────────────────────────────────────────────
      Route::prefix('smelting-batches')->middleware('module:smelting')->group(function () {
           Route::get('/', [SmeltingBatchController::class, 'index']);
@@ -233,6 +235,26 @@ Route::middleware('auth:sanctum')->group(function () {
           Route::get('acid-test-status/filters', [\App\Http\Controllers\Api\ReportController::class, 'acidTestStatusFilters'])
                ->middleware('module:report_acid_test_status')
                ->name('acidTestStatus.filters');
+
+          Route::get('bbsu/filters', [\App\Http\Controllers\Api\ReportController::class, 'bbsuFilters'])
+               ->middleware('module:report_bbsu')
+               ->name('bbsu.filters');
+
+          Route::get('bbsu/dashboard', [\App\Http\Controllers\Api\ReportController::class, 'bbsuDashboard'])
+               ->middleware('module:report_bbsu')
+               ->name('bbsu.dashboard');
+
+          Route::get('bbsu/report', [\App\Http\Controllers\Api\ReportController::class, 'bbsuReport'])
+               ->middleware('module:report_bbsu')
+               ->name('bbsu.report');
+
+          Route::get('bbsu/chart', [\App\Http\Controllers\Api\ReportController::class, 'bbsuChart'])
+               ->middleware('module:report_bbsu')
+               ->name('bbsu.chart');
+
+          Route::get('bbsu/drilldown', [\App\Http\Controllers\Api\ReportController::class, 'bbsuDrilldown'])
+               ->middleware('module:report_bbsu')
+               ->name('bbsu.drilldown');
 
      });
      Route::prefix('admin')->name('admin.')->group(function () {

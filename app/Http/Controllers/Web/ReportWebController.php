@@ -27,5 +27,10 @@ class ReportWebController extends Controller
     {
         return view('admin.reports.acid_test_status');
     }
+    public function bbsu()
+    {
+        return view('admin.reports.bbsu_dashboard');
+    }
+
 
 }

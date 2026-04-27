@@ -112,6 +112,7 @@ class RefiningBatchController extends Controller
                 'oxygen_flow_time' => $request->oxygen_flow_time,
                 'oxygen_consumption' => $request->oxygen_consumption,
                 'total_process_time' => $request->total_process_time,
+                'remarks' => $request->remarks ?? null,
                 'status' => 0,
                 'is_active' => true,
                 'created_by' => $userId,
@@ -193,6 +194,7 @@ class RefiningBatchController extends Controller
                 'oxygen_flow_time' => $request->oxygen_flow_time ?? $batch->oxygen_flow_time,
                 'oxygen_consumption' => $request->oxygen_consumption ?? $batch->oxygen_consumption,
                 'total_process_time' => $request->total_process_time ?? $batch->total_process_time,
+                'remarks' => $request->remarks ?? $batch->remarks,
                 'updated_by' => $userId,
             ]);
 
@@ -246,6 +248,7 @@ class RefiningBatchController extends Controller
                 'oxygen_flow_time',
                 'oxygen_consumption',
                 'total_process_time',
+                'remarks',
             ];
             foreach ($fields as $f) {
                 if ($request->filled($f))
@@ -443,6 +446,8 @@ class RefiningBatchController extends Controller
             'Pot Transfering',
             'Casting Preparation',
             'Casting',
+            'De-Se/Te/Zn',
+            'Break Down'
         ];
 
         $fromDb = DB::table('refining_process_details')->distinct()->pluck('refining_process')->toArray();

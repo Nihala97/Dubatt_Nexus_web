@@ -1440,8 +1440,7 @@
                             <circle cx="12" cy="12" r="10" />
                             <polyline points="12 6 12 12 16 14" />
                         </svg>
-                        <input type="text" id="charge_no" placeholder="Enter charge no…"
-                            oninput="triggerAutosave()">
+                        <input type="text" id="charge_no" placeholder="Enter charge no…" oninput="triggerAutosave()">
                     </div>
                 </div>
             </div>
@@ -1602,7 +1601,8 @@
                                 <input type="number" id="lpg_consumption" step="0.001" placeholder="0.000"
                                     oninput="calcLpgConversion(); triggerAutosave()">
                             </div>
-                            <small id="lpg_converted" style="color:var(--g);font-weight:600;margin-top:4px;">0.00 LTR</small>
+                            <small id="lpg_converted" style="color:var(--g);font-weight:600;margin-top:4px;">0.00
+                                LTR</small>
                         </div>
                         <div class="field">
                             <label>Liquid O₂ (NM³)</label>
@@ -1772,6 +1772,32 @@
             </div>
         </div>
     </div>
+    {{-- ════════════════════════════════════════════════════════════
+    REMARKS (optional)
+    ════════════════════════════════════════════════════════════ --}}
+    <div class="card" style="margin-bottom:18px">
+        <div class="card-head">
+            <div class="card-head-left">
+                <svg viewBox="0 0 24 24">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                <span>Remarks</span>
+            </div>
+            <span style="font-size:10.5px;color:var(--txtmu);font-style:italic">Optional</span>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <label>Remarks / Notes</label>
+                <div class="iw">
+                    <svg class="ico" viewBox="0 0 24 24" style="top:14px;transform:none">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <textarea id="remarks" rows="3" placeholder="Enter any remarks or notes about this smelting batch…"
+                        style="padding-top:10px;resize:vertical;min-height:70px" oninput="triggerAutosave()"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="form-actions" id="formActions">
         <a href="{{ route('admin.mes.smelting.index') }}" class="btn btn-outline btn-sm">Cancel</a>
@@ -1908,9 +1934,9 @@
             list.innerHTML = filtered.map(item => {
                 const sel = String(item.value) === String(current);
                 return `<div class="sdd-item${sel ? ' selected' : ''}" onclick="sddSelect('${sddActiveField}','${item.value}')">
-                    <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span>${item.label}</span>
-                </div>`;
+                                            <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                                            <span>${item.label}</span>
+                                        </div>`;
             }).join('');
         }
 
@@ -1984,15 +2010,15 @@
                 tr.dataset.process = name;
                 const firingOpts = FIRING_OPTIONS.map(f => `<option value="${f}">${f || 'Select…'}</option>`).join('');
                 tr.innerHTML = `
-              <td style="font-size:12px;font-weight:600;padding-left:10px;white-space:nowrap">${name}</td>
-              <td><button class="proc-btn proc-start" onclick="setProcessTime(${idx},'start')">START</button></td>
-              <td style="padding:4px 4px"><input type="time" class="ri" id="proc_start_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
-              <td><button class="proc-btn proc-end" onclick="setProcessTime(${idx},'end')">END</button></td>
-              <td style="padding:4px 4px"><input type="time" class="ri" id="proc_end_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
-              <td><input type="text" class="ri ro" id="proc_total_${idx}" readonly placeholder="0 min" style="min-width:70px;font-weight:700;color:var(--g);background:var(--gxl)"></td>
-              <td style="position:relative" class="sc">
-                <select class="rs" id="proc_firing_${idx}" onchange="triggerAutosave()" style="min-width:100px">${firingOpts}</select>
-              </td>`;
+                                      <td style="font-size:12px;font-weight:600;padding-left:10px;white-space:nowrap">${name}</td>
+                                      <td><button class="proc-btn proc-start" onclick="setProcessTime(${idx},'start')">START</button></td>
+                                      <td style="padding:4px 4px"><input type="time" class="ri" id="proc_start_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
+                                      <td><button class="proc-btn proc-end" onclick="setProcessTime(${idx},'end')">END</button></td>
+                                      <td style="padding:4px 4px"><input type="time" class="ri" id="proc_end_${idx}" oninput="calcProcTime(${idx});triggerAutosave()" style="min-width:90px"></td>
+                                      <td><input type="text" class="ri ro" id="proc_total_${idx}" readonly placeholder="0 min" style="min-width:70px;font-weight:700;color:var(--g);background:var(--gxl)"></td>
+                                      <td style="position:relative" class="sc">
+                                        <select class="rs" id="proc_firing_${idx}" onchange="triggerAutosave()" style="min-width:100px">${firingOpts}</select>
+                                      </td>`;
                 tbody.appendChild(tr);
             });
         }
@@ -2039,33 +2065,33 @@
             tr.dataset.bbsuBatchNo = data.bbsu_batch_no || '';
             tr.dataset.bbsuSelections = data.bbsu_selections ? JSON.stringify(data.bbsu_selections) : '';
             tr.innerHTML = `
-            <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-            <td style="position:relative;min-width:160px">
-              <div class="sdd" id="sdd_rm_id_${i}">
-                <div class="sdd-trigger" onclick="toggleSdd('rm_id_${i}')">
-                  <span class="sdd-trigger-text placeholder" id="sdd_rm_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                  <svg class="sdd-clear" onclick="clearSdd('rm_id_${i}',event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <input type="hidden" id="rm_id_${i}" onchange="onRawMaterialChange(${i});triggerAutosave()">
-              </div>
-            </td>
-            <td>
-              <input type="number" class="ri" id="rm_qty_${i}" name="raw_materials[${i}][raw_material_qty]"
-                value="${data.raw_material_qty ?? ''}" step="0.001" placeholder="0.000"
-                oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"
-                onclick="onRawQtyClick(${i})" onfocus="onRawQtyFocus(${i})"
-                style="min-width:90px;cursor:pointer" title="Click to assign from BBSU batch">
-              <input type="hidden" id="rm_bbsu_id_${i}" value="${data.bbsu_batch_id ?? ''}">
-              <input type="hidden" id="rm_bbsu_no_${i}" value="${data.bbsu_batch_no ?? ''}">
-            </td>
-            <td><input type="number" class="ri" id="rm_yield_${i}" value="${data.raw_material_yield_pct ?? ''}" step="0.01" placeholder="0.00"
-              oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"></td>
-            <td><input type="number" class="ri ro" id="rm_exp_${i}" value="${data.expected_output_qty ?? ''}" readonly placeholder="0.000"
-              style="background:#eef6f1;color:var(--g);font-weight:600"></td>
-            <td><button class="del-btn" onclick="removeRow('rrow-${i}',recalcRawTotals)" title="Remove">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-            </button></td>`;
+                                    <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                                    <td style="position:relative;min-width:160px">
+                                      <div class="sdd" id="sdd_rm_id_${i}">
+                                        <div class="sdd-trigger" onclick="toggleSdd('rm_id_${i}')">
+                                          <span class="sdd-trigger-text placeholder" id="sdd_rm_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                                          <svg class="sdd-clear" onclick="clearSdd('rm_id_${i}',event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                          <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                                        </div>
+                                        <input type="hidden" id="rm_id_${i}" onchange="onRawMaterialChange(${i});triggerAutosave()">
+                                      </div>
+                                    </td>
+                                    <td>
+                                      <input type="number" class="ri" id="rm_qty_${i}" name="raw_materials[${i}][raw_material_qty]"
+                                        value="${data.raw_material_qty ?? ''}" step="0.001" placeholder="0.000"
+                                        oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"
+                                        onclick="onRawQtyClick(${i})" onfocus="onRawQtyFocus(${i})"
+                                        style="min-width:90px;cursor:pointer" title="Click to assign from BBSU batch">
+                                      <input type="hidden" id="rm_bbsu_id_${i}" value="${data.bbsu_batch_id ?? ''}">
+                                      <input type="hidden" id="rm_bbsu_no_${i}" value="${data.bbsu_batch_no ?? ''}">
+                                    </td>
+                                    <td><input type="number" class="ri" id="rm_yield_${i}" value="${data.raw_material_yield_pct ?? ''}" step="0.01" placeholder="0.00"
+                                      oninput="calcRawExpected(${i});recalcRawTotals();triggerAutosave()"></td>
+                                    <td><input type="number" class="ri ro" id="rm_exp_${i}" value="${data.expected_output_qty ?? ''}" readonly placeholder="0.000"
+                                      style="background:#eef6f1;color:var(--g);font-weight:600"></td>
+                                    <td><button class="del-btn" onclick="removeRow('rrow-${i}',recalcRawTotals)" title="Remove">
+                                      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                    </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initMaterialSdd(`rm_id_${i}`, data.raw_material_id ?? null);
@@ -2126,29 +2152,29 @@
             tr.dataset.rowIndex = i;
             tr.dataset.fluxBbsuSelections = data.flux_bbsu_selections ? JSON.stringify(data.flux_bbsu_selections) : '';
             tr.innerHTML = `
-            <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-            <td style="position:relative;min-width:160px">
-              <div class="sdd" id="sdd_fl_id_${i}">
-                <div class="sdd-trigger" onclick="toggleSdd('fl_id_${i}')">
-                  <span class="sdd-trigger-text placeholder" id="sdd_fl_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                  <svg class="sdd-clear" onclick="clearSdd('fl_id_${i}',event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <input type="hidden" id="fl_id_${i}" onchange="onFluxMaterialChange(${i});triggerAutosave()">
-              </div>
-            </td>
-            <td>
-              <input type="number" class="ri" id="fl_qty_${i}"
-                value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
-                oninput="recalcFluxTotals();triggerAutosave()"
-                onclick="onFluxQtyClick(${i})" onfocus="onFluxQtyFocus(${i})"
-                style="min-width:90px;cursor:pointer" title="Click to assign from BBSU batch">
-              <input type="hidden" id="fl_bbsu_id_${i}" value="${data.fl_bbsu_batch_id ?? ''}">
-              <input type="hidden" id="fl_bbsu_no_${i}" value="${data.fl_bbsu_batch_no ?? ''}">
-            </td>
-            <td><button class="del-btn" onclick="removeRow('frow-${i}',recalcFluxTotals)" title="Remove">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-            </button></td>`;
+                                    <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                                    <td style="position:relative;min-width:160px">
+                                      <div class="sdd" id="sdd_fl_id_${i}">
+                                        <div class="sdd-trigger" onclick="toggleSdd('fl_id_${i}')">
+                                          <span class="sdd-trigger-text placeholder" id="sdd_fl_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                                          <svg class="sdd-clear" onclick="clearSdd('fl_id_${i}',event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                          <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                                        </div>
+                                        <input type="hidden" id="fl_id_${i}" onchange="onFluxMaterialChange(${i});triggerAutosave()">
+                                      </div>
+                                    </td>
+                                    <td>
+                                      <input type="number" class="ri" id="fl_qty_${i}"
+                                        value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
+                                        oninput="recalcFluxTotals();triggerAutosave()"
+                                        onclick="onFluxQtyClick(${i})" onfocus="onFluxQtyFocus(${i})"
+                                        style="min-width:90px;cursor:pointer" title="Click to assign from BBSU batch">
+                                      <input type="hidden" id="fl_bbsu_id_${i}" value="${data.fl_bbsu_batch_id ?? ''}">
+                                      <input type="hidden" id="fl_bbsu_no_${i}" value="${data.fl_bbsu_batch_no ?? ''}">
+                                    </td>
+                                    <td><button class="del-btn" onclick="removeRow('frow-${i}',recalcFluxTotals)" title="Remove">
+                                      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                    </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initMaterialSdd(`fl_id_${i}`, data.chemical_id ?? null);
@@ -2197,15 +2223,15 @@
             tr.id = `trow-${i}`;
             tr.dataset.rowIndex = i;
             tr.innerHTML = `
-            <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-            <td><input type="time" class="ri" id="temp_time_${i}" value="${data.record_time ?? ''}" oninput="triggerAutosave()"></td>
-            <td><input type="number" class="ri" id="temp_inside_${i}" value="${data.inside_temp_before_charging ?? ''}" step="0.01" placeholder="°C" oninput="triggerAutosave()"></td>
-            <td><input type="text" class="ri" id="temp_pgc_${i}" value="${data.process_gas_chamber_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
-            <td><input type="text" class="ri" id="temp_shell_${i}" value="${data.shell_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
-            <td><input type="text" class="ri" id="temp_bag_${i}" value="${data.bag_house_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
-            <td><button class="del-btn" onclick="removeRow('trow-${i}',null)" title="Remove">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-            </button></td>`;
+                                    <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                                    <td><input type="time" class="ri" id="temp_time_${i}" value="${data.record_time ?? ''}" oninput="triggerAutosave()"></td>
+                                    <td><input type="number" class="ri" id="temp_inside_${i}" value="${data.inside_temp_before_charging ?? ''}" step="0.01" placeholder="°C" oninput="triggerAutosave()"></td>
+                                    <td><input type="text" class="ri" id="temp_pgc_${i}" value="${data.process_gas_chamber_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
+                                    <td><input type="text" class="ri" id="temp_shell_${i}" value="${data.shell_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
+                                    <td><input type="text" class="ri" id="temp_bag_${i}" value="${data.bag_house_temp ?? ''}" placeholder="VARCHAR" oninput="triggerAutosave()"></td>
+                                    <td><button class="del-btn" onclick="removeRow('trow-${i}',null)" title="Remove">
+                                      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                    </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
         }
@@ -2241,23 +2267,23 @@
 
             isSubmitted = data.status === 'submitted';
 
-            document.getElementById('batch_no').value    = data.batch_no ?? '';
-            document.getElementById('date').value        = data.date?.slice(0, 10) ?? '';
-            document.getElementById('rotary_no').value   = data.rotary_no ?? '';
+            document.getElementById('batch_no').value = data.batch_no ?? '';
+            document.getElementById('date').value = data.date?.slice(0, 10) ?? '';
+            document.getElementById('rotary_no').value = data.rotary_no ?? '';
             if (data.start_time) document.getElementById('start_time').value = data.start_time.slice(11, 16);
-            if (data.end_time)   document.getElementById('end_time').value   = data.end_time.slice(11, 16);
+            if (data.end_time) document.getElementById('end_time').value = data.end_time.slice(11, 16);
 
-            // ── Charge No ──────────────────────────────────────────────────────────
             document.getElementById('charge_no').value = data.charge_no ?? '';
+            document.getElementById('remarks').value = data.remarks ?? '';
 
-            document.getElementById('lpg_consumption').value      = data.lpg_consumption ?? '';
-            document.getElementById('o2_consumption').value       = data.o2_consumption ?? '';
+            document.getElementById('lpg_consumption').value = data.lpg_consumption ?? '';
+            document.getElementById('o2_consumption').value = data.o2_consumption ?? '';
             calcLpgConversion();
             calcO2Conversion();
-            document.getElementById('id_fan_initial').value       = data.id_fan_initial ?? '';
-            document.getElementById('id_fan_final').value         = data.id_fan_final ?? '';
+            document.getElementById('id_fan_initial').value = data.id_fan_initial ?? '';
+            document.getElementById('id_fan_final').value = data.id_fan_final ?? '';
             document.getElementById('rotary_power_initial').value = data.rotary_power_initial ?? '';
-            document.getElementById('rotary_power_final').value   = data.rotary_power_final ?? '';
+            document.getElementById('rotary_power_final').value = data.rotary_power_final ?? '';
 
             if (data.output_material) sddSelect('output_material', String(data.output_material), false);
 
@@ -2277,7 +2303,7 @@
                 const idx = PROCESS_NAMES.indexOf(pd.process_name);
                 if (idx >= 0) {
                     if (pd.start_time) document.getElementById(`proc_start_${idx}`).value = pd.start_time.slice(11, 16);
-                    if (pd.end_time)   document.getElementById(`proc_end_${idx}`).value   = pd.end_time.slice(11, 16);
+                    if (pd.end_time) document.getElementById(`proc_end_${idx}`).value = pd.end_time.slice(11, 16);
                     if (pd.firing_mode) document.getElementById(`proc_firing_${idx}`).value = pd.firing_mode;
                     calcProcTime(idx);
                 }
@@ -2286,10 +2312,10 @@
             (data.temperature_records ?? []).forEach(t => addTempRow(t));
             if (!data.temperature_records?.length) addTempRow();
 
-            document.getElementById('pageTitle').textContent      = 'Edit Smelting Batch';
-            document.getElementById('pageSubtitle').textContent   = `Batch: ${data.batch_no}`;
+            document.getElementById('pageTitle').textContent = 'Edit Smelting Batch';
+            document.getElementById('pageSubtitle').textContent = `Batch: ${data.batch_no}`;
             document.getElementById('breadcrumbTitle').textContent = 'Edit Batch';
-            document.getElementById('btnSaveLabel').textContent   = 'Save Draft';
+            document.getElementById('btnSaveLabel').textContent = 'Save Draft';
 
             const badge = document.getElementById('statusBadge');
             if (isSubmitted) {
@@ -2313,13 +2339,13 @@
                 const bbsuIdRaw = document.getElementById(`rm_bbsu_id_${i}`)?.value || null;
                 const bbsuNoRaw = document.getElementById(`rm_bbsu_no_${i}`)?.value || null;
                 raw_materials.push({
-                    raw_material_id:        id,
-                    bbsu_batch_id:          bbsuIdRaw ? bbsuIdRaw.split(',')[0] : null,
-                    bbsu_batch_no:          bbsuNoRaw ? bbsuNoRaw.split(',')[0] : null,
-                    bbsu_selections:        bbsuSelections,
-                    raw_material_qty:       document.getElementById(`rm_qty_${i}`)?.value || 0,
+                    raw_material_id: id,
+                    bbsu_batch_id: bbsuIdRaw ? bbsuIdRaw.split(',')[0] : null,
+                    bbsu_batch_no: bbsuNoRaw ? bbsuNoRaw.split(',')[0] : null,
+                    bbsu_selections: bbsuSelections,
+                    raw_material_qty: document.getElementById(`rm_qty_${i}`)?.value || 0,
                     raw_material_yield_pct: document.getElementById(`rm_yield_${i}`)?.value || 0,
-                    expected_output_qty:    document.getElementById(`rm_exp_${i}`)?.value || 0,
+                    expected_output_qty: document.getElementById(`rm_exp_${i}`)?.value || 0,
                 });
             });
 
@@ -2332,11 +2358,11 @@
                 const fluxBbsuIdRaw = document.getElementById(`fl_bbsu_id_${i}`)?.value || null;
                 const fluxBbsuNoRaw = document.getElementById(`fl_bbsu_no_${i}`)?.value || null;
                 flux_chemicals.push({
-                    chemical_id:   id,
+                    chemical_id: id,
                     bbsu_batch_id: fluxBbsuIdRaw ? fluxBbsuIdRaw.split(',')[0] : null,
                     bbsu_batch_no: fluxBbsuNoRaw ? fluxBbsuNoRaw.split(',')[0] : null,
                     bbsu_selections: fluxSelections,
-                    qty:           document.getElementById(`fl_qty_${i}`)?.value || 0,
+                    qty: document.getElementById(`fl_qty_${i}`)?.value || 0,
                 });
             });
 
@@ -2357,38 +2383,38 @@
                     record_time: document.getElementById(`temp_time_${i}`)?.value
                         ? document.getElementById('date').value + 'T' + document.getElementById(`temp_time_${i}`).value + ':00' : null,
                     inside_temp_before_charging: document.getElementById(`temp_inside_${i}`)?.value || null,
-                    process_gas_chamber_temp:    document.getElementById(`temp_pgc_${i}`)?.value || null,
-                    shell_temp:                  document.getElementById(`temp_shell_${i}`)?.value || null,
-                    bag_house_temp:              document.getElementById(`temp_bag_${i}`)?.value || null,
+                    process_gas_chamber_temp: document.getElementById(`temp_pgc_${i}`)?.value || null,
+                    shell_temp: document.getElementById(`temp_shell_${i}`)?.value || null,
+                    bag_house_temp: document.getElementById(`temp_bag_${i}`)?.value || null,
                 });
             });
 
             return {
-                batch_no:   document.getElementById('batch_no').value,
-                rotary_no:  document.getElementById('rotary_no').value,
-                date:       document.getElementById('date').value,
+                batch_no: document.getElementById('batch_no').value,
+                rotary_no: document.getElementById('rotary_no').value,
+                date: document.getElementById('date').value,
                 start_time: document.getElementById('start_time').value || null,
-                end_time:   document.getElementById('end_time').value || null,
+                end_time: document.getElementById('end_time').value || null,
 
-                // ── Charge No included in every save/autosave ──────────────────────
-                charge_no:  document.getElementById('charge_no').value.trim() || null,
+                charge_no: document.getElementById('charge_no').value.trim() || null,
 
-                lpg_consumption:           document.getElementById('lpg_consumption').value || null,
-                o2_consumption:            document.getElementById('o2_consumption').value || null,
-                id_fan_initial:            document.getElementById('id_fan_initial').value || null,
-                id_fan_final:              document.getElementById('id_fan_final').value || null,
-                id_fan_consumption:        document.getElementById('id_fan_consumption').value || null,
-                rotary_power_initial:      document.getElementById('rotary_power_initial').value || null,
-                rotary_power_final:        document.getElementById('rotary_power_final').value || null,
-                rotary_power_consumption:  document.getElementById('rotary_power_consumption').value || null,
-                output_material:           document.getElementById('output_material').value || null,
-                output_qty:                document.getElementById('output_qty').value || null,
+                lpg_consumption: document.getElementById('lpg_consumption').value || null,
+                o2_consumption: document.getElementById('o2_consumption').value || null,
+                id_fan_initial: document.getElementById('id_fan_initial').value || null,
+                id_fan_final: document.getElementById('id_fan_final').value || null,
+                id_fan_consumption: document.getElementById('id_fan_consumption').value || null,
+                rotary_power_initial: document.getElementById('rotary_power_initial').value || null,
+                rotary_power_final: document.getElementById('rotary_power_final').value || null,
+                rotary_power_consumption: document.getElementById('rotary_power_consumption').value || null,
+                output_material: document.getElementById('output_material').value || null,
+                output_qty: document.getElementById('output_qty').value || null,
                 raw_materials, flux_chemicals, process_details, temperature_records,
                 output_blocks: outputBlockRows.map((r, idx) => ({
-                    material_id:   document.getElementById('output_material').value || null,
-                    block_sl_no:   idx + 1,
-                    block_weight:  parseFloat(r.qty) || 0,
+                    material_id: document.getElementById('output_material').value || null,
+                    block_sl_no: idx + 1,
+                    block_weight: parseFloat(r.qty) || 0,
                 })).filter(r => r.block_weight > 0),
+                remarks: document.getElementById('remarks').value || null,
             };
         }
 
@@ -2397,7 +2423,7 @@
             const payload = buildPayload();
             const btn = document.getElementById('btnSave');
             if (!silent) btn.disabled = true;
-            const method   = isCreate ? 'POST' : 'PUT';
+            const method = isCreate ? 'POST' : 'PUT';
             const endpoint = isCreate ? '/smelting-batches' : `/smelting-batches/${recordId}`;
             const res = await apiFetch(endpoint, { method, body: JSON.stringify(payload) });
             if (!silent) btn.disabled = false;
@@ -2539,14 +2565,14 @@
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid var(--bdr)';
                 tr.innerHTML = `
-              <td style="padding:5px 14px;font-size:12.5px;font-weight:700;color:var(--g);text-align:right;background:var(--gxl);width:80px;border-right:1px solid var(--bdr)">${i + 1}</td>
-              <td style="padding:4px 10px">
-                <input type="number" step="0.001" min="0" placeholder="0.000" value="${qty}"
-                  style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-family:'Outfit',sans-serif;font-size:13px;text-align:right;background:var(--white);outline:none;transition:border-color .15s"
-                  oninput="onOutputQtyInput(this,${i})"
-                  onfocus="this.style.borderColor='var(--g)'"
-                  onblur="this.style.borderColor='var(--bdr)'">
-              </td>`;
+                                      <td style="padding:5px 14px;font-size:12.5px;font-weight:700;color:var(--g);text-align:right;background:var(--gxl);width:80px;border-right:1px solid var(--bdr)">${i + 1}</td>
+                                      <td style="padding:4px 10px">
+                                        <input type="number" step="0.001" min="0" placeholder="0.000" value="${qty}"
+                                          style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-family:'Outfit',sans-serif;font-size:13px;text-align:right;background:var(--white);outline:none;transition:border-color .15s"
+                                          oninput="onOutputQtyInput(this,${i})"
+                                          onfocus="this.style.borderColor='var(--g)'"
+                                          onblur="this.style.borderColor='var(--bdr)'">
+                                      </td>`;
                 tbody.appendChild(tr);
             }
             recalcOutputTotal();
@@ -2622,10 +2648,10 @@
 
         async function loadBbsuLots(materialId, rowIndex) {
             const loading = document.getElementById('bbsuLotLoading');
-            const empty   = document.getElementById('bbsuLotEmpty');
-            const scroll  = document.getElementById('bbsuLotTableScroll');
-            const tbody   = document.getElementById('bbsuLotTbody');
-            const tfoot   = document.getElementById('bbsuLotTfoot');
+            const empty = document.getElementById('bbsuLotEmpty');
+            const scroll = document.getElementById('bbsuLotTableScroll');
+            const tbody = document.getElementById('bbsuLotTbody');
+            const tfoot = document.getElementById('bbsuLotTfoot');
 
             loading.style.display = 'block'; empty.style.display = 'none';
             scroll.style.display = 'none'; tfoot.style.display = 'none';
@@ -2649,17 +2675,17 @@
                 const tr = document.createElement('tr');
                 tr.dataset.bbsuId = lot.bbsu_batch_id; tr.dataset.bbsuNo = lot.batch_no; tr.dataset.availableQty = lot.available_qty;
                 tr.innerHTML = `
-              <td><span class="lot-bbsu-tag">${lot.batch_no}</span></td>
-              <td style="font-size:12.5px;font-weight:600">${lot.material_name}</td>
-              <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
-              <td><span class="avail-pill ${availClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
-              <td>
-                <input type="number" class="assign-input" id="bbs_assign_${lot.bbsu_batch_id}"
-                  placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
-                  ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
-                  oninput="onAssignQtyInput(${lot.bbsu_batch_id},${lot.available_qty})"
-                  onclick="event.stopPropagation()">
-              </td>`;
+                                      <td><span class="lot-bbsu-tag">${lot.batch_no}</span></td>
+                                      <td style="font-size:12.5px;font-weight:600">${lot.material_name}</td>
+                                      <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
+                                      <td><span class="avail-pill ${availClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
+                                      <td>
+                                        <input type="number" class="assign-input" id="bbs_assign_${lot.bbsu_batch_id}"
+                                          placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
+                                          ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
+                                          oninput="onAssignQtyInput(${lot.bbsu_batch_id},${lot.available_qty})"
+                                          onclick="event.stopPropagation()">
+                                      </td>`;
                 tr.addEventListener('click', e => {
                     if (e.target.tagName === 'INPUT') return;
                     const inp = document.getElementById(`bbs_assign_${lot.bbsu_batch_id}`);
@@ -2741,10 +2767,10 @@
 
         async function loadFluxLots(materialId, rowIndex) {
             const loading = document.getElementById('fluxLotLoading');
-            const empty   = document.getElementById('fluxLotEmpty');
-            const scroll  = document.getElementById('fluxLotTableScroll');
-            const tbody   = document.getElementById('fluxLotTbody');
-            const tfoot   = document.getElementById('fluxLotTfoot');
+            const empty = document.getElementById('fluxLotEmpty');
+            const scroll = document.getElementById('fluxLotTableScroll');
+            const tbody = document.getElementById('fluxLotTbody');
+            const tfoot = document.getElementById('fluxLotTfoot');
 
             loading.style.display = 'block'; empty.style.display = 'none';
             scroll.style.display = 'none'; tfoot.style.display = 'none';
@@ -2768,17 +2794,17 @@
                 const tr = document.createElement('tr');
                 tr.dataset.bbsuId = lot.bbsu_batch_id; tr.dataset.bbsuNo = lot.batch_no; tr.dataset.availableQty = lot.available_qty;
                 tr.innerHTML = `
-              <td><span class="lot-bbsu-tag">${lot.batch_no}</span></td>
-              <td style="font-size:12.5px;font-weight:600">${lot.material_name}</td>
-              <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
-              <td><span class="avail-pill ${availClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
-              <td>
-                <input type="number" class="assign-input" id="flux_assign_${lot.bbsu_batch_id}"
-                  placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
-                  ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
-                  oninput="onFluxAssignInput(${lot.bbsu_batch_id},${lot.available_qty})"
-                  onclick="event.stopPropagation()">
-              </td>`;
+                                      <td><span class="lot-bbsu-tag">${lot.batch_no}</span></td>
+                                      <td style="font-size:12.5px;font-weight:600">${lot.material_name}</td>
+                                      <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
+                                      <td><span class="avail-pill ${availClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
+                                      <td>
+                                        <input type="number" class="assign-input" id="flux_assign_${lot.bbsu_batch_id}"
+                                          placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
+                                          ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
+                                          oninput="onFluxAssignInput(${lot.bbsu_batch_id},${lot.available_qty})"
+                                          onclick="event.stopPropagation()">
+                                      </td>`;
                 tr.addEventListener('click', e => {
                     if (e.target.tagName === 'INPUT') return;
                     const inp = document.getElementById(`flux_assign_${lot.bbsu_batch_id}`);
