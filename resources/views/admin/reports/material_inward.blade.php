@@ -1194,6 +1194,7 @@
                 </div>
 
                 {{-- ── Category select ── --}}
+                {{-- ── Category select — populated from API ── --}}
                 <div class="field">
                     <label>Category</label>
                     <div class="iw">
@@ -1205,13 +1206,6 @@
                         </svg>
                         <select id="f_category" onchange="onFilterChange()">
                             <option value="">All Categories</option>
-                            <option value="CHEMICAL / METALS">Chemical / Metals</option>
-                            <option value="DROSS">Dross</option>
-                            <option value="FUEL">Fuel</option>
-                            <option value="OTHER">Other</option>
-                            <option value="PLATES / TERMINALS">Plates / Terminals</option>
-                            <option value="RML">RML</option>
-                            <option value="ULAB">ULAB</option>
                         </select>
                     </div>
                 </div>
@@ -1308,12 +1302,11 @@
                                     <th>Supplier</th>
                                     <th>Material</th>
                                     <th style="text-align:right">Qty</th>
-                                    <th style="width:70px">Share</th>
                                 </tr>
                             </thead>
                             <tbody id="supAccTbody">
                                 <tr>
-                                    <td colspan="5" style="text-align:center;padding:20px;color:var(--txtmu)"><span
+                                    <td colspan="4" style="text-align:center;padding:20px;color:var(--txtmu)"><span
                                             class="spinner"></span> Loading…</td>
                                 </tr>
                             </tbody>
@@ -1517,9 +1510,9 @@
             list.innerHTML = filtered.map(item => {
                 const sel = String(item.value) === String(current);
                 return `<div class="sdd-item${sel ? ' selected' : ''}" onclick="sddSelect('${sddActiveField}','${item.value}')">
-                <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>${item.label}</span>
-            </div>`;
+                                        <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                                        <span>${item.label}</span>
+                                    </div>`;
             }).join('');
         }
 
@@ -1567,6 +1560,14 @@
                 ...(data.materials ?? []).map(m => ({ value: String(m.id), label: m.name }))
             ];
             sddRegister('f_material_id', materialItems);
+
+            const catSel = document.getElementById('f_category');
+            (data.categories ?? []).forEach(cat => {
+                const o = document.createElement('option');
+                o.value = cat;
+                o.textContent = cat;
+                catSel.appendChild(o);
+            });
         }
 
         function buildParams(page) {
@@ -1606,16 +1607,16 @@
                     ? `<span class="badge-status st-submitted">● Submitted</span>`
                     : `<span class="badge-status st-draft">Draft</span>`;
                 return `<tr>
-                <td>${escHtml(r.receipt_date)}</td>
-                <td style="font-weight:600">${escHtml(r.lot_no)}</td>
-                <td>${escHtml(r.supplier_name)}</td>
-                <td>${escHtml(r.material_name)}</td>
-                <td class="num">${fmtNum(r.received_qty)}</td>
-                <td class="num">${fmtNum(r.invoice_qty)}</td>
-                <td>${escHtml(r.unit)}</td>
-                <td>${escHtml(r.category)}</td>
-                <td style="text-align:center">${badge}</td>
-            </tr>`;
+                                        <td>${escHtml(r.receipt_date)}</td>
+                                        <td style="font-weight:600">${escHtml(r.lot_no)}</td>
+                                        <td>${escHtml(r.supplier_name)}</td>
+                                        <td>${escHtml(r.material_name)}</td>
+                                        <td class="num">${fmtNum(r.received_qty)}</td>
+                                        <td class="num">${fmtNum(r.invoice_qty)}</td>
+                                        <td>${escHtml(r.unit)}</td>
+                                        <td>${escHtml(r.category)}</td>
+                                        <td style="text-align:center">${badge}</td>
+                                    </tr>`;
             }).join('');
             document.getElementById('footReceived').textContent = fmtNum(pr);
             document.getElementById('footInvoice').textContent = fmtNum(pi);
@@ -1801,13 +1802,33 @@
         }
 
         function renderSupplierAccumulation(rows, monthLabel) {
-            const tbody = document.getElementById('supAccTbody'), badge = document.getElementById('supMonthBadge');
+            const tbody = document.getElementById('supAccTbody'),
+                badge = document.getElementById('supMonthBadge');
+
             if (badge && monthLabel) badge.textContent = monthLabel;
-            if (!rows.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="dash-empty">No supplier data for current month</div></td></tr>`; return; }
-            const maxQty = Math.max(...rows.map(r => r.total_qty), 1);
+
+            if (!rows.length) {
+                tbody.innerHTML = `<tr>
+                <td colspan="4">
+                    <div class="dash-empty">No supplier data for current month</div>
+                </td>
+            </tr>`;
+                return;
+            }
+
             tbody.innerHTML = rows.map((r, i) => {
-                const pct = Math.round((r.total_qty / maxQty) * 100);
-                return `<tr><td><span class="sup-rank">${i + 1}</span></td><td style="font-weight:600;color:var(--txtm)">${escHtml(r.supplier_name)}</td><td style="color:var(--txtmu);font-size:11px">${escHtml(r.material_name)}</td><td style="text-align:right;font-weight:700;color:var(--g)">${fmtNum(r.total_qty)}</td><td><div class="sup-bar-wrap"><div class="sup-bar"><div class="sup-bar-fill" style="width:${pct}%"></div></div><span style="font-size:9px;color:var(--txtmu);min-width:24px;text-align:right">${pct}%</span></div></td></tr>`;
+                return `<tr>
+                <td><span class="sup-rank">${i + 1}</span></td>
+                <td style="font-weight:600;color:var(--txtm)">
+                    ${escHtml(r.supplier_name)}
+                </td>
+                <td style="color:var(--txtmu);font-size:11px">
+                    ${escHtml(r.material_name)}
+                </td>
+                <td style="text-align:right;font-weight:700;color:var(--g)">
+                    ${fmtNum(r.total_qty)}
+                </td>
+            </tr>`;
             }).join('');
         }
 

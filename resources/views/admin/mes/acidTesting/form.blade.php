@@ -1577,7 +1577,7 @@
       document.getElementById('invoice_qty_hidden').value = lot.invoice_qty ?? '';
 
       calcAvgPalletForeign();
-      triggerAutosave();
+      
     }
 
     function clearLotAutofill() {
@@ -1709,7 +1709,7 @@
       if (pctEl) pctEl.value = initial > 0 ? pct.toFixed(2) : '';
 
       recalcTotals();
-      triggerAutosave();
+      
     }
 
     function recalcTotals() {
@@ -1848,7 +1848,7 @@
       });
 
       calcRow(idx);
-      triggerAutosave();
+      
     }
 
     function removeRow(idx) {
@@ -2002,13 +2002,13 @@
     // ════════════════════════════════════════════════════════════════
     // AUTOSAVE
     // ════════════════════════════════════════════════════════════════
-    function setupAutosave() {
+    function setupAutosave() { return;
       ['date', 'avg_pallet_weight', 'foreign_material_weight'].forEach(id => {
         document.getElementById(id)?.addEventListener('change', triggerAutosave);
       });
     }
 
-    function triggerAutosave() {
+    function triggerAutosave() { return;
       if (isCreate || isSubmitted) return;
       setDot('saving', 'Saving…');
       document.getElementById('autosaveStatus').style.display = 'inline';

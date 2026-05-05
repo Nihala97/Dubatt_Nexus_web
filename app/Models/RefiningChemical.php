@@ -2,6 +2,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class RefiningChemical extends Model
 {
     protected $table = 'refining_chemicals';
@@ -16,8 +17,9 @@ class RefiningChemical extends Model
         'created_by',
         'updated_by',
     ];
+
     public function material(): BelongsTo
     {
-        return $this->belongsTo(Material::class, 'chemical_id');
+        return $this->belongsTo(\App\Models\Material::class, 'chemical_id');
     }
 }

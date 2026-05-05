@@ -581,7 +581,8 @@
 
             <div class="nav-section-label" style="margin-top:8px;">Reports &amp; Dashboard</div>
 
-            <a href="{{ route('admin.reports.materialInward') }}" data-permission="report_material_inward"
+            <a href="{{ route('admin.reports.materialInward') }}" data-label="Material Inward"
+                data-permission="report_material_inward"
                 class="nav-item {{ request()->routeIs('admin.reports.materialInward') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -594,7 +595,8 @@
                 <span>Material Inward</span>
             </a>
 
-            <a href="{{ route('admin.reports.acidTestStatus') }}" data-permission="report_acid_test_status"
+            <a href="{{ route('admin.reports.acidTestStatus') }}" data-label="Acid Test Status"
+                data-permission="report_acid_test_status"
                 class="nav-item {{ request()->routeIs('admin.reports.acidTestStatus') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -604,7 +606,7 @@
                 <span>Acid Test Status</span>
             </a>
 
-            <a href="{{ route('admin.reports.bbsu') }}" data-permission="report_bbsu"
+            <a href="{{ route('admin.reports.bbsu') }}" data-label="BBSU Dashboard" data-permission="report_bbsu"
                 class="nav-item {{ request()->routeIs('admin.reports.bbsu') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -615,6 +617,32 @@
                     <line x1="14" y1="9" x2="14" y2="15"></line>
                 </svg>
                 <span>BBSU Dashboard</span>
+            </a>
+            <a href="{{ route('admin.reports.smeltingDashboard') }}" data-label="Smelting Dashboard"
+                data-permission="report_smelting"
+                class="nav-item {{ request()->routeIs('admin.reports.smeltingDashboard') ? 'active' : '' }}">
+
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2C12 2 7 8 7 12a5 5 0 0 0 10 0c0-4-5-10-5-10z"></path>
+                    <path d="M9 14a3 3 0 0 0 6 0"></path>
+                </svg>
+
+                <span>Smelting Dashboard</span>
+            </a>
+            <a href="{{ route('admin.reports.refiningDashboard') }}" data-label="Refining Dashboard"
+                data-permission="report_refining"
+                class="nav-item {{ request()->routeIs('admin.reports.refiningDashboard') ? 'active' : '' }}">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M12 2a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4z" />
+                </svg>
+                <span>Refining Dashboard</span>
+            </a>
+            <a href="{{ route('admin.reports.user_activity') }}"
+                class="nav-item {{ request()->routeIs('admin.reports.user_activity') ? 'active' : '' }}">
+                <span>User Activity Log</span>
             </a>
 
             <div class="nav-section-label" style="margin-top:8px;">Masters</div>

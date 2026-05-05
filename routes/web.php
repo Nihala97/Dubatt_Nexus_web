@@ -87,6 +87,15 @@ Route::prefix('admin/reports')->name('admin.reports.')->group(function () {
     Route::get('bbsu', [\App\Http\Controllers\Web\ReportWebController::class, 'bbsu'])
         ->name('bbsu');
 
+    Route::get('smelting-dashboard', [\App\Http\Controllers\Web\ReportWebController::class, 'smeltingDashboard'])
+        ->name('smeltingDashboard');
+
+    Route::get('refining-dashboard', [\App\Http\Controllers\Web\ReportWebController::class, 'refiningDashboard'])
+        ->name('refiningDashboard');
+
+    Route::get('user-activity', [\App\Http\Controllers\Web\ReportWebController::class, 'userActivity'])
+        ->name('user_activity');
+
 });
 Route::prefix('admin/settings')->name('admin.settings.')->group(function () {
     Route::get('users', [\App\Http\Controllers\Web\AdminWebController::class, 'users'])->name('users');

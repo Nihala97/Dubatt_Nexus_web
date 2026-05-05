@@ -2,6 +2,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class RefiningRawMaterial extends Model
 {
     protected $table = 'refining_raw_materials';
@@ -18,6 +19,7 @@ class RefiningRawMaterial extends Model
     ];
     public function material(): BelongsTo
     {
-        return $this->belongsTo(Material::class, 'raw_material_id');
+        return $this->belongsTo(\App\Models\Material::class, 'raw_material_id');
     }
+
 }

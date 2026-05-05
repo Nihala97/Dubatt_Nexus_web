@@ -2,6 +2,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 class RefiningFinishedGoodsSummary extends Model
 {
     protected $table = 'refining_finished_goods_summary';
@@ -14,4 +16,9 @@ class RefiningFinishedGoodsSummary extends Model
         'created_by',
         'updated_by',
     ];
+
+    public function material(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Material::class, 'material_id');
+    }
 }

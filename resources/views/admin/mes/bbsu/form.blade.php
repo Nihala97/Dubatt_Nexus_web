@@ -1490,7 +1490,7 @@
                             <td>
                                 <input type="text" class="row-input" id="acid_${idx}"
                                        placeholder="0.000" value="${acid}"
-                                       oninput="recalcTotals(); triggerAutosave();">
+                                       oninput="recalcTotals(); ">
                             </td>
                             <td style="text-align:center;">
                                 <button type="button" class="view-btn" onclick="openLotDetailModal(${idx})" title="View assigned materials">
@@ -1530,7 +1530,7 @@
                 if (!tr) return;
                 tr.style.transition = 'opacity 0.2s';
                 tr.style.opacity = '0';
-                setTimeout(() => { tr.remove(); renumberRows(); recalcTotals(); triggerAutosave(); }, 200);
+                setTimeout(() => { tr.remove(); renumberRows(); recalcTotals();  }, 200);
             }
 
             function renumberRows() {
@@ -1543,7 +1543,7 @@
             function onLotChange(idx) {
                 // acid % is filled after qty assignment from modal, not on lot select
                 recalcTotals();
-                triggerAutosave();
+                
             }
 
             function recalcTotals() {
@@ -1706,7 +1706,7 @@
 
                 recalcTotals();
                 closeQtyModal();
-                triggerAutosave();
+                
             }
 
             function closeQtyModal() {
@@ -1858,7 +1858,7 @@
                             <tr>
                                 <td class="mat-name">${getOutputLabel(mat.code)}</td>
                                 <td><input type="number" class="out-input" id="out_qty_${mat.key}"
-                                           placeholder="0.00" step="0.0001" oninput="calcOutputTotal(); triggerAutosave();"></td>
+                                           placeholder="0.00" step="0.0001" oninput="calcOutputTotal(); "></td>
                                 <td><input type="number" class="out-input" id="out_yield_${mat.key}"
                                            placeholder="0.00" readonly
                                            style="background:#eef6f1;color:var(--green);font-weight:600;cursor:default;"></td>
@@ -1915,7 +1915,7 @@
                 const final_ = parseFloat(document.getElementById('power_final').value) || 0;
                 document.getElementById('power_consumption').value =
                     final_ >= initial ? (final_ - initial).toFixed(2) : '';
-                triggerAutosave();
+                
             }
 
             // ─── Collect Payload ─────────────────────────────────────────────
@@ -2105,7 +2105,7 @@
             }
 
             // ─── Autosave (edit/draft only) — silent background save ─────────
-            function triggerAutosave() {
+            function triggerAutosave() { return;
                 if (isCreate || isLocked || !currentBatchId) return;
                 clearTimeout(autosaveTimer);
                 // autosaveTimer = setTimeout(() => saveForm(true), 2500);

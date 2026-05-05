@@ -256,6 +256,29 @@ Route::middleware('auth:sanctum')->group(function () {
                ->middleware('module:report_bbsu')
                ->name('bbsu.drilldown');
 
+          Route::get('smelting/dashboard', [\App\Http\Controllers\Api\ReportController::class, 'smeltingDashboard'])
+               ->name('smelting.dashboard');
+
+          Route::get('smelting/yield', [\App\Http\Controllers\Api\ReportController::class, 'smeltingYieldDrilldown'])
+               ->name('smelting.yield');
+
+          Route::get('smelting/report', [\App\Http\Controllers\Api\ReportController::class, 'smeltingReport'])
+               ->name('smelting.report');
+
+          Route::get('smelting/filters', [\App\Http\Controllers\Api\ReportController::class, 'smeltingReportFilters'])
+               ->name('smelting.filters');
+
+          Route::get('refining/dashboard', [\App\Http\Controllers\Api\ReportController::class, 'refiningDashboard'])
+               ->name('refining.dashboard');
+
+          Route::get('refining/report', [\App\Http\Controllers\Api\ReportController::class, 'refiningReport'])
+               ->name('refining.report');
+
+          Route::get('refining/filters', [\App\Http\Controllers\Api\ReportController::class, 'refiningReportFilters'])
+               ->name('refining.filters');
+          Route::get('user-activity', [\App\Http\Controllers\Api\ReportController::class, 'userActivityReport'])
+               ->name('userActivity');
+
      });
      Route::prefix('admin')->name('admin.')->group(function () {
 
