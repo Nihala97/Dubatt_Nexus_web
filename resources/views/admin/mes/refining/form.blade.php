@@ -1271,7 +1271,7 @@
                             <circle cx="12" cy="12" r="3" />
                             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
                         </svg>
-                        <input type="text" id="pot_no" placeholder="e.g. POT-A1" oninput="triggerAutosave()">
+                        <input type="text" id="pot_no" placeholder="e.g. POT-A1">
                     </div>
                 </div>
                 <div class="field">
@@ -1288,7 +1288,7 @@
                                 <polyline points="6 9 12 15 18 9" />
                             </svg>
                         </div>
-                        <input type="hidden" id="material_id" onchange="triggerAutosave()">
+                        <input type="hidden" id="material_id">
                     </div>
                 </div>
                 <div class="field">
@@ -1300,7 +1300,7 @@
                             <line x1="8" y1="2" x2="8" y2="6" />
                             <line x1="3" y1="10" x2="21" y2="10" />
                         </svg>
-                        <input type="date" id="date" onchange="triggerAutosave()">
+                        <input type="date" id="date">
                     </div>
                 </div>
             </div>
@@ -1565,7 +1565,7 @@
                                     <line x1="22" y1="12" x2="2" y2="12" />
                                 </svg>
                                 <input type="number" id="lpg_initial" step="0.001" placeholder="0.000"
-                                    oninput="calcConsumption('lpg');triggerAutosave()">
+                                    oninput="calcConsumption('lpg')">
                             </div>
                         </td>
 
@@ -1590,7 +1590,7 @@
                                     <line x1="22" y1="12" x2="2" y2="12" />
                                 </svg>
                                 <input type="number" id="lpg2_initial" step="0.001" placeholder="0.000"
-                                    oninput="calcConsumption('lpg2');triggerAutosave()">
+                                    oninput="calcConsumption('lpg2')">
                             </div>
                         </td>
 
@@ -1615,7 +1615,7 @@
                                     <line x1="22" y1="12" x2="2" y2="12" />
                                 </svg>
                                 <input type="number" id="electricity_initial" step="0.001" placeholder="0.000"
-                                    oninput="calcConsumption('electricity');triggerAutosave()">
+                                    oninput="calcConsumption('electricity')">
                             </div>
                         </td>
 
@@ -1633,7 +1633,7 @@
                                             <path d="M12 2v20M2 12h20" />
                                         </svg>
                                         <input type="number" id="oxygen_flow_nm3" step="0.001" placeholder="0.000"
-                                            oninput="calcOxygen();triggerAutosave()">
+                                            oninput="calcOxygen()">
                                     </div>
                                 </div>
                                 <div>
@@ -1670,7 +1670,7 @@
                                     <line x1="22" y1="12" x2="2" y2="12" />
                                 </svg>
                                 <input type="number" id="lpg_final" step="0.001" placeholder="0.000"
-                                    oninput="calcConsumption('lpg');triggerAutosave()">
+                                    oninput="calcConsumption('lpg')">
                             </div>
                         </td>
 
@@ -1695,7 +1695,7 @@
                                     <line x1="22" y1="12" x2="2" y2="12" />
                                 </svg>
                                 <input type="number" id="lpg2_final" step="0.001" placeholder="0.000"
-                                    oninput="calcConsumption('lpg2');triggerAutosave()">
+                                    oninput="calcConsumption('lpg2')">
                             </div>
                         </td>
 
@@ -1720,7 +1720,7 @@
                                     <line x1="22" y1="12" x2="2" y2="12" />
                                 </svg>
                                 <input type="number" id="electricity_final" step="0.001" placeholder="0.000"
-                                    oninput="calcConsumption('electricity');triggerAutosave()">
+                                    oninput="calcConsumption('electricity')">
                             </div>
                         </td>
 
@@ -1738,7 +1738,7 @@
                                         <polyline points="12 6 12 12 16 14" />
                                     </svg>
                                     <input type="number" id="oxygen_flow_time" step="0.001" placeholder="0.000"
-                                        oninput="calcOxygen();triggerAutosave()">
+                                        oninput="calcOxygen()">
                                 </div>
                             </div>
                         </td>
@@ -1995,7 +1995,7 @@
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                     </svg>
                     <textarea id="remarks" rows="3" placeholder="Enter any remarks or notes about this batch…"
-                        style="padding-top:10px;resize:vertical;min-height:70px" oninput="triggerAutosave()"></textarea>
+                        style="padding-top:10px;resize:vertical;min-height:70px"></textarea>
                 </div>
             </div>
         </div>
@@ -2039,15 +2039,16 @@
         const recordId = isCreate ? null : PATH[PATH.length - 2];
 
         let isSubmitted = false;
+        let _loadingRecord = false; // FIX: suppress material-change events during record load
+
         let rawRowCount = 0, chemRowCount = 0, procRowCount = 0, fgRowCount = 0, drossRowCount = 0;
         let autosaveTimer;
-        let itemsList = [];  // all materials from DB
-        let processNames = [];  // from API
+        let itemsList = [];
+        let processNames = [];
         let outputModal = { type: null, rowIndex: null, blocks: [] };
         const OUTPUT_MAX_ROWS = 11;
 
-        // ── Smelting lot modal state ──────────────────────────────────
-        let smtModal = { type: null, rowIndex: null }; // type: 'raw'|'chem'
+        let smtModal = { type: null, rowIndex: null };
 
         // ════════════════════════════════════════════════════════════════
         // INIT
@@ -2100,11 +2101,10 @@
         }
 
         // ════════════════════════════════════════════════════════════════
-        // SEARCHABLE DROPDOWN ENGINE — Portal / fixed positioning
-        // Works inside overflow:hidden tables. One shared panel for all.
+        // SDD ENGINE
         // ════════════════════════════════════════════════════════════════
-        const sddRegistry = {};   // fieldId -> { items, selected }
-        let sddActiveField = null; // currently open fieldId
+        const sddRegistry = {};
+        let sddActiveField = null;
 
         function sddRegister(fieldId, items, selectedValue = null) {
             sddRegistry[fieldId] = { items, selected: null };
@@ -2134,10 +2134,8 @@
                 : null;
             sddRegistry[fieldId].selected = item || null;
             sddUpdateTrigger(fieldId);
-
             const hidden = document.getElementById(fieldId);
             if (hidden && triggerChange) hidden.dispatchEvent(new Event('change'));
-
             sddClosePortal();
         }
 
@@ -2156,33 +2154,24 @@
         function sddOpenPortal(fieldId) {
             const trigger = document.querySelector(`#sdd_${fieldId} .sdd-trigger`);
             if (!trigger || !sddRegistry[fieldId]) return;
-
             sddActiveField = fieldId;
-
-            // Mark trigger open
             document.querySelectorAll('.sdd.open').forEach(el => el.classList.remove('open'));
             document.getElementById(`sdd_${fieldId}`)?.classList.add('open');
 
-            // Position portal under trigger using fixed coords
             const portal = document.getElementById('sddPortal');
             const rect = trigger.getBoundingClientRect();
             const viewW = window.innerWidth;
             const viewH = window.innerHeight;
 
-            portal.style.top = '';
-            portal.style.bottom = '';
-            portal.style.left = '';
-            portal.style.right = '';
+            portal.style.top = ''; portal.style.bottom = '';
+            portal.style.left = ''; portal.style.right = '';
             portal.style.width = Math.max(rect.width, 240) + 'px';
 
-            // position:fixed uses viewport coords — NO scrollX/Y offset needed
-            // Horizontal: align with trigger left, clamp so it doesn't overflow right edge
             let left = rect.left;
             const portalW = Math.max(rect.width, 240);
             if (left + portalW > viewW - 8) left = Math.max(8, viewW - portalW - 8);
             portal.style.left = left + 'px';
 
-            // Vertical: below trigger if enough space, otherwise above
             const spaceBelow = viewH - rect.bottom;
             const spaceAbove = rect.top;
             if (spaceBelow >= 200 || spaceBelow >= spaceAbove) {
@@ -2191,11 +2180,8 @@
                 portal.style.bottom = (viewH - rect.top + 4) + 'px';
             }
 
-            // Populate list
             sddPortalRender('');
             portal.classList.add('visible');
-
-            // Focus search
             const search = document.getElementById('sddPortalSearch');
             if (search) { search.value = ''; setTimeout(() => search.focus(), 40); }
         }
@@ -2214,31 +2200,21 @@
             const current = sddRegistry[sddActiveField].selected?.value ?? '';
             const list = document.getElementById('sddPortalList');
             if (!list) return;
-
-            if (!filtered.length) {
-                list.innerHTML = '<div class="sdd-empty">No results found</div>';
-                return;
-            }
+            if (!filtered.length) { list.innerHTML = '<div class="sdd-empty">No results found</div>'; return; }
             list.innerHTML = filtered.map(item => {
                 const sel = String(item.value) === String(current);
                 return `<div class="sdd-item${sel ? ' selected' : ''}" onclick="sddSelect('${sddActiveField}','${item.value}')">
-                                                              <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                                                              <span>${item.label}</span>
-                                                            </div>`;
+                        <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span>${item.label}</span>
+                    </div>`;
             }).join('');
         }
 
         function sddPortalFilter(query) { sddPortalRender(query); }
+        function sddPortalKeydown(e) { if (e.key === 'Escape') sddClosePortal(); }
 
-        function sddPortalKeydown(e) {
-            if (e.key === 'Escape') { sddClosePortal(); }
-        }
-
-        // Close on outside click / scroll
         document.addEventListener('click', e => {
-            if (!e.target.closest('.sdd') && !e.target.closest('#sddPortal')) {
-                sddClosePortal();
-            }
+            if (!e.target.closest('.sdd') && !e.target.closest('#sddPortal')) sddClosePortal();
         });
         document.addEventListener('scroll', () => {
             if (sddActiveField) {
@@ -2246,14 +2222,12 @@
                 if (trigger) {
                     const rect = trigger.getBoundingClientRect();
                     const portal = document.getElementById('sddPortal');
-                    // position:fixed — viewport coords only, no scrollY
                     portal.style.top = (rect.bottom + 4) + 'px';
                     portal.style.left = rect.left + 'px';
                 }
             }
         }, true);
 
-        // ── Material / Process helpers (now using sdd) ─────────────────
         function buildMaterialDropdown(fieldId, selectedId = null) {
             const items = itemsList.map(i => ({ value: String(i.id), label: i.name ?? i.secondary_name ?? '' }));
             sddRegister(fieldId, items, selectedId ? String(selectedId) : null);
@@ -2269,19 +2243,23 @@
             sddRegister(fieldId, items, selectedVal || null);
         }
 
-        // Keep these for payload building — they now read hidden inputs
-        function getMaterialOptions() { return ''; } // unused — kept for compat
-        function getProcessOptions() { return ''; } // unused — kept for compat
+        function getMaterialOptions() { return ''; }
+        function getProcessOptions() { return ''; }
 
         // ════════════════════════════════════════════════════════════════
-        // LOAD RECORD (edit mode)
+        // LOAD RECORD — FIX 1 (integer status) + FIX 2 (_loadingRecord)
         // ════════════════════════════════════════════════════════════════
         async function loadRecord() {
             const res = await apiFetch(`/refining/${recordId}`);
             if (!res?.ok) { showAlert('Failed to load record.'); return; }
             const { data } = await res.json();
 
-            isSubmitted = data.status === 'submitted';
+            // FIX 1: backend stores status as integer 1, not string 'submitted'
+            isSubmitted = (data.status === 'submitted' || Number(data.status) >= 1);
+
+            // FIX 2: set flag BEFORE adding any rows so onFGMaterialChange /
+            // onDrossMaterialChange do NOT clear outputModal.blocks during load
+            _loadingRecord = true;
 
             document.getElementById('batch_no').value = data.batch_no ?? '';
             document.getElementById('pot_no').value = data.pot_no ?? '';
@@ -2293,8 +2271,6 @@
             document.getElementById('lpg_final').value = data.lpg_final ?? '';
             document.getElementById('lpg2_initial').value = data.lpg2_initial ?? '';
             document.getElementById('lpg2_final').value = data.lpg2_final ?? '';
-            // then recalc:
-
             document.getElementById('electricity_initial').value = data.electricity_initial ?? '';
             document.getElementById('electricity_final').value = data.electricity_final ?? '';
             document.getElementById('oxygen_flow_nm3').value = data.oxygen_flow_nm3 ?? '';
@@ -2318,13 +2294,40 @@
             (data.process_details ?? []).forEach(p => addProcessRow(p));
             if (!data.process_details?.length) addProcessRow();
 
-            (data.finished_goods_summary ?? []).forEach(fg => addFGRow(fg));
+            // Build per-material block lookup from flat blocks arrays
+            const fgBlocksByMat = {};
+            (data.finished_goods_blocks ?? []).forEach(b => {
+                const key = String(b.material_id);
+                if (!fgBlocksByMat[key]) fgBlocksByMat[key] = [];
+                // handle both field names: block_weight (DB) or qty (transformed)
+                fgBlocksByMat[key].push({ qty: parseFloat(b.block_weight ?? b.qty ?? 0) || 0 });
+            });
+
+            const drossBlocksByMat = {};
+            (data.dross_blocks ?? []).forEach(b => {
+                const key = String(b.material_id);
+                if (!drossBlocksByMat[key]) drossBlocksByMat[key] = [];
+                drossBlocksByMat[key].push({ qty: parseFloat(b.block_weight ?? b.qty ?? 0) || 0 });
+            });
+
+            // Pass restored blocks into addFGRow — dataset is populated from DB
+            (data.finished_goods_summary ?? []).forEach(fg => {
+                const blocks = fgBlocksByMat[String(fg.material_id)] ?? [];
+                addFGRow({ ...fg, output_blocks: blocks });
+            });
             if (!data.finished_goods_summary?.length) addFGRow();
             recalcFGTotals();
 
-            (data.dross_summary ?? []).forEach(dr => addDrossRow(dr));
+            // Pass restored blocks into addDrossRow
+            (data.dross_summary ?? []).forEach(dr => {
+                const blocks = drossBlocksByMat[String(dr.material_id)] ?? [];
+                addDrossRow({ ...dr, output_blocks: blocks });
+            });
             if (!data.dross_summary?.length) addDrossRow();
             recalcDrossTotals();
+
+            // FIX 2: clear flag — all rows/SDDs are now set up
+            _loadingRecord = false;
 
             document.getElementById('pageTitle').textContent = 'Edit Refining Batch';
             document.getElementById('pageSubtitle').textContent = `Batch: ${data.batch_no}`;
@@ -2355,32 +2358,31 @@
             tr.dataset.rowIndex = i;
             tr.dataset.smtSelections = data.smelting_selections ? JSON.stringify(data.smelting_selections) : '';
             tr.innerHTML = `
-                                                            <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-                                                            <td style="position:relative;min-width:160px">
-                                                              <div class="sdd" id="sdd_rm_id_${i}">
-                                                                <div class="sdd-trigger" onclick="toggleSdd('rm_id_'+${i})">
-                                                                  <span class="sdd-trigger-text placeholder" id="sdd_rm_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                                                                  <svg class="sdd-clear" onclick="clearSdd('rm_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                                                                  <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                                                                </div>
-                                                                <input type="hidden" id="rm_id_${i}" onchange="onRawMaterialChange(${i});triggerAutosave()">
-                                                              </div>
-                                                            </td>
-                                                            <td>
-                                                              <input type="number" class="ri" id="rm_qty_${i}"
-                                                                value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
-                                                                onclick="onRawQtyClick(${i})" onfocus="onRawQtyFocus(${i})"
-                                                                oninput="recalcRawTotals();triggerAutosave()"
-                                                                style="min-width:90px;cursor:pointer" title="Click to assign from smelting batch">
-                                                              <input type="hidden" id="rm_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
-                                                              <input type="hidden" id="rm_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
-                                                            </td>
-                                                            <td><button class="del-btn" onclick="removeRow('rrow-${i}',recalcRawTotals)" title="Remove">
-                                                              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                                                            </button></td>`;
+                    <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                    <td style="position:relative;min-width:160px">
+                      <div class="sdd" id="sdd_rm_id_${i}">
+                        <div class="sdd-trigger" onclick="toggleSdd('rm_id_'+${i})">
+                          <span class="sdd-trigger-text placeholder" id="sdd_rm_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                          <svg class="sdd-clear" onclick="clearSdd('rm_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                        <input type="hidden" id="rm_id_${i}" onchange="onRawMaterialChange(${i})">
+                      </div>
+                    </td>
+                    <td>
+                      <input type="number" class="ri" id="rm_qty_${i}"
+                        value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
+                        onclick="onRawQtyClick(${i})" onfocus="onRawQtyFocus(${i})"
+                        oninput="recalcRawTotals()"
+                        style="min-width:90px;cursor:pointer" title="Click to assign from smelting batch">
+                      <input type="hidden" id="rm_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
+                      <input type="hidden" id="rm_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
+                    </td>
+                    <td><button class="del-btn" onclick="removeRow('rrow-${i}',recalcRawTotals)" title="Remove">
+                      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
-            // init searchable dropdown after DOM insertion
             initMaterialSdd(`rm_id_${i}`, data.raw_material_id ?? null);
         }
 
@@ -2416,29 +2418,29 @@
             tr.dataset.rowIndex = i;
             tr.dataset.smtSelections = data.smelting_selections ? JSON.stringify(data.smelting_selections) : '';
             tr.innerHTML = `
-                                                            <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-                                                            <td style="position:relative;min-width:160px">
-                                                              <div class="sdd" id="sdd_ch_id_${i}">
-                                                                <div class="sdd-trigger" onclick="toggleSdd('ch_id_'+${i})">
-                                                                  <span class="sdd-trigger-text placeholder" id="sdd_ch_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                                                                  <svg class="sdd-clear" onclick="clearSdd('ch_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                                                                  <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                                                                </div>
-                                                                <input type="hidden" id="ch_id_${i}" onchange="onChemMaterialChange(${i});triggerAutosave()">
-                                                              </div>
-                                                            </td>
-                                                            <td>
-                                                              <input type="number" class="ri" id="ch_qty_${i}"
-                                                                value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
-                                                                onclick="onChemQtyClick(${i})" onfocus="onChemQtyFocus(${i})"
-                                                                oninput="recalcChemTotals();triggerAutosave()"
-                                                                style="min-width:90px;cursor:pointer" title="Click to assign from smelting batch">
-                                                              <input type="hidden" id="ch_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
-                                                              <input type="hidden" id="ch_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
-                                                            </td>
-                                                            <td><button class="del-btn" onclick="removeRow('crow-${i}',recalcChemTotals)" title="Remove">
-                                                              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                                                            </button></td>`;
+                    <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                    <td style="position:relative;min-width:160px">
+                      <div class="sdd" id="sdd_ch_id_${i}">
+                        <div class="sdd-trigger" onclick="toggleSdd('ch_id_'+${i})">
+                          <span class="sdd-trigger-text placeholder" id="sdd_ch_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                          <svg class="sdd-clear" onclick="clearSdd('ch_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                        <input type="hidden" id="ch_id_${i}" onchange="onChemMaterialChange(${i})">
+                      </div>
+                    </td>
+                    <td>
+                      <input type="number" class="ri" id="ch_qty_${i}"
+                        value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
+                        onclick="onChemQtyClick(${i})" onfocus="onChemQtyFocus(${i})"
+                        oninput="recalcChemTotals()"
+                        style="min-width:90px;cursor:pointer" title="Click to assign from smelting batch">
+                      <input type="hidden" id="ch_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
+                      <input type="hidden" id="ch_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
+                    </td>
+                    <td><button class="del-btn" onclick="removeRow('crow-${i}',recalcChemTotals)" title="Remove">
+                      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initMaterialSdd(`ch_id_${i}`, data.chemical_id ?? null);
@@ -2465,19 +2467,17 @@
         }
 
         // ════════════════════════════════════════════════════════════════
-        // SMELTING LOT MODAL (shared for raw + chem)
+        // SMELTING LOT MODAL
         // ════════════════════════════════════════════════════════════════
         function openSmtModal(type, rowIndex) {
             const prefix = type === 'raw' ? 'rm' : 'ch';
             const matId = document.getElementById(`${prefix}_id_${rowIndex}`)?.value;
             if (!matId) return;
-
             smtModal = { type, rowIndex };
             const matName = sddRegistry[`${prefix}_id_${rowIndex}`]?.selected?.label ?? '';
             document.getElementById('smtModalTitle').textContent = `Select Smelting Batch — ${matName}`;
-            document.getElementById('smtModalSubtitle').textContent = 'Enter quantity to assign from each smelting batch. Total fills the QTY field.';
+            document.getElementById('smtModalSubtitle').textContent = 'Enter quantity to assign from each smelting batch.';
             document.getElementById('smtConfirmBtn').disabled = true;
-
             document.getElementById('smtLotModal').classList.add('open');
             document.body.style.overflow = 'hidden';
             loadSmtLots(matId);
@@ -2497,10 +2497,8 @@
             const tbody = document.getElementById('smtLotTbody');
             const tfoot = document.getElementById('smtLotTfoot');
 
-            loading.style.display = 'block';
-            empty.style.display = 'none';
-            scroll.style.display = 'none';
-            tfoot.style.display = 'none';
+            loading.style.display = 'block'; empty.style.display = 'none';
+            scroll.style.display = 'none'; tfoot.style.display = 'none';
             tbody.innerHTML = '';
             document.getElementById('smtTotalAssign').textContent = '0.000';
             document.getElementById('smtConfirmBtn').disabled = true;
@@ -2512,11 +2510,9 @@
             if (!res || !res.ok) { empty.style.display = 'block'; return; }
             const json = await res.json();
             const lots = json.data ?? [];
-
             if (!lots.length) { empty.style.display = 'block'; return; }
 
-            scroll.style.display = 'block';
-            tfoot.style.display = '';
+            scroll.style.display = 'block'; tfoot.style.display = '';
 
             lots.forEach(lot => {
                 const pillClass = lot.available_qty <= 0 ? 'avail-zero'
@@ -2526,17 +2522,17 @@
                 tr.dataset.smtNo = lot.batch_no;
                 tr.dataset.availableQty = lot.available_qty;
                 tr.innerHTML = `
-                                                              <td><span class="smt-tag">${lot.batch_no}</span></td>
-                                                              <td style="font-size:12.5px;font-weight:600">${lot.secondary_name}</td>
-                                                              <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
-                                                              <td><span class="lot-table avail-pill ${pillClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
-                                                              <td>
-                                                                <input type="number" class="assign-input" id="smt_assign_${lot.smelting_batch_id}"
-                                                                  placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
-                                                                  ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
-                                                                  oninput="onSmtAssignInput(${lot.smelting_batch_id}, ${lot.available_qty})"
-                                                                  onclick="event.stopPropagation()">
-                                                              </td>`;
+                        <td><span class="smt-tag">${lot.batch_no}</span></td>
+                        <td style="font-size:12.5px;font-weight:600">${lot.secondary_name}</td>
+                        <td style="font-weight:600;color:var(--txtm)">${lot.material_unit ?? 'KG'}</td>
+                        <td><span class="lot-table avail-pill ${pillClass}">${Number(lot.available_qty).toFixed(3)}</span></td>
+                        <td>
+                          <input type="number" class="assign-input" id="smt_assign_${lot.smelting_batch_id}"
+                            placeholder="0.000" step="0.001" min="0.001" max="${lot.available_qty}"
+                            ${lot.available_qty <= 0 ? 'disabled title="No available quantity"' : ''}
+                            oninput="onSmtAssignInput(${lot.smelting_batch_id}, ${lot.available_qty})"
+                            onclick="event.stopPropagation()">
+                        </td>`;
                 tr.addEventListener('click', e => {
                     if (e.target.tagName === 'INPUT') return;
                     const inp = document.getElementById(`smt_assign_${lot.smelting_batch_id}`);
@@ -2571,8 +2567,8 @@
             if (!type || !rowIndex) return;
             const prefix = type === 'raw' ? 'rm' : 'ch';
             const qtyFieldId = type === 'raw' ? `rm_qty_${rowIndex}` : `ch_qty_${rowIndex}`;
-
             const selections = [];
+
             document.querySelectorAll('#smtLotTbody tr').forEach(tr => {
                 const smtId = tr.dataset.smtId;
                 const smtNo = tr.dataset.smtNo;
@@ -2583,11 +2579,8 @@
             if (!selections.length) return;
 
             const totalQty = selections.reduce((s, r) => s + r.qty, 0);
-            const ids = selections.map(r => r.smtId).join(',');
-            const nos = selections.map(r => r.smtNo).join(',');
-
-            document.getElementById(`${prefix}_smt_id_${rowIndex}`).value = ids;
-            document.getElementById(`${prefix}_smt_no_${rowIndex}`).value = nos;
+            document.getElementById(`${prefix}_smt_id_${rowIndex}`).value = selections.map(r => r.smtId).join(',');
+            document.getElementById(`${prefix}_smt_no_${rowIndex}`).value = selections.map(r => r.smtNo).join(',');
 
             const tr = document.getElementById(type === 'raw' ? `rrow-${rowIndex}` : `crow-${rowIndex}`);
             if (tr) tr.dataset.smtSelections = JSON.stringify(selections);
@@ -2597,11 +2590,9 @@
                 qtyInput.value = totalQty.toFixed(3);
                 qtyInput.title = 'SMT: ' + selections.map(r => `${r.smtNo} (${r.qty} KG)`).join(', ');
                 qtyInput.style.borderColor = 'var(--g)';
-                if (type === 'raw') recalcRawTotals();
-                else recalcChemTotals();
+                if (type === 'raw') recalcRawTotals(); else recalcChemTotals();
             }
 
-            triggerAutosave();
             document.getElementById('smtLotModal').classList.remove('open');
             document.body.style.overflow = '';
             smtModal = { type: null, rowIndex: null };
@@ -2617,7 +2608,6 @@
             if (qtyEl) { qtyEl.title = 'Click to assign from smelting batch'; qtyEl.style.borderColor = ''; }
             const tr = document.getElementById(type === 'raw' ? `rrow-${i}` : `crow-${i}`);
             if (tr) tr.dataset.smtSelections = '';
-            triggerAutosave();
         }
 
         // ════════════════════════════════════════════════════════════════
@@ -2631,29 +2621,29 @@
             tr.id = `prow-${i}`;
             tr.dataset.rowIndex = i;
             tr.innerHTML = `
-                                                            <td style="position:relative;min-width:160px">
-                                                              <div class="sdd" id="sdd_proc_name_${i}">
-                                                                <div class="sdd-trigger" onclick="toggleSdd('proc_name_'+${i})">
-                                                                  <span class="sdd-trigger-text placeholder" id="sdd_proc_name_${i}_label" data-placeholder="Select process…">Select process…</span>
-                                                                  <svg class="sdd-clear" onclick="clearSdd('proc_name_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                                                                  <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                                                                </div>
-                                                                <input type="hidden" id="proc_name_${i}" onchange="triggerAutosave()">
-                                                              </div>
-                                                            </td>
-                                                            <td><button class="proc-btn proc-start" onclick="setProcTime(${i},'start')">START</button></td>
-                                                            <td style="padding:4px 4px"><input type="time" class="ri" id="proc_start_${i}"
-                                                              value="${data.start_time ? data.start_time.slice(11, 16) : ''}"
-                                                              oninput="calcProcTime(${i});triggerAutosave()" style="min-width:90px"></td>
-                                                            <td><button class="proc-btn proc-end" onclick="setProcTime(${i},'end')">END</button></td>
-                                                            <td style="padding:4px 4px"><input type="time" class="ri" id="proc_end_${i}"
-                                                              value="${data.end_time ? data.end_time.slice(11, 16) : ''}"
-                                                              oninput="calcProcTime(${i});triggerAutosave()" style="min-width:90px"></td>
-                                                            <td><input type="text" class="ri ro" id="proc_total_${i}" readonly placeholder="0 min"
-                                                              style="min-width:70px;font-weight:700;color:var(--g);background:var(--gxl)"></td>
-                                                            <td><button class="del-btn" onclick="removeRow('prow-${i}',calcTotalProcessTime)" title="Remove">
-                                                              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                                                            </button></td>`;
+                    <td style="position:relative;min-width:160px">
+                      <div class="sdd" id="sdd_proc_name_${i}">
+                        <div class="sdd-trigger" onclick="toggleSdd('proc_name_'+${i})">
+                          <span class="sdd-trigger-text placeholder" id="sdd_proc_name_${i}_label" data-placeholder="Select process…">Select process…</span>
+                          <svg class="sdd-clear" onclick="clearSdd('proc_name_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                        <input type="hidden" id="proc_name_${i}">
+                      </div>
+                    </td>
+                    <td><button class="proc-btn proc-start" onclick="setProcTime(${i},'start')">START</button></td>
+                    <td style="padding:4px 4px"><input type="time" class="ri" id="proc_start_${i}"
+                      value="${data.start_time ? data.start_time.slice(11, 16) : ''}"
+                      oninput="calcProcTime(${i})" style="min-width:90px"></td>
+                    <td><button class="proc-btn proc-end" onclick="setProcTime(${i},'end')">END</button></td>
+                    <td style="padding:4px 4px"><input type="time" class="ri" id="proc_end_${i}"
+                      value="${data.end_time ? data.end_time.slice(11, 16) : ''}"
+                      oninput="calcProcTime(${i})" style="min-width:90px"></td>
+                    <td><input type="text" class="ri ro" id="proc_total_${i}" readonly placeholder="0 min"
+                      style="min-width:70px;font-weight:700;color:var(--g);background:var(--gxl)"></td>
+                    <td><button class="del-btn" onclick="removeRow('prow-${i}',calcTotalProcessTime)" title="Remove">
+                      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initProcessSdd(`proc_name_${i}`, data.refining_process ?? '');
@@ -2664,69 +2654,52 @@
             const now = new Date();
             const t = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
             document.getElementById(`proc_${which}_${i}`).value = t;
-            calcProcTime(i); triggerAutosave();
+            calcProcTime(i);
         }
 
         function calcProcTime(i) {
             const s = document.getElementById(`proc_start_${i}`)?.value;
             const e = document.getElementById(`proc_end_${i}`)?.value;
             const el = document.getElementById(`proc_total_${i}`);
-
             if (s && e) {
                 const [sh, sm] = s.split(':').map(Number);
                 const [eh, em] = e.split(':').map(Number);
-
                 let mins = (eh * 60 + em) - (sh * 60 + sm);
-                if (mins < 0) mins += 1440; // handle midnight crossing
-
-                const hours = Math.floor(mins / 60);
-                const remainingMins = mins % 60;
-
+                if (mins < 0) mins += 1440;
+                const hours = Math.floor(mins / 60), rem = mins % 60;
                 let display = '';
                 if (hours > 0) display += hours + ' hr ';
-                if (remainingMins > 0) display += remainingMins + ' min';
-                if (display === '') display = '0 min';
-
+                if (rem > 0) display += rem + ' min';
+                if (!display) display = '0 min';
                 el.value = display.trim();
-                el.dataset.mins = mins;   // keep minutes for backend
-                el.dataset.hours = (mins / 60).toFixed(2); // optional decimal hours
+                el.dataset.mins = mins;
+                el.dataset.hours = (mins / 60).toFixed(2);
             } else {
                 el.value = '';
                 el.dataset.mins = 0;
                 el.dataset.hours = 0;
             }
-
             calcTotalProcessTime();
         }
 
         function calcTotalProcessTime() {
             let totalMins = 0;
-
             document.querySelectorAll('#procBody tr').forEach(tr => {
                 const i = tr.dataset.rowIndex;
-                totalMins += parseInt(
-                    document.getElementById(`proc_total_${i}`)?.dataset.mins ?? 0
-                );
+                totalMins += parseInt(document.getElementById(`proc_total_${i}`)?.dataset.mins ?? 0);
             });
-
             const el = document.getElementById('totalProcessTime');
-
             if (el && totalMins > 0) {
-                const hours = Math.floor(totalMins / 60);
-                const mins = totalMins % 60;
-
-                let display = '';
-                if (hours > 0) display += hours + ' hr ';
-                if (mins > 0) display += mins + ' min';
-
-                el.value = display.trim();
-            } else if (el) {
-                el.value = '';
-            }
+                const h = Math.floor(totalMins / 60), m = totalMins % 60;
+                let d = '';
+                if (h > 0) d += h + ' hr ';
+                if (m > 0) d += m + ' min';
+                el.value = d.trim();
+            } else if (el) { el.value = ''; }
         }
 
         // ════════════════════════════════════════════════════════════════
-        // FINISHED GOODS TABLE
+        // FINISHED GOODS TABLE — blocks restored from DB via _loadingRecord
         // ════════════════════════════════════════════════════════════════
         function addFGRow(data = {}) {
             fgRowCount++;
@@ -2735,38 +2708,44 @@
             const tr = document.createElement('tr');
             tr.id = `fgrow-${i}`;
             tr.dataset.rowIndex = i;
-            tr.dataset.outputBlocks = data.output_blocks ? JSON.stringify(data.output_blocks) : '';
+
+            // Restore blocks array passed from loadRecord()
+            const blocks = Array.isArray(data.output_blocks) ? data.output_blocks : [];
+            tr.dataset.outputBlocks = blocks.length ? JSON.stringify(blocks) : '';
+
             tr.innerHTML = `
-                                                            <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-                                                            <td style="position:relative;min-width:160px">
-                                                              <div class="sdd" id="sdd_fg_id_${i}">
-                                                                <div class="sdd-trigger" onclick="toggleSdd('fg_id_'+${i})">
-                                                                  <span class="sdd-trigger-text placeholder" id="sdd_fg_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                                                                  <svg class="sdd-clear" onclick="clearSdd('fg_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                                                                  <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                                                                </div>
-                                                                <input type="hidden" id="fg_id_${i}" onchange="onFGMaterialChange(${i});triggerAutosave()">
-                                                              </div>
-                                                            </td>
-                                                            <td>
-                                                              <input type="number" class="ri" id="fg_qty_${i}"
-                                                                value="${data.total_qty ?? ''}" step="0.001" placeholder="Click to enter blocks…"
-                                                                onclick="openOutputModal('fg', ${i})" readonly
-                                                                style="min-width:90px;cursor:pointer;background:var(--gxl)" title="Click to enter block weights">
-                                                            </td>
-                                                            <td><button class="del-btn" onclick="removeRow('fgrow-${i}',recalcFGTotals)" title="Remove">
-                                                              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                                                            </button></td>`;
+                    <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                    <td style="position:relative;min-width:160px">
+                      <div class="sdd" id="sdd_fg_id_${i}">
+                        <div class="sdd-trigger" onclick="toggleSdd('fg_id_'+${i})">
+                          <span class="sdd-trigger-text placeholder" id="sdd_fg_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                          <svg class="sdd-clear" onclick="clearSdd('fg_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                        <input type="hidden" id="fg_id_${i}" onchange="onFGMaterialChange(${i})">
+                      </div>
+                    </td>
+                    <td>
+                      <input type="number" class="ri" id="fg_qty_${i}"
+                        value="${data.total_qty ?? ''}" step="0.001" placeholder="Click to enter blocks…"
+                        onclick="openOutputModal('fg', ${i})" readonly
+                        style="min-width:90px;cursor:pointer;background:var(--gxl)" title="Click to enter block weights">
+                    </td>
+                    <td><button class="del-btn" onclick="removeRow('fgrow-${i}',recalcFGTotals)" title="Remove">
+                      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initMaterialSdd(`fg_id_${i}`, data.material_id ?? null);
         }
 
+        // FIX: guard with _loadingRecord so blocks are not cleared during load
         function onFGMaterialChange(i) {
+            if (_loadingRecord) return;
             document.getElementById(`fg_qty_${i}`).value = '';
             const tr = document.getElementById(`fgrow-${i}`);
             if (tr) tr.dataset.outputBlocks = '';
-            recalcFGTotals(); triggerAutosave();
+            recalcFGTotals();
         }
 
         function recalcFGTotals() {
@@ -2780,7 +2759,7 @@
         }
 
         // ════════════════════════════════════════════════════════════════
-        // DROSS TABLE
+        // DROSS TABLE — blocks restored from DB via _loadingRecord
         // ════════════════════════════════════════════════════════════════
         function addDrossRow(data = {}) {
             drossRowCount++;
@@ -2789,38 +2768,44 @@
             const tr = document.createElement('tr');
             tr.id = `drow-${i}`;
             tr.dataset.rowIndex = i;
-            tr.dataset.outputBlocks = data.output_blocks ? JSON.stringify(data.output_blocks) : '';
+
+            // Restore blocks array passed from loadRecord()
+            const blocks = Array.isArray(data.output_blocks) ? data.output_blocks : [];
+            tr.dataset.outputBlocks = blocks.length ? JSON.stringify(blocks) : '';
+
             tr.innerHTML = `
-                                                            <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
-                                                            <td style="position:relative;min-width:160px">
-                                                              <div class="sdd" id="sdd_dr_id_${i}">
-                                                                <div class="sdd-trigger" onclick="toggleSdd('dr_id_'+${i})">
-                                                                  <span class="sdd-trigger-text placeholder" id="sdd_dr_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                                                                  <svg class="sdd-clear" onclick="clearSdd('dr_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                                                                  <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                                                                </div>
-                                                                <input type="hidden" id="dr_id_${i}" onchange="onDrossMaterialChange(${i});triggerAutosave()">
-                                                              </div>
-                                                            </td>
-                                                            <td>
-                                                              <input type="number" class="ri" id="dr_qty_${i}"
-                                                                value="${data.total_qty ?? ''}" step="0.001" placeholder="Click to enter blocks…"
-                                                                onclick="openOutputModal('dross', ${i})" readonly
-                                                                style="min-width:90px;cursor:pointer;background:var(--gxl)" title="Click to enter block weights">
-                                                            </td>
-                                                            <td><button class="del-btn" onclick="removeRow('drow-${i}',recalcDrossTotals)" title="Remove">
-                                                              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                                                            </button></td>`;
+                    <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
+                    <td style="position:relative;min-width:160px">
+                      <div class="sdd" id="sdd_dr_id_${i}">
+                        <div class="sdd-trigger" onclick="toggleSdd('dr_id_'+${i})">
+                          <span class="sdd-trigger-text placeholder" id="sdd_dr_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                          <svg class="sdd-clear" onclick="clearSdd('dr_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                        <input type="hidden" id="dr_id_${i}" onchange="onDrossMaterialChange(${i})">
+                      </div>
+                    </td>
+                    <td>
+                      <input type="number" class="ri" id="dr_qty_${i}"
+                        value="${data.total_qty ?? ''}" step="0.001" placeholder="Click to enter blocks…"
+                        onclick="openOutputModal('dross', ${i})" readonly
+                        style="min-width:90px;cursor:pointer;background:var(--gxl)" title="Click to enter block weights">
+                    </td>
+                    <td><button class="del-btn" onclick="removeRow('drow-${i}',recalcDrossTotals)" title="Remove">
+                      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initMaterialSdd(`dr_id_${i}`, data.material_id ?? null);
         }
 
+        // FIX: guard with _loadingRecord so blocks are not cleared during load
         function onDrossMaterialChange(i) {
+            if (_loadingRecord) return;
             document.getElementById(`dr_qty_${i}`).value = '';
             const tr = document.getElementById(`drow-${i}`);
             if (tr) tr.dataset.outputBlocks = '';
-            recalcDrossTotals(); triggerAutosave();
+            recalcDrossTotals();
         }
 
         function recalcDrossTotals() {
@@ -2834,14 +2819,17 @@
         }
 
         // ════════════════════════════════════════════════════════════════
-        // OUTPUT QTY WINDOW MODAL (shared for FG + Dross)
+        // OUTPUT QTY WINDOW MODAL (shared FG + Dross)
         // ════════════════════════════════════════════════════════════════
         function openOutputModal(type, rowIndex) {
             const matId = type === 'fg'
                 ? document.getElementById(`fg_id_${rowIndex}`)?.value
                 : document.getElementById(`dr_id_${rowIndex}`)?.value;
 
-            if (!matId) { showAlert('Please select a material first.', 'error'); return; }
+            if (!matId) {
+                if (!isSubmitted) showAlert('Please select a material first.', 'error');
+                return;
+            }
 
             const fgKey = type === 'fg' ? `fg_id_${rowIndex}` : `dr_id_${rowIndex}`;
             const matName = sddRegistry[fgKey]?.selected?.label ?? '';
@@ -2849,16 +2837,36 @@
             outputModal.type = type;
             outputModal.rowIndex = rowIndex;
 
-            // Load existing blocks from tr dataset
+            // Load blocks from tr.dataset.outputBlocks (populated from DB on loadRecord)
             const tr = document.getElementById(type === 'fg' ? `fgrow-${rowIndex}` : `drow-${rowIndex}`);
             outputModal.blocks = tr?.dataset.outputBlocks
                 ? JSON.parse(tr.dataset.outputBlocks)
                 : [];
 
-            document.getElementById('outputModalTitle').textContent = type === 'fg' ? 'Finished Goods QTY Window' : 'Dross QTY Window';
-            document.getElementById('outputModalSubtitle').textContent = matName ? `Material: ${matName}` : 'Enter block weights';
+            document.getElementById('outputModalTitle').textContent = type === 'fg'
+                ? 'Finished Goods QTY Window'
+                : 'Dross QTY Window';
+            document.getElementById('outputModalSubtitle').textContent = matName
+                ? `Material: ${matName}` + (isSubmitted ? ' — View Only' : '')
+                : 'Enter block weights';
 
             renderOutputRows();
+
+            // Show/hide footer buttons based on submitted state
+            const addBtn = document.querySelector('#outputQtyModal .modal-footer .btn-outline:first-child');
+            const cancelBtn = document.querySelector('#outputQtyModal .modal-footer .btn-outline:last-of-type');
+            const okBtn = document.querySelector('#outputQtyModal .modal-footer .btn-primary');
+
+            if (isSubmitted) {
+                if (addBtn) addBtn.style.display = 'none';
+                if (okBtn) okBtn.style.display = 'none';
+                if (cancelBtn) cancelBtn.textContent = 'Close';
+            } else {
+                if (addBtn) addBtn.style.display = '';
+                if (okBtn) okBtn.style.display = '';
+                if (cancelBtn) cancelBtn.textContent = 'Cancel';
+            }
+
             document.getElementById('outputQtyModal').classList.add('open');
             document.body.style.overflow = 'hidden';
         }
@@ -2874,28 +2882,30 @@
             tbody.innerHTML = '';
             const count = Math.max(OUTPUT_MAX_ROWS, outputModal.blocks.length);
             for (let i = 0; i < count; i++) {
-                const qty = outputModal.blocks[i]?.qty ?? '';
+                const rawQty = outputModal.blocks[i]?.qty ?? '';
+                // Only show value if it's a real number > 0
+                const displayQty = rawQty !== '' && parseFloat(rawQty) > 0
+                    ? parseFloat(rawQty).toFixed(3)
+                    : '';
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid var(--bdr)';
+                const inputAttrs = isSubmitted
+                    ? `readonly style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-family:'Outfit',sans-serif;font-size:13px;text-align:right;background:#f5f5f5;outline:none;cursor:default"`
+                    : `oninput="onOutputQtyInput(this,${i})" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--bdr)'" style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-family:'Outfit',sans-serif;font-size:13px;text-align:right;background:var(--white);outline:none;transition:border-color .15s"`;
                 tr.innerHTML = `
-                                                              <td style="padding:5px 14px;font-size:12.5px;font-weight:700;color:var(--g);text-align:right;
-                                                                         background:var(--gxl);width:80px;border-right:1px solid var(--bdr)">${i + 1}</td>
-                                                              <td style="padding:4px 10px">
-                                                                <input type="number" step="0.001" min="0" placeholder="0.000"
-                                                                  value="${qty}"
-                                                                  style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:6px;
-                                                                         font-family:'Outfit',sans-serif;font-size:13px;text-align:right;
-                                                                         background:var(--white);outline:none;transition:border-color .15s"
-                                                                  oninput="onOutputQtyInput(this,${i})"
-                                                                  onfocus="this.style.borderColor='var(--g)'"
-                                                                  onblur="this.style.borderColor='var(--bdr)'">
-                                                              </td>`;
+                        <td style="padding:5px 14px;font-size:12.5px;font-weight:700;color:var(--g);text-align:right;
+                                   background:var(--gxl);width:80px;border-right:1px solid var(--bdr)">${i + 1}</td>
+                        <td style="padding:4px 10px">
+                          <input type="number" step="0.001" min="0" placeholder="0.000"
+                            value="${displayQty}" ${inputAttrs}>
+                        </td>`;
                 tbody.appendChild(tr);
             }
             recalcOutputTotal();
         }
 
         function addOutputRow() {
+            if (isSubmitted) return;
             syncOutputBlocks();
             outputModal.blocks.push({ qty: '' });
             renderOutputRows();
@@ -2911,6 +2921,7 @@
         }
 
         function onOutputQtyInput(inp, rowIdx) {
+            if (isSubmitted) return;
             if (!outputModal.blocks[rowIdx]) outputModal.blocks[rowIdx] = {};
             outputModal.blocks[rowIdx].qty = inp.value;
             recalcOutputTotal();
@@ -2925,6 +2936,7 @@
         }
 
         function confirmOutputQty() {
+            if (isSubmitted) { closeOutputModal(); return; }
             syncOutputBlocks();
             const { type, rowIndex } = outputModal;
             const total = outputModal.blocks.reduce((s, r) => {
@@ -2934,12 +2946,11 @@
             const qtyEl = document.getElementById(type === 'fg' ? `fg_qty_${rowIndex}` : `dr_qty_${rowIndex}`);
             if (qtyEl) qtyEl.value = total > 0 ? total.toFixed(3) : '';
 
-            // Persist blocks to row dataset
             const tr = document.getElementById(type === 'fg' ? `fgrow-${rowIndex}` : `drow-${rowIndex}`);
             if (tr) tr.dataset.outputBlocks = JSON.stringify(outputModal.blocks);
 
             if (type === 'fg') recalcFGTotals(); else recalcDrossTotals();
-            triggerAutosave();
+
             document.getElementById('outputQtyModal').classList.remove('open');
             document.body.style.overflow = '';
         }
@@ -2960,32 +2971,23 @@
                 if (display) display.textContent = '—';
                 if (hidden) hidden.value = '';
             }
-
             updateAllLtr();
         }
+
         function updateLtrDisplay(inputId, displayId) {
             const kg = parseFloat(document.getElementById(inputId)?.value);
             const el = document.getElementById(displayId);
             if (!el) return;
-            if (!isNaN(kg) && kg >= 0) {
-                el.textContent = (kg * 1.98).toFixed(3);
-            } else {
-                el.textContent = '—';
-            }
+            if (!isNaN(kg) && kg >= 0) { el.textContent = (kg * 1.98).toFixed(3); }
+            else { el.textContent = '—'; }
         }
 
-        /**
-         * Override / extend calcConsumption to also update LTR displays.
-         * Hook into your existing calcConsumption() — add these calls at the end of it,
-         * OR call updateAllLtr() after every calcConsumption() call.
-         */
         function updateAllLtr() {
             updateLtrDisplay('lpg_initial', 'lpg_initial_ltr_display');
             updateLtrDisplay('lpg_final', 'lpg_final_ltr_display');
             updateLtrDisplay('lpg2_initial', 'lpg2_initial_ltr_display');
             updateLtrDisplay('lpg2_final', 'lpg2_final_ltr_display');
 
-            // Consumption row — read from the hidden inputs (set by calcConsumption)
             const lpgKg = parseFloat(document.getElementById('lpg_consumption')?.value);
             const lpg2Kg = parseFloat(document.getElementById('lpg2_consumption')?.value);
 
@@ -3013,39 +3015,25 @@
             }
         }
 
-        // Liquid Oxygen auto-calculations
-        // Flow KG  = Flow NM³ × 1.429
-        // Consumption KG = Flow Time (hr) × Flow KG
         function calcOxygen() {
             const nm3 = parseFloat(document.getElementById('oxygen_flow_nm3')?.value);
             const time = parseFloat(document.getElementById('oxygen_flow_time')?.value);
-
             const kgEl = document.getElementById('oxygen_flow_kg');
             const consEl = document.getElementById('oxygen_consumption');
-
-            // Auto: Flow KG = NM3 × 1.429
             let flowKg = NaN;
             if (!isNaN(nm3) && nm3 >= 0) {
                 flowKg = nm3 * 1.429;
                 if (kgEl) kgEl.value = flowKg.toFixed(3);
-            } else {
-                if (kgEl) kgEl.value = '';
-            }
-
-            // Auto: Consumption = Flow Time × Flow KG
+            } else { if (kgEl) kgEl.value = ''; }
             if (!isNaN(time) && time >= 0 && !isNaN(flowKg)) {
-                const cons = time * flowKg;
-                if (consEl) consEl.value = cons.toFixed(3);
-            } else {
-                if (consEl) consEl.value = '';
-            }
+                if (consEl) consEl.value = (time * flowKg).toFixed(3);
+            } else { if (consEl) consEl.value = ''; }
         }
 
         // ════════════════════════════════════════════════════════════════
         // BUILD PAYLOAD
         // ════════════════════════════════════════════════════════════════
         function buildPayload() {
-            // Raw materials
             const raw_materials = [];
             document.querySelectorAll('#rawBody tr').forEach(tr => {
                 const i = tr.dataset.rowIndex;
@@ -3061,7 +3049,6 @@
                 });
             });
 
-            // Chemicals
             const chemicals = [];
             document.querySelectorAll('#chemBody tr').forEach(tr => {
                 const i = tr.dataset.rowIndex;
@@ -3077,7 +3064,6 @@
                 });
             });
 
-            // Process details
             const process_details = [];
             document.querySelectorAll('#procBody tr').forEach(tr => {
                 const i = tr.dataset.rowIndex;
@@ -3093,7 +3079,6 @@
                 });
             });
 
-            // Finished goods blocks + summary
             const finished_goods_blocks = [];
             const finished_goods_summary = [];
             document.querySelectorAll('#fgBody tr').forEach(tr => {
@@ -3104,14 +3089,12 @@
                 const blocks = tr.dataset.outputBlocks ? JSON.parse(tr.dataset.outputBlocks) : [];
                 blocks.forEach((b, idx) => {
                     const w = parseFloat(b.qty);
-                    if (!isNaN(w) && w > 0) {
+                    if (!isNaN(w) && w > 0)
                         finished_goods_blocks.push({ material_id: matId, block_sl_no: idx + 1, block_weight: w });
-                    }
                 });
                 if (totalQty > 0) finished_goods_summary.push({ material_id: matId, total_qty: totalQty });
             });
 
-            // Dross blocks + summary
             const dross_blocks = [];
             const dross_summary = [];
             document.querySelectorAll('#drossBody tr').forEach(tr => {
@@ -3122,9 +3105,8 @@
                 const blocks = tr.dataset.outputBlocks ? JSON.parse(tr.dataset.outputBlocks) : [];
                 blocks.forEach((b, idx) => {
                     const w = parseFloat(b.qty);
-                    if (!isNaN(w) && w > 0) {
+                    if (!isNaN(w) && w > 0)
                         dross_blocks.push({ material_id: matId, block_sl_no: idx + 1, block_weight: w });
-                    }
                 });
                 if (totalQty > 0) dross_summary.push({ material_id: matId, total_qty: totalQty });
             });
@@ -3200,46 +3182,13 @@
             }
         }
 
-        function setupAutosave() {
-            const watchFields = ['pot_no', 'material_id', 'date',
-                'lpg_initial', 'lpg_final', 'lpg2_initial', 'lpg2_final', 'electricity_initial', 'electricity_final',
-                'oxygen_flow_nm3', 'oxygen_flow_kg', 'oxygen_flow_time', 'oxygen_consumption'];
-            watchFields.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.addEventListener('change', triggerAutosave);
-            });
-        }
-
-        function triggerAutosave() {
-            if (isCreate || isSubmitted) return;
-            setDot('saving', 'Saving…');
-            document.getElementById('autosaveStatus').style.display = 'inline';
-            // Also show on input card header dot
-            const inputStatus = document.getElementById('inputAutosaveStatus');
-            if (inputStatus) {
-                inputStatus.style.display = 'inline-flex';
-                document.getElementById('inputAsDot').className = 'as-dot saving';
-                document.getElementById('inputAsText').textContent = 'Saving…';
-            }
-            clearTimeout(autosaveTimer);
-            // autosaveTimer = setTimeout(() => saveForm(true), 2200);
-        }
+        function setupAutosave() { return; }
+        function triggerAutosave() { return; }
 
         function setDot(state, text) {
             document.getElementById('asDot').className = `as-dot ${state}`;
             const txt = document.getElementById('asText');
             if (txt) txt.textContent = text;
-            // Sync input card dot
-            const inputDot = document.getElementById('inputAsDot');
-            const inputText = document.getElementById('inputAsText');
-            const inputStatus = document.getElementById('inputAutosaveStatus');
-            if (inputDot) inputDot.className = `as-dot ${state}`;
-            if (inputText) inputText.textContent = text;
-            if (inputStatus) {
-                if (state === 'saved') {
-                    setTimeout(() => { inputStatus.style.display = 'none'; }, 4000);
-                }
-            }
         }
 
         // ════════════════════════════════════════════════════════════════
@@ -3249,7 +3198,7 @@
             const el = document.getElementById(id);
             if (!el) return;
             el.style.transition = 'opacity .18s'; el.style.opacity = '0';
-            setTimeout(() => { el.remove(); if (recalcFn) recalcFn(); triggerAutosave(); }, 190);
+            setTimeout(() => { el.remove(); if (recalcFn) recalcFn(); }, 190);
         }
         function animateIn(el) {
             el.style.opacity = '0'; el.style.transform = 'translateY(-5px)';
@@ -3265,12 +3214,15 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
             if (type === 'success') setTimeout(() => { el.className = 'form-alert'; el.textContent = ''; }, 4000);
         }
+
+        // setReadonly: skips fg_qty_* and dr_qty_* so onclick fires for viewing
         function setReadonly(ro) {
-            document.querySelectorAll('input,select,textarea').forEach(el => {
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                if (el.id && (el.id.startsWith('fg_qty_') || el.id.startsWith('dr_qty_'))) return;
                 if (ro) el.setAttribute('disabled', true);
                 else el.removeAttribute('disabled');
             });
-            document.querySelectorAll('.sdd-trigger,.sdd-search').forEach(el => {
+            document.querySelectorAll('.sdd-trigger, .sdd-search').forEach(el => {
                 if (ro) { el.style.pointerEvents = 'none'; el.style.opacity = '.6'; }
                 else { el.style.pointerEvents = ''; el.style.opacity = ''; }
             });
@@ -3279,7 +3231,9 @@
                 if (el) el.style.display = ro ? 'none' : '';
             });
             if (ro) document.getElementById('readonlyNotice').style.display = 'block';
-            document.querySelectorAll('.del-btn,.proc-btn').forEach(b => b.style.display = ro ? 'none' : '');
+            document.querySelectorAll('.del-btn, .proc-btn').forEach(b => {
+                b.style.display = ro ? 'none' : '';
+            });
         }
     </script>
 @endpush
