@@ -770,6 +770,7 @@
                 const res = await apiFetch('/auth/me');
                 if (!res || !res.ok) return;
                 const json = await res.json();
+                console.log(json);
                 if (json.status === 'ok') {
                     // Update user info in storage
                     localStorage.setItem('auth_user', JSON.stringify(json.data));

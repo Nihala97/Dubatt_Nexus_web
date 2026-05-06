@@ -200,6 +200,7 @@ class AdminController extends Controller
         }
         $user->tokens()->delete();
         $user->delete();
+        $user->update(['is_active' => 0]);
         return response()->json(['status' => 'ok', 'message' => 'User deleted.']);
     }
 

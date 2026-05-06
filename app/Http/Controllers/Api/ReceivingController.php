@@ -220,4 +220,23 @@ class ReceivingController extends Controller
             'data' => $lots
         ]);
     }
+    
+    public function getLots()
+    {
+        $lots = Receiving::where('is_active', 1)
+            ->select('id', 'lot_no')
+            ->get();
+
+        if ($lots->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No lots found.'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'data' => $lots
+        ]);
+    }
 }
