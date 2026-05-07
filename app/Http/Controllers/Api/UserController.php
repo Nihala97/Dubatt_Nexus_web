@@ -20,12 +20,15 @@ class UserController extends Controller
     {
         $users = User::query()
             ->with(['createdBy:id,name'])
-            ->when($request->role,       fn($q) => $q->where('role', $request->role))
-            ->when($request->is_active !== null, fn($q) => $q->where('is_active', $request->boolean('is_active')))
-            ->when($request->search,     fn($q) => $q->where(function ($q) use ($request) {
+            ->when($request->role, fn($q) => $q->where('role', $request->role))
+            ->when(
+                $request->is_active !== null && $request->is_active !== '',
+                fn($q) => $q->where('is_active', filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN))
+            )
+            ->when($request->search, fn($q) => $q->where(function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('email', 'like', "%{$request->search}%")
-                  ->orWhere('username', 'like', "%{$request->search}%");
+                    ->orWhere('email', 'like', "%{$request->search}%")
+                    ->orWhere('username', 'like', "%{$request->search}%");
             }))
             ->orderBy('name')
             ->paginate($request->per_page ?? 20);
@@ -40,33 +43,33 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'       => 'required|string|max:255',
-            'email'      => 'required|email|unique:users,email',
-            'username'   => 'required|string|max:50|unique:users,username|alpha_dash',
-            'password'   => 'required|string|min:8|confirmed',
-            'role'       => 'required|in:admin,management,normal',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'username' => 'required|string|max:50|unique:users,username|alpha_dash',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|in:admin,management,normal',
             'department' => 'nullable|string|max:100',
-            'phone'      => 'nullable|string|max:30',
-            'is_active'  => 'boolean',
+            'phone' => 'nullable|string|max:30',
+            'is_active' => 'boolean',
         ]);
 
         $user = User::create([
-            'name'       => $request->name,
-            'email'      => $request->email,
-            'username'   => $request->username,
-            'password'   => Hash::make($request->password),
-            'role'       => $request->role,
+            'name' => $request->name,
+            'email' => $request->email,
+            'username' => $request->username,
+            'password' => Hash::make($request->password),
+            'role' => $request->role,
             'department' => $request->department,
-            'phone'      => $request->phone,
-            'is_active'  => $request->input('is_active', true),
+            'phone' => $request->phone,
+            'is_active' => $request->input('is_active', true),
             'created_by' => auth()->id(),
             'updated_by' => auth()->id(),
         ]);
 
         return response()->json([
-            'status'  => 'ok',
+            'status' => 'ok',
             'message' => 'User created successfully.',
-            'data'    => $user,
+            'data' => $user,
         ], 201);
     }
 
@@ -94,14 +97,14 @@ class UserController extends Controller
         $user = User::findOrFail($id);
 
         $request->validate([
-            'name'       => 'sometimes|required|string|max:255',
-            'email'      => ['sometimes', 'required', 'email', Rule::unique('users')->ignore($user->id)],
-            'username'   => ['sometimes', 'required', 'string', 'max:50', 'alpha_dash', Rule::unique('users')->ignore($user->id)],
-            'password'   => 'sometimes|nullable|string|min:8|confirmed',
-            'role'       => 'sometimes|required|in:admin,management,normal',
+            'name' => 'sometimes|required|string|max:255',
+            'email' => ['sometimes', 'required', 'email', Rule::unique('users')->ignore($user->id)],
+            'username' => ['sometimes', 'required', 'string', 'max:50', 'alpha_dash', Rule::unique('users')->ignore($user->id)],
+            'password' => 'sometimes|nullable|string|min:8|confirmed',
+            'role' => 'sometimes|required|in:admin,management,normal',
             'department' => 'nullable|string|max:100',
-            'phone'      => 'nullable|string|max:30',
-            'is_active'  => 'boolean',
+            'phone' => 'nullable|string|max:30',
+            'is_active' => 'boolean',
         ]);
 
         $data = $request->only(['name', 'email', 'username', 'role', 'department', 'phone', 'is_active']);
@@ -114,9 +117,9 @@ class UserController extends Controller
         $user->update($data);
 
         return response()->json([
-            'status'  => 'ok',
+            'status' => 'ok',
             'message' => 'User updated successfully.',
-            'data'    => $user->fresh(),
+            'data' => $user->fresh(),
         ]);
     }
 
@@ -130,17 +133,16 @@ class UserController extends Controller
 
         if ($user->id === auth()->id()) {
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'You cannot delete your own account.',
             ], 422);
         }
 
-        // Revoke all tokens
         $user->tokens()->delete();
         $user->delete();
 
         return response()->json([
-            'status'  => 'ok',
+            'status' => 'ok',
             'message' => 'User deleted successfully.',
         ]);
     }
@@ -155,13 +157,13 @@ class UserController extends Controller
 
         if ($user->id === auth()->id()) {
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'You cannot disable your own account.',
             ], 422);
         }
 
         $user->update([
-            'is_active'  => !$user->is_active,
+            'is_active' => !$user->is_active,
             'updated_by' => auth()->id(),
         ]);
 
@@ -171,9 +173,9 @@ class UserController extends Controller
         }
 
         return response()->json([
-            'status'  => 'ok',
+            'status' => 'ok',
             'message' => $user->is_active ? 'User enabled.' : 'User disabled and logged out.',
-            'data'    => ['is_active' => $user->is_active],
+            'data' => ['is_active' => $user->is_active],
         ]);
     }
 
@@ -185,19 +187,20 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
+        // Only normal users have configurable permissions
         if (!$user->isNormal()) {
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'Permissions are only configurable for normal users. Admin and Management have full access.',
             ], 422);
         }
 
         $request->validate([
-            'permissions'              => 'required|array',
-            'permissions.*.module_id'  => 'required|integer|exists:modules,id',
-            'permissions.*.can_view'   => 'boolean',
+            'permissions' => 'required|array',
+            'permissions.*.module_id' => 'required|integer|exists:modules,id',
+            'permissions.*.can_view' => 'boolean',
             'permissions.*.can_create' => 'boolean',
-            'permissions.*.can_edit'   => 'boolean',
+            'permissions.*.can_edit' => 'boolean',
             'permissions.*.can_delete' => 'boolean',
         ]);
 
@@ -205,11 +208,11 @@ class UserController extends Controller
         UserModulePermission::where('user_id', $user->id)->delete();
 
         $permissions = collect($request->permissions)->map(fn($p) => [
-            'user_id'    => $user->id,
-            'module_id'  => $p['module_id'],
-            'can_view'   => $p['can_view']   ?? true,
+            'user_id' => $user->id,
+            'module_id' => $p['module_id'],
+            'can_view' => $p['can_view'] ?? true,
             'can_create' => $p['can_create'] ?? false,
-            'can_edit'   => $p['can_edit']   ?? false,
+            'can_edit' => $p['can_edit'] ?? false,
             'can_delete' => $p['can_delete'] ?? false,
             'granted_by' => auth()->id(),
             'created_at' => now(),
@@ -219,11 +222,11 @@ class UserController extends Controller
         UserModulePermission::insert($permissions);
 
         return response()->json([
-            'status'  => 'ok',
+            'status' => 'ok',
             'message' => 'Permissions updated successfully.',
-            'data'    => UserModulePermission::with('module')
-                            ->where('user_id', $user->id)
-                            ->get(),
+            'data' => UserModulePermission::with('module')
+                ->where('user_id', $user->id)
+                ->get(),
         ]);
     }
 
@@ -233,24 +236,35 @@ class UserController extends Controller
      */
     public function getPermissions(string $id)
     {
-        $user = User::findOrFail($id);
+        $user = User::with(['modulePermissions.module'])->findOrFail($id);
 
         if (!$user->isNormal()) {
             return response()->json([
                 'status' => 'ok',
-                'data'   => [
+                'data' => [
                     'full_access' => true,
-                    'role'        => $user->role,
+                    'role' => $user->role,
                     'permissions' => [],
                 ],
             ]);
         }
 
-        $permissions = UserModulePermission::with('module')
-            ->where('user_id', $user->id)
-            ->get();
-
-        return response()->json(['status' => 'ok', 'data' => $permissions]);
+        return response()->json([
+            'status' => 'ok',
+            'data' => $user->modulePermissions->map(fn($p) => [
+                'module_id' => $p->module_id,
+                'can_view' => (bool) $p->can_view,
+                'can_create' => (bool) $p->can_create,
+                'can_edit' => (bool) $p->can_edit,
+                'can_delete' => (bool) $p->can_delete,
+                'module' => $p->module ? [
+                    'id' => $p->module->id,
+                    'name' => $p->module->name,
+                    'slug' => $p->module->slug,
+                    'group' => $p->module->group,
+                ] : null,
+            ]),
+        ]);
     }
 
     /**
@@ -281,7 +295,7 @@ class UserController extends Controller
         }
 
         $targetUser->update([
-            'password'   => Hash::make($request->new_password),
+            'password' => Hash::make($request->new_password),
             'updated_by' => $authUser->id,
         ]);
 
@@ -289,7 +303,7 @@ class UserController extends Controller
         $targetUser->tokens()->delete();
 
         return response()->json([
-            'status'  => 'ok',
+            'status' => 'ok',
             'message' => 'Password changed successfully. Please log in again.',
         ]);
     }

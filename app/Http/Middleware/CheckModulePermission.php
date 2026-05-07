@@ -1,13 +1,4 @@
 <?php
-// ─────────────────────────────────────────────────────────────────
-// app/Http/Middleware/CheckModulePermission.php
-//
-// Usage in routes:
-//   Route::get('...')->middleware('module:acid_testing,can_view');
-//   Route::post('...')->middleware('module:acid_testing,can_create');
-//   Route::put('...')->middleware('module:acid_testing,can_edit');
-//   Route::delete('...')->middleware('module:acid_testing,can_delete');
-// ─────────────────────────────────────────────────────────────────
 namespace App\Http\Middleware;
 
 use Closure;

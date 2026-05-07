@@ -321,7 +321,9 @@
             padding: 9px 12px;
             border-bottom: 2px solid var(--bdr);
             white-space: nowrap;
-            user-select: none
+            user-select: none;
+            text-align: left;
+            vertical-align: middle;
         }
 
         .dt thead th.sortable {
@@ -369,7 +371,8 @@
             padding: 8px 12px;
             border-bottom: 1px solid #eaeef3;
             font-size: 12.5px;
-            vertical-align: middle
+            vertical-align: middle;
+            text-align: left;
         }
 
         .dt tbody tr:last-child td {
@@ -877,22 +880,22 @@
                     : `<span class="badge badge-inactive">● Inactive</span>`;
 
                 return `<tr>
-                    <td style="color:var(--txtmu);font-size:11.5px">${offset + i + 1}</td>
-                    <td style="white-space:nowrap;font-weight:600">
-                        ${escHtml(r.logged_at)}
-                    </td>
-                    <td>
-                        <div style="font-weight:600;color:var(--txt)">${escHtml(r.name)}</div>
-                        <div style="font-size:10.5px;color:var(--txtmu)">${escHtml(r.username)} &nbsp;·&nbsp; ${escHtml(r.email)}</div>
-                    </td>
-                    <td style="font-family:monospace;font-size:11.5px;color:var(--txtmu)">#${r.user_id}</td>
-                    <td>${roleBadge}</td>
-                    <td style="font-size:12px">${escHtml(r.department)}</td>
-                    <td>${actionBadge}</td>
-                    <td style="font-family:monospace;font-size:11.5px;color:var(--txtmu)">${escHtml(r.ip_address)}</td>
-                    <td>${statusBadge}</td>
-                    <td style="font-family:monospace;font-size:10.5px;color:var(--txtmu)">${escHtml(r.session_id)}</td>
-                </tr>`;
+                                <td style="color:var(--txtmu);font-size:11.5px;text-align:left">${offset + i + 1}</td>
+                                <td style="white-space:nowrap;font-weight:600;text-align:left">
+                                    ${escHtml(r.logged_at)}
+                                </td>
+                                <td style="text-align:left">
+                                    <div style="font-weight:600;color:var(--txt)">${escHtml(r.name)}</div>
+                                    <div style="font-size:10.5px;color:var(--txtmu)">${escHtml(r.username)} &nbsp;·&nbsp; ${escHtml(r.email)}</div>
+                                </td>
+                                <td style="font-family:monospace;font-size:11.5px;color:var(--txtmu);text-align:left">#${r.user_id}</td>
+                                <td style="text-align:left">${roleBadge}</td>
+                                <td style="font-size:12px;text-align:left">${escHtml(r.department)}</td>
+                                <td style="text-align:left">${actionBadge}</td>
+                                <td style="font-family:monospace;font-size:11.5px;color:var(--txtmu);text-align:left">${escHtml(r.ip_address)}</td>
+                                <td style="text-align:left">${statusBadge}</td>
+                                <td style="font-family:monospace;font-size:10.5px;color:var(--txtmu);text-align:left">${escHtml(r.session_id)}</td>
+        </tr>`;
             }).join('');
 
             document.getElementById('tableCaption').textContent =
