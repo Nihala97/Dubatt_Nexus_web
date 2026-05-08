@@ -8,16 +8,16 @@ class MaterialWebController extends Controller
 {
     public function index()
     {
-        return view('admin.mes.Material.index');
+        return view('admin.mes.material.index');
     }
 
     public function create()
     {
-        return view('admin.mes.Material.form');
+        return view('admin.mes.material.form');
     }
 
     public function edit($id)
     {
-        return view('admin.mes.Material.form', ['item_id' => $id]);
+        return view('admin.mes.material.form', ['item_id' => $id]);
     }
 }
