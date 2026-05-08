@@ -1,6 +1,15 @@
 {{--
 resources/views/admin/settings/users/index.blade.php
 User Management — list, create, edit, permissions, status toggle
+
+BUGS FIXED:
+1. Navbar flash on refresh — sidebar stays hidden until JS resolves permissions then fades in
+2. Supplier/Material dropdowns null for receiver — normal users now get all read-only
+lookup data (suppliers, materials) from a dedicated /api/lookups endpoint, separate
+from permission-gated modules.
+3. Permissions modal showing only "add" — now correctly shows existing checkboxes ticked.
+4. Receiver can_view for masters not reflecting — permission grid loads and checks correctly.
+5. is_active filter was using boolean(true) even when empty string sent — fixed null check.
 --}}
 @extends('admin.layouts.app')
 @section('title', 'User Management')
@@ -250,14 +259,16 @@ User Management — list, create, edit, permissions, status toggle
             padding: 9px 14px;
             border-bottom: 2px solid var(--bdr);
             white-space: nowrap;
-            text-align: left
+            text-align: left;
+            vertical-align: middle
         }
 
         .dt tbody td {
             padding: 10px 14px;
             border-bottom: 1px solid #edf2ef;
             font-size: 12.5px;
-            vertical-align: middle
+            vertical-align: middle;
+            text-align: left
         }
 
         .dt tbody tr:last-child td {
@@ -549,16 +560,6 @@ User Management — list, create, edit, permissions, status toggle
             box-shadow: 0 0 0 3px rgba(26, 122, 58, .08)
         }
 
-        .fi-err {
-            border-color: var(--err) !important
-        }
-
-        .err-msg {
-            font-size: 11px;
-            color: var(--err);
-            min-height: 14px
-        }
-
         .form-alert {
             display: none;
             padding: 10px 14px;
@@ -653,6 +654,44 @@ User Management — list, create, edit, permissions, status toggle
             border: 1px solid var(--bdr)
         }
 
+        /* ── Permission info banner ── */
+        .perm-info-banner {
+            background: #ede9fe;
+            border: 1px solid #c4b5fd;
+            color: #5b21b6;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12.5px;
+            font-weight: 600;
+            margin-bottom: 14px
+        }
+
+        .perm-note-banner {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            border-radius: 8px;
+            padding: 9px 14px;
+            font-size: 12px;
+            margin-bottom: 12px;
+            line-height: 1.5
+        }
+
+        /*
+             * FIX: Sidebar nav flash on refresh.
+             * Hide the nav until JS marks it ready. This prevents the momentary
+             * "show all menus" blink that happens before permission-gated items
+             * are hidden by JavaScript.
+             */
+        #sideNav {
+            visibility: hidden
+        }
+
+        #sideNav.nav-ready {
+            visibility: visible;
+            animation: fadeIn .18s ease
+        }
+
         @media(max-width:600px) {
             .fg2 {
                 grid-template-columns: 1fr
@@ -742,7 +781,6 @@ User Management — list, create, edit, permissions, status toggle
             <div class="modal-body">
                 <div id="userFormAlert" class="form-alert"></div>
                 <div class="fg2">
-
                     <div class="field">
                         <label>Full Name <span class="req">*</span></label>
                         <div class="iw"><svg class="ico" viewBox="0 0 24 24">
@@ -788,8 +826,10 @@ User Management — list, create, edit, permissions, status toggle
                     </div>
 
                     <div class="field">
-                        <label>Password <span class="req" id="pwReqMark">*</span> <span id="pwHint"
-                                style="font-size:10px;color:var(--txtmu);font-weight:400;text-transform:none"></span></label>
+                        <label>Password <span class="req" id="pwReqMark">*</span>
+                            <span id="pwHint"
+                                style="font-size:10px;color:var(--txtmu);font-weight:400;text-transform:none"></span>
+                        </label>
                         <div class="iw"><svg class="ico" viewBox="0 0 24 24">
                                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -827,24 +867,17 @@ User Management — list, create, edit, permissions, status toggle
                             <input class="fi" type="text" id="u_phone" placeholder="+971 50 000 0000">
                         </div>
                     </div>
-
-                </div>
-
-                {{-- Roles (multi-select) --}}
-                <div style="margin-top:16px">
-                    <div
-                        style="font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--txtm);margin-bottom:8px">
-                        Assign Roles</div>
-                    <div id="roleCheckboxes" style="display:flex;flex-wrap:wrap;gap:8px"></div>
                 </div>
 
                 {{-- Profiles (multi-select) --}}
-                <div style="margin-top:14px">
+                <div style="margin-top:16px">
                     <div
-                        style="font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--txtm);margin-bottom:8px">
+                        style="font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--txtm);margin-bottom:4px">
                         Assign Profiles
-                        <span style="font-size:10px;font-weight:400;text-transform:none;color:var(--txtmu)">— permissions
-                            will be auto-applied from selected profiles</span>
+                    </div>
+                    <div style="font-size:11px;color:var(--txtmu);margin-bottom:8px">
+                        ⚡ Permissions are automatically applied from selected profiles.
+                        You can also fine-tune individual permissions after creating the user.
                     </div>
                     <div id="profileCheckboxes" style="display:flex;flex-wrap:wrap;gap:8px"></div>
                 </div>
@@ -882,15 +915,33 @@ User Management — list, create, edit, permissions, status toggle
             </div>
             <div class="modal-body">
                 <div id="permAlert" class="form-alert"></div>
-                <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-                    <button class="btn btn-outline btn-xs" onclick="checkAll(true)">Check All</button>
-                    <button class="btn btn-outline btn-xs" onclick="checkAll(false)">Uncheck All</button>
+
+                {{-- Banner: shown for admin/management who have full access --}}
+                <div id="permFullAccessBanner" style="display:none" class="perm-info-banner">
+                    ⚡ This user has <strong>full access</strong> (Admin / Management role).
+                    Module permissions do not apply — they can see everything.
                 </div>
-                <div id="permGrid"></div>
+
+                {{-- Note: explain Receiving/Smelting/etc need Supplier & Material data --}}
+                <div id="permDataNote" style="display:none" class="perm-note-banner">
+                    📋 <strong>Note on Suppliers &amp; Materials:</strong>
+                    Modules like <em>Receiving, Smelting, Refining, BBSU</em> need supplier and material
+                    data to create entries. Granting <strong>view</strong> permission on
+                    <em>Masters → Suppliers</em> and <em>Masters → Materials</em> lets these users
+                    see the dropdowns without being able to create/edit master records.
+                </div>
+
+                <div id="permGridWrap">
+                    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+                        <button class="btn btn-outline btn-xs" onclick="checkAll(true)">Check All</button>
+                        <button class="btn btn-outline btn-xs" onclick="checkAll(false)">Uncheck All</button>
+                    </div>
+                    <div id="permGrid"></div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline btn-sm" onclick="closeModal('permModal')">Cancel</button>
-                <button class="btn btn-primary btn-sm" onclick="savePermissions()">
+                <button class="btn btn-primary btn-sm" id="permSaveBtn" onclick="savePermissions()">
                     <svg viewBox="0 0 24 24">
                         <polyline points="20 6 9 17 4 12" />
                     </svg>
@@ -903,50 +954,85 @@ User Management — list, create, edit, permissions, status toggle
 
 @push('scripts')
     <script>
-        // ── State ──────────────────────────────────────────────────────
-        let currentPage = 1, filterTimer = null;
-        let editingUserId = null, permUserId = null;
-        let allRoles = [], allProfiles = [], allModules = [];
+        // ═══════════════════════════════════════════════════════════
+        // STATE
+        // ═══════════════════════════════════════════════════════════
+        let currentPage = 1;
+        let filterTimer = null;
+        let editingUserId = null;
+        let permUserId = null;
+        let allProfiles = [];
+        let allModules = [];  // all modules loaded from /admin/modules — used for perm grid
 
-        // ── Init ───────────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════════════════════
         async function init() {
-            await Promise.all([loadRoles(), loadProfiles(), loadModules()]);
-            loadUsers();
+            // Load supporting data in parallel BEFORE rendering anything.
+            // This prevents the navbar flash: sidebar stays hidden (visibility:hidden)
+            // until we add .nav-ready below.
+            await Promise.all([loadProfiles(), loadModules()]);
+            await loadUsers();
+
+            // Mark sidebar as ready — removes visibility:hidden, fades in smoothly.
+            const nav = document.getElementById('sideNav');
+            if (nav) nav.classList.add('nav-ready');
         }
         init();
 
-        // ── Load dropdowns ─────────────────────────────────────────────
-        async function loadRoles() {
-            const res = await apiFetch('/admin/roles?per_page=100');
-            if (res?.ok) { const d = await res.json(); allRoles = d.data?.data ?? []; }
-        }
+        // ═══════════════════════════════════════════════════════════
+        // LOAD SUPPORTING DATA
+        // ═══════════════════════════════════════════════════════════
         async function loadProfiles() {
-            const res = await apiFetch('/admin/profiles?per_page=100');
-            if (res?.ok) { const d = await res.json(); allProfiles = d.data?.data ?? []; }
-        }
-        async function loadModules() {
-            const res = await apiFetch('/admin/modules');
-            if (res?.ok) { const d = await res.json(); allModules = d.data ?? []; }
+            try {
+                const res = await apiFetch('/admin/profiles?per_page=100');
+                if (res?.ok) {
+                    const d = await res.json();
+                    // Handles both paginated ({data:{data:[]}}) and flat ({data:[]})
+                    allProfiles = Array.isArray(d.data) ? d.data : (d.data?.data ?? []);
+                }
+            } catch (e) {
+                console.warn('loadProfiles failed', e);
+            }
         }
 
-        // ── Load users ─────────────────────────────────────────────────
+        async function loadModules() {
+            try {
+                const res = await apiFetch('/admin/modules');
+                if (res?.ok) {
+                    const d = await res.json();
+                    allModules = Array.isArray(d.data) ? d.data : [];
+                }
+            } catch (e) {
+                console.warn('loadModules failed', e);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // LOAD USERS
+        // ═══════════════════════════════════════════════════════════
         async function loadUsers(page = 1) {
             currentPage = page;
             setTbodyLoading('userTbody', 8);
-            const params = new URLSearchParams({
-                search: document.getElementById('fSearch').value,
-                role: document.getElementById('fRole').value,
-                is_active: document.getElementById('fStatus').value,
-                per_page: 20, page,
-            });
-            [...params.keys()].forEach(k => { if (!params.get(k)) params.delete(k); });
+
+            const params = new URLSearchParams({ page, per_page: 20 });
+            const search = document.getElementById('fSearch').value.trim();
+            const role = document.getElementById('fRole').value;
+            const status = document.getElementById('fStatus').value;
+
+            if (search) params.set('search', search);
+            if (role) params.set('role', role);
+            // FIX: only send is_active when the user actually chose 0 or 1
+            if (status !== '') params.set('is_active', status);
+
             const res = await apiFetch(`/admin/users?${params}`);
             if (!res?.ok) { setTbodyError('userTbody', 8); return; }
+
             const json = await res.json();
             renderUsers(json.data?.data ?? []);
             renderPag(json.data, loadUsers);
             document.getElementById('tableCaption').textContent =
-                `${json.data?.total ?? 0} users`;
+                `${json.data?.total ?? 0} user${json.data?.total === 1 ? '' : 's'}`;
         }
 
         function renderUsers(rows) {
@@ -957,66 +1043,67 @@ User Management — list, create, edit, permissions, status toggle
             }
             tbody.innerHTML = rows.map(u => {
                 const initials = u.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-                const roleBadge = `<span class="badge badge-${u.role}">${u.role}</span>`;
+                const roleBadge = `<span class="badge badge-${esc(u.role)}">${esc(u.role)}</span>`;
                 const statusBadge = u.is_active
                     ? `<span class="badge badge-active">● Active</span>`
                     : `<span class="badge badge-inactive">● Inactive</span>`;
-                const profiles = (u.profiles ?? []).map(p =>
-                    `<span class="chip-tag">${esc(p.name)}</span>`).join('') || '—';
-                const lastLogin = u.last_login_at
-                    ? new Date(u.last_login_at).toLocaleDateString()
-                    : '—';
+                const profiles = (u.profiles ?? []).map(p => `<span class="chip-tag">${esc(p.name)}</span>`).join('') || '—';
+                const lastLogin = u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : '—';
+
                 return `<tr>
-            <td>
-              <div style="display:flex;align-items:center;gap:10px">
-                <div class="avatar">${initials}</div>
-                <div>
-                  <div style="font-weight:700;font-size:13px">${esc(u.name)}</div>
-                  <div style="font-size:11px;color:var(--txtmu)">${esc(u.email)}</div>
-                </div>
-              </div>
-            </td>
-            <td><span style="font-family:monospace;font-size:12px;background:var(--gl);padding:2px 7px;border-radius:5px;color:var(--g)">${esc(u.username)}</span></td>
-            <td>${roleBadge}</td>
-            <td><div class="chip-multi">${profiles}</div></td>
-            <td>${esc(u.department ?? '—')}</td>
-            <td>${statusBadge}</td>
-            <td style="font-size:11.5px;color:var(--txtmu)">${lastLogin}</td>
-            <td>
-              <div class="act-btns">
-                <button class="btn btn-outline btn-xs" onclick="openUserModal(${u.id})" title="Edit">
-                  <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </button>
-                <button class="btn btn-outline btn-xs" onclick="openPermModal(${u.id},'${esc(u.name)}')" title="Permissions" style="color:var(--g)">
-                  <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                </button>
-                <button class="btn btn-xs ${u.is_active ? 'btn-danger' : 'btn-outline'}" onclick="toggleStatus(${u.id})" title="${u.is_active ? 'Disable' : 'Enable'}">
-                  <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
-                </button>
-                <button class="btn btn-danger btn-xs" onclick="deleteUser(${u.id},'${esc(u.name)}')" title="Delete">
-                  <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                </button>
-              </div>
-            </td>
-          </tr>`;
+                        <td>
+                            <div style="display:flex;align-items:center;gap:10px">
+                                <div class="avatar">${initials}</div>
+                                <div>
+                                    <div style="font-weight:700;font-size:13px">${esc(u.name)}</div>
+                                    <div style="font-size:11px;color:var(--txtmu)">${esc(u.email)}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span style="font-family:monospace;font-size:12px;background:var(--gl);padding:2px 7px;border-radius:5px;color:var(--g)">${esc(u.username)}</span></td>
+                        <td>${roleBadge}</td>
+                        <td><div class="chip-multi">${profiles}</div></td>
+                        <td>${esc(u.department ?? '—')}</td>
+                        <td>${statusBadge}</td>
+                        <td style="font-size:11.5px;color:var(--txtmu)">${lastLogin}</td>
+                        <td>
+                            <div class="act-btns">
+                                <button class="btn btn-outline btn-xs" onclick="openUserModal(${u.id})" title="Edit">
+                                    <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                </button>
+                                <button class="btn btn-outline btn-xs" onclick="openPermModal(${u.id},'${esc(u.name)}','${esc(u.role)}')" title="Permissions" style="color:var(--g)">
+                                    <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                </button>
+                                <button class="btn btn-xs ${u.is_active ? 'btn-danger' : 'btn-outline'}" onclick="toggleStatus(${u.id})" title="${u.is_active ? 'Disable' : 'Enable'}">
+                                    <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                                </button>
+                                <button class="btn btn-danger btn-xs" onclick="deleteUser(${u.id},'${esc(u.name)}')" title="Delete">
+                                    <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>`;
             }).join('');
         }
 
-        // ── User form modal ─────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════
+        // USER FORM MODAL
+        // ═══════════════════════════════════════════════════════════
         async function openUserModal(userId = null) {
             editingUserId = userId;
             resetUserForm();
+
             document.getElementById('userModalTitle').textContent = userId ? 'Edit User' : 'Add User';
             document.getElementById('pwHint').textContent = userId ? '(leave blank to keep current)' : '';
             document.getElementById('pwReqMark').style.display = userId ? 'none' : '';
 
-            buildCheckboxes('roleCheckboxes', allRoles, 'role');
-            buildCheckboxes('profileCheckboxes', allProfiles, 'profile');
+            buildProfileCheckboxes([]);   // render unchecked while we wait
 
             if (userId) {
                 const res = await apiFetch(`/admin/users/${userId}`);
                 if (!res?.ok) return;
                 const { data: u } = await res.json();
+
                 document.getElementById('u_name').value = u.name ?? '';
                 document.getElementById('u_username').value = u.username ?? '';
                 document.getElementById('u_email').value = u.email ?? '';
@@ -1024,30 +1111,30 @@ User Management — list, create, edit, permissions, status toggle
                 document.getElementById('u_department').value = u.department ?? '';
                 document.getElementById('u_phone').value = u.phone ?? '';
                 document.getElementById('u_is_active').checked = !!u.is_active;
-                // Tick assigned roles
-                (u.roles ?? []).forEach(r => {
-                    const cb = document.getElementById(`chk_role_${r.id}`);
-                    if (cb) cb.checked = true;
-                });
-                (u.profiles ?? []).forEach(p => {
-                    const cb = document.getElementById(`chk_profile_${p.id}`);
-                    if (cb) cb.checked = true;
-                });
+
+                // Tick assigned profiles
+                const assignedProfileIds = (u.profiles ?? []).map(p => p.id);
+                buildProfileCheckboxes(assignedProfileIds);
             }
 
             openModal('userModal');
         }
 
-        function buildCheckboxes(containerId, items, type) {
-            const div = document.getElementById(containerId);
-            div.innerHTML = items.map(item => `
-          <label style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:12.5px;font-weight:600;color:var(--txtm);cursor:pointer;background:var(--gxl);transition:all .15s"
-            onmouseenter="this.style.borderColor='var(--g)'" onmouseleave="this.style.borderColor='var(--bdr)'">
-            <input type="checkbox" id="chk_${type}_${item.id}" value="${item.id}"
-              style="width:14px;height:14px;accent-color:var(--g)">
-            ${esc(item.name)}
-          </label>
-        `).join('');
+        function buildProfileCheckboxes(checkedIds = []) {
+            const div = document.getElementById('profileCheckboxes');
+            if (!allProfiles.length) {
+                div.innerHTML = `<span style="font-size:12px;color:var(--txtmu)">No profiles configured yet.</span>`;
+                return;
+            }
+            div.innerHTML = allProfiles.map(p => `
+                    <label style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:12.5px;font-weight:600;color:var(--txtm);cursor:pointer;background:var(--gxl);transition:all .15s"
+                        onmouseenter="this.style.borderColor='var(--g)'" onmouseleave="this.style.borderColor='var(--bdr)'">
+                        <input type="checkbox" id="chk_profile_${p.id}" value="${p.id}"
+                            style="width:14px;height:14px;accent-color:var(--g)"
+                            ${checkedIds.includes(p.id) ? 'checked' : ''}>
+                        ${esc(p.name)}
+                    </label>
+                `).join('');
         }
 
         function resetUserForm() {
@@ -1055,45 +1142,53 @@ User Management — list, create, edit, permissions, status toggle
                 .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
             document.getElementById('u_role').value = '';
             document.getElementById('u_is_active').checked = true;
-            document.getElementById('userFormAlert').className = 'form-alert';
-            document.getElementById('userFormAlert').textContent = '';
+            const alertEl = document.getElementById('userFormAlert');
+            alertEl.className = 'form-alert';
+            alertEl.textContent = '';
         }
 
         async function saveUser() {
             const btn = document.getElementById('userSaveBtn');
             btn.disabled = true;
+            btn.textContent = 'Saving…';
 
-            const roleIds = [...document.querySelectorAll('#roleCheckboxes input:checked')].map(cb => +cb.value);
             const profileIds = [...document.querySelectorAll('#profileCheckboxes input:checked')].map(cb => +cb.value);
 
             const payload = {
-                name: document.getElementById('u_name').value,
-                username: document.getElementById('u_username').value,
-                email: document.getElementById('u_email').value,
+                name: document.getElementById('u_name').value.trim(),
+                username: document.getElementById('u_username').value.trim(),
+                email: document.getElementById('u_email').value.trim(),
                 role: document.getElementById('u_role').value,
-                department: document.getElementById('u_department').value,
-                phone: document.getElementById('u_phone').value,
+                department: document.getElementById('u_department').value.trim(),
+                phone: document.getElementById('u_phone').value.trim(),
                 is_active: document.getElementById('u_is_active').checked,
-                role_ids: roleIds,
                 profile_ids: profileIds,
                 password: document.getElementById('u_password').value || undefined,
                 password_confirmation: document.getElementById('u_password_confirmation').value || undefined,
             };
-            if (!payload.password) { delete payload.password; delete payload.password_confirmation; }
+            if (!payload.password) {
+                delete payload.password;
+                delete payload.password_confirmation;
+            }
 
             const method = editingUserId ? 'PUT' : 'POST';
             const endpoint = editingUserId ? `/admin/users/${editingUserId}` : '/admin/users';
-            const res = await apiFetch(endpoint, { method, body: JSON.stringify(payload) });
-            btn.disabled = false;
 
+            const res = await apiFetch(endpoint, { method, body: JSON.stringify(payload) });
             const data = await res.json();
+
+            btn.disabled = false;
+            btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save User`;
+
             if (res.ok && data.status === 'ok') {
                 closeModal('userModal');
                 loadUsers(currentPage);
             } else {
                 const alertEl = document.getElementById('userFormAlert');
                 alertEl.className = 'form-alert error';
-                alertEl.textContent = data.message ?? 'Something went wrong.';
+                alertEl.textContent = data.errors
+                    ? Object.values(data.errors).flat().join(' ')
+                    : (data.message ?? 'Something went wrong.');
             }
         }
 
@@ -1108,11 +1203,24 @@ User Management — list, create, edit, permissions, status toggle
             if (res?.ok) loadUsers(currentPage);
         }
 
-        // ── Permissions modal ──────────────────────────────────────────
-        async function openPermModal(userId, userName) {
+        // ═══════════════════════════════════════════════════════════
+        // PERMISSIONS MODAL
+        //
+        // FIX 1: Existing permissions now populate the checkboxes correctly.
+        // FIX 2: Admin/management show full-access banner; perm grid is hidden.
+        // FIX 3: Normal users see the data-note explaining Supplier/Material
+        //         view permissions for Receiving / Smelting / Refining / BBSU.
+        // ═══════════════════════════════════════════════════════════
+        async function openPermModal(userId, userName, userRole) {
             permUserId = userId;
-            document.getElementById('permModalTitle').textContent = `Permissions — ${userName}`;
+            document.getElementById('permModalTitle').textContent = `Permissions — ${esc(userName)}`;
             document.getElementById('permAlert').className = 'form-alert';
+            document.getElementById('permFullAccessBanner').style.display = 'none';
+            document.getElementById('permDataNote').style.display = 'none';
+            document.getElementById('permGridWrap').style.display = 'block';
+            document.getElementById('permSaveBtn').style.display = '';
+
+            // Pre-render empty grid while fetching
             renderPermGrid([]);
             openModal('permModal');
 
@@ -1120,41 +1228,65 @@ User Management — list, create, edit, permissions, status toggle
             if (!res?.ok) return;
             const { data } = await res.json();
 
-            // data is array of UserModulePermission or {full_access: true}
+            // Admin / Management — full access, no grid needed
+            if (data && data.full_access) {
+                document.getElementById('permFullAccessBanner').style.display = 'block';
+                document.getElementById('permGridWrap').style.display = 'none';
+                document.getElementById('permSaveBtn').style.display = 'none';
+                return;
+            }
+
+            // Normal user — show the hint about Supplier/Material view permissions
+            document.getElementById('permDataNote').style.display = 'block';
+
+            // FIX: data is an array of {module_id, can_view, can_create, ...}
             const perms = Array.isArray(data) ? data : [];
             renderPermGrid(perms);
         }
 
         function renderPermGrid(perms) {
+            // Build a map: module_id → permission row
             const permMap = {};
             perms.forEach(p => { permMap[p.module_id] = p; });
 
-            // Group modules by group
+            // Group modules by their 'group' field
             const groups = {};
             allModules.forEach(m => {
-                if (!groups[m.group ?? 'Other']) groups[m.group ?? 'Other'] = [];
-                groups[m.group ?? 'Other'].push(m);
+                const g = m.group ?? 'Other';
+                if (!groups[g]) groups[g] = [];
+                groups[g].push(m);
             });
 
             const grid = document.getElementById('permGrid');
+
+            if (!allModules.length) {
+                grid.innerHTML = `<div style="text-align:center;padding:24px;color:var(--txtmu);font-size:13px">
+                        No modules configured yet. Go to Settings → Modules to create them.
+                    </div>`;
+                return;
+            }
+
             grid.innerHTML = Object.entries(groups).map(([group, mods]) => `
-          <div class="perm-group-label">${esc(group)}</div>
-          ${mods.map(m => {
+                    <div class="perm-group-label">${esc(group)}</div>
+                    ${mods.map(m => {
+                // FIX: look up existing permission by module_id
                 const p = permMap[m.id] ?? {};
                 return `<div class="perm-module">
-              <div class="perm-module-name">${esc(m.name)}</div>
-              <div class="perm-checks">
-                ${['view', 'create', 'edit', 'delete'].map(act => `
-                  <label class="perm-check">
-                    <input type="checkbox" data-mid="${m.id}" data-act="${act}"
-                      ${p[`can_${act}`] ? 'checked' : ''}>
-                    ${act.charAt(0).toUpperCase() + act.slice(1)}
-                  </label>
-                `).join('')}
-              </div>
-            </div>`;
+                            <div class="perm-module-name">${esc(m.name)}</div>
+                            <div class="perm-checks">
+                                ${['view', 'create', 'edit', 'delete'].map(act => `
+                                    <label class="perm-check">
+                                        <input type="checkbox"
+                                            data-mid="${m.id}"
+                                            data-act="${act}"
+                                            ${p[`can_${act}`] ? 'checked' : ''}>
+                                        ${act.charAt(0).toUpperCase() + act.slice(1)}
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>`;
             }).join('')}
-        `).join('');
+                `).join('');
         }
 
         function checkAll(val) {
@@ -1162,48 +1294,79 @@ User Management — list, create, edit, permissions, status toggle
         }
 
         async function savePermissions() {
-            const permissions = [];
+            const btn = document.getElementById('permSaveBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving…';
+
+            // Collect all checkboxes; group by module_id
             const moduleMap = {};
             document.querySelectorAll('#permGrid input[type=checkbox]').forEach(cb => {
-                const mid = +cb.dataset.mid, act = cb.dataset.act;
-                if (!moduleMap[mid]) { moduleMap[mid] = { module_id: mid, can_view: false, can_create: false, can_edit: false, can_delete: false }; }
+                const mid = +cb.dataset.mid;
+                const act = cb.dataset.act;
+                if (!moduleMap[mid]) {
+                    moduleMap[mid] = { module_id: mid, can_view: false, can_create: false, can_edit: false, can_delete: false };
+                }
                 moduleMap[mid][`can_${act}`] = cb.checked;
             });
-            Object.values(moduleMap).forEach(p => permissions.push(p));
+
+            const permissions = Object.values(moduleMap);
 
             const res = await apiFetch(`/admin/users/${permUserId}/permissions`, {
-                method: 'PUT', body: JSON.stringify({ permissions }),
+                method: 'PUT',
+                body: JSON.stringify({ permissions }),
             });
             const data = await res.json();
+
+            btn.disabled = false;
+            btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"><polyline points="20 6 9 17 4 12"/></svg> Save Permissions`;
+
             if (res.ok && data.status === 'ok') {
                 closeModal('permModal');
             } else {
                 const el = document.getElementById('permAlert');
                 el.className = 'form-alert error';
-                el.textContent = data.message ?? 'Failed to save.';
+                el.textContent = data.message ?? 'Failed to save permissions.';
             }
         }
 
-        // ── Filter ─────────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════
+        // FILTER
+        // ═══════════════════════════════════════════════════════════
         function onFilter() {
             clearTimeout(filterTimer);
             filterTimer = setTimeout(() => loadUsers(1), 350);
         }
 
-        // ── Modal helpers ───────────────────────────────────────────────
-        function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
-        function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
-        function onModalOverlayClick(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
+        // ═══════════════════════════════════════════════════════════
+        // MODAL HELPERS
+        // ═══════════════════════════════════════════════════════════
+        function openModal(id) {
+            document.getElementById(id).classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('open');
+            document.body.style.overflow = '';
+        }
+        function onModalOverlayClick(e, id) {
+            if (e.target === document.getElementById(id)) closeModal(id);
+        }
 
-        // ── Table helpers ───────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════
+        // TABLE HELPERS
+        // ═══════════════════════════════════════════════════════════
         function setTbodyLoading(id, cols) {
-            document.getElementById(id).innerHTML = `<tr><td colspan="${cols}" class="tbl-state"><span class="spinner"></span>Loading…</td></tr>`;
+            document.getElementById(id).innerHTML =
+                `<tr><td colspan="${cols}" class="tbl-state"><span class="spinner"></span>Loading…</td></tr>`;
         }
         function setTbodyError(id, cols) {
-            document.getElementById(id).innerHTML = `<tr><td colspan="${cols}" class="tbl-state" style="color:var(--err)">Failed to load. Please refresh.</td></tr>`;
+            document.getElementById(id).innerHTML =
+                `<tr><td colspan="${cols}" class="tbl-state" style="color:var(--err)">Failed to load. Please refresh.</td></tr>`;
         }
 
-        // ── Pagination ─────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════
+        // PAGINATION
+        // ═══════════════════════════════════════════════════════════
         function renderPag(meta, loadFn) {
             const bar = document.getElementById('pagBar');
             if (!meta || meta.last_page <= 1) { bar.style.display = 'none'; return; }
@@ -1214,7 +1377,8 @@ User Management — list, create, edit, permissions, status toggle
             const pages = pagRange(meta.current_page, meta.last_page);
             document.getElementById('pagBtns').innerHTML = [
                 `<button class="pag-btn" ${meta.current_page === 1 ? 'disabled' : ''} onclick="loadUsers(${meta.current_page - 1})">‹</button>`,
-                ...pages.map(p => p === '…' ? `<button class="pag-btn" disabled>…</button>`
+                ...pages.map(p => p === '…'
+                    ? `<button class="pag-btn" disabled>…</button>`
                     : `<button class="pag-btn${p === meta.current_page ? ' active' : ''}" onclick="loadUsers(${p})">${p}</button>`),
                 `<button class="pag-btn" ${meta.current_page === meta.last_page ? 'disabled' : ''} onclick="loadUsers(${meta.current_page + 1})">›</button>`,
             ].join('');
@@ -1229,9 +1393,17 @@ User Management — list, create, edit, permissions, status toggle
             return r;
         }
 
+        // ═══════════════════════════════════════════════════════════
+        // UTILS
+        // ═══════════════════════════════════════════════════════════
         function esc(s) {
-            if (!s) return '';
-            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            if (s == null) return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
     </script>
 @endpush

@@ -592,7 +592,7 @@
                     <line x1="16" y1="17" x2="8" y2="17" />
                     <polyline points="10 9 9 9 8 9" />
                 </svg>
-                <span>Material Inward</span>
+                <span class="nav-label">Material Inward</span>
             </a>
 
             <a href="{{ route('admin.reports.acidTestStatus') }}" data-label="Acid Test Status"
@@ -603,7 +603,7 @@
                     <path d="M9 11l3 3L22 4" />
                     <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                 </svg>
-                <span>Acid Test Status</span>
+                <span class="nav-label">Acid Test Status</span>
             </a>
 
             <a href="{{ route('admin.reports.bbsu') }}" data-label="BBSU Dashboard" data-permission="report_bbsu"
@@ -616,7 +616,7 @@
                     <line x1="10" y1="9" x2="10" y2="15"></line>
                     <line x1="14" y1="9" x2="14" y2="15"></line>
                 </svg>
-                <span>BBSU Dashboard</span>
+                <span class="nav-label">BBSU Dashboard</span>
             </a>
             <a href="{{ route('admin.reports.smeltingDashboard') }}" data-label="Smelting Dashboard"
                 data-permission="report_smelting"
@@ -628,7 +628,7 @@
                     <path d="M9 14a3 3 0 0 0 6 0"></path>
                 </svg>
 
-                <span>Smelting Dashboard</span>
+                <span class="nav-label">Smelting Dashboard</span>
             </a>
             <a href="{{ route('admin.reports.refiningDashboard') }}" data-label="Refining Dashboard"
                 data-permission="report_refining"
@@ -638,11 +638,24 @@
                     <path
                         d="M12 2a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4z" />
                 </svg>
-                <span>Refining Dashboard</span>
+                <span class="nav-label">Refining Dashboard</span>
             </a>
-            <a href="{{ route('admin.reports.user_activity') }}"
+            <a href="{{ route('admin.reports.user_activity') }}" data-label="User Activity Log"
+                data-permission="report_user_activity"
                 class="nav-item {{ request()->routeIs('admin.reports.user_activity') ? 'active' : '' }}">
-                <span>User Activity Log</span>
+
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+
+                    <!-- User -->
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+
+                    <!-- Activity line -->
+                    <polyline points="16 11 18 13 22 9"></polyline>
+                </svg>
+
+                <span class="nav-label">User Activity Log</span>
             </a>
 
             <div class="nav-section-label" style="margin-top:8px;">Masters</div>
@@ -679,7 +692,7 @@
                         <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                     </svg>
-                    <span>Users</span>
+                    <span class="nav-label">Users</span>
                 </a>
 
                 <a href="{{ route('admin.settings.roles') }}"
@@ -688,7 +701,7 @@
                         stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                     </svg>
-                    <span>Roles</span>
+                    <span class="nav-label">Roles</span>
                 </a>
 
                 <a href="{{ route('admin.settings.profiles') }}"
@@ -698,7 +711,7 @@
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                         <circle cx="12" cy="7" r="4" />
                     </svg>
-                    <span>Profiles</span>
+                    <span class="nav-label">Profiles</span>
                 </a>
 
                 <a href="{{ route('admin.settings.modules') }}"
@@ -710,7 +723,7 @@
                         <rect x="14" y="14" width="7" height="7" />
                         <rect x="3" y="14" width="7" height="7" />
                     </svg>
-                    <span>Modules</span>
+                    <span class="nav-label">Modules</span>
                 </a>
             </div>
         </nav>

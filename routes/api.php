@@ -13,10 +13,6 @@ use App\Http\Controllers\Api\BbsuBatchController;
 use App\Http\Controllers\Api\SmeltingBatchController;
 use App\Http\Controllers\Api\RefiningBatchController;
 
-// future imports:
-// use App\Http\Controllers\Api\BbsuController;
-// use App\Http\Controllers\Api\SmeltingController;
-// use App\Http\Controllers\Api\RefiningController;
 
 // ═══════════════════════════════════════════════════════════════
 //  PUBLIC — Auth Routes (no token needed)
@@ -132,24 +128,6 @@ Route::middleware('auth:sanctum')->group(function () {
           Route::delete('/{id}', [AcidTestingController::class, 'destroy'])
                ->middleware('module:acid_testing,can_delete');
      });
-     // Route::prefix('acid-testings')->middleware('module:acid-testing')->group(function () {
-     //      Route::get('/',                  [AcidTestingController::class, 'index']);
-     //      Route::get('/prefill/{lotNo}',   [AcidTestingController::class, 'prefill']);
-     //      Route::get('/lot/{lotNo}',       [AcidTestingController::class, 'getByLot']);
-     //      Route::get('/{id}',              [AcidTestingController::class, 'show']);
-
-     //      Route::post('/',                 [AcidTestingController::class, 'store'])
-     //           ->middleware('module:acid-testing,can_create');
-
-     //      Route::put('/{id}',              [AcidTestingController::class, 'update'])
-     //           ->middleware('module:acid-testing,can_edit');
-
-     //      Route::patch('/{id}/status',     [AcidTestingController::class, 'updateStatus'])
-     //           ->middleware('module:acid-testing,can_edit');
-
-     //      Route::delete('/{id}',           [AcidTestingController::class, 'destroy'])
-     //           ->middleware('module:acid-testing,can_delete');
-     // });
 
      // ── BBSU ──────────────────────────────────────────────────────
      Route::prefix('bbsu-batches')->middleware('module:bbsu')->group(function () {
@@ -277,6 +255,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
           Route::get('refining/filters', [\App\Http\Controllers\Api\ReportController::class, 'refiningReportFilters'])
                ->name('refining.filters');
+
           Route::get('user-activity', [\App\Http\Controllers\Api\ReportController::class, 'userActivityReport'])
                ->name('userActivity');
 

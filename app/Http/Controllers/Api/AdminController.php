@@ -19,11 +19,12 @@ use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
 {
-    // ── Helper: check if roles/profiles tables exist (migration safety) ──
+    // ── Schema guards ─────────────────────────────────────────────
     private function hasRolesTable(): bool
     {
         return Schema::hasTable('roles');
     }
+
     private function hasProfilesTable(): bool
     {
         return Schema::hasTable('profiles');
@@ -49,16 +50,15 @@ class AdminController extends Controller
             )
             ->orderBy('name');
 
-        // Only eager-load if the tables exist
-        if ($this->hasRolesTable())
+        if ($this->hasRolesTable()) {
             $query->with('roles');
-        if ($this->hasProfilesTable())
+        }
+        if ($this->hasProfilesTable()) {
             $query->with('profiles');
+        }
 
         $paginated = $query->paginate($request->per_page ?? 20);
 
-        // Map rows to clean arrays — blade JS reads json.data (the paginator)
-        // then json.data.data (the rows array)
         $paginated->getCollection()->transform(fn($u) => [
             'id' => $u->id,
             'name' => $u->name,
@@ -79,12 +79,13 @@ class AdminController extends Controller
     // GET /api/admin/users/{id}
     public function userShow(string $id)
     {
-        $query = User::query();
-        if ($this->hasRolesTable())
+        $query = User::query()->with('modulePermissions.module');
+        if ($this->hasRolesTable()) {
             $query->with('roles');
-        if ($this->hasProfilesTable())
+        }
+        if ($this->hasProfilesTable()) {
             $query->with('profiles');
-        $query->with('modulePermissions.module');
+        }
 
         $user = $query->findOrFail($id);
 
@@ -102,8 +103,8 @@ class AdminController extends Controller
                 'last_login_at' => $user->last_login_at,
                 'roles' => $user->roles ?? collect(),
                 'profiles' => $user->profiles ?? collect(),
-                'modulePermissions' => $user->modulePermissions,
-            ]
+                'modulePermissions' => $user->modulePermissions ?? collect(),
+            ],
         ]);
     }
 
@@ -134,10 +135,11 @@ class AdminController extends Controller
             'updated_by' => auth()->id(),
         ]);
 
-        // Sync roles/profiles only if tables exist
         if ($this->hasRolesTable() && $request->filled('role_ids')) {
             $user->roles()->sync($request->role_ids);
         }
+
+        // Apply profile permissions immediately on user creation
         if ($this->hasProfilesTable() && $request->filled('profile_ids')) {
             $user->profiles()->sync($request->profile_ids);
             $this->applyProfilePermissionsToUser($user, $request->profile_ids);
@@ -168,16 +170,24 @@ class AdminController extends Controller
 
         $data = $request->only(['name', 'email', 'username', 'role', 'department', 'phone', 'is_active']);
         $data['updated_by'] = auth()->id();
+
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
+
         $user->update($data);
 
         if ($this->hasRolesTable() && $request->has('role_ids')) {
             $user->roles()->sync($request->role_ids ?? []);
         }
+
+        // Re-apply profile permissions whenever profiles are updated
         if ($this->hasProfilesTable() && $request->has('profile_ids')) {
-            $user->profiles()->sync($request->profile_ids ?? []);
+            $profileIds = $request->profile_ids ?? [];
+            $user->profiles()->sync($profileIds);
+            if (!empty($profileIds)) {
+                $this->applyProfilePermissionsToUser($user, $profileIds);
+            }
         }
 
         if (isset($data['is_active']) && !$data['is_active']) {
@@ -195,25 +205,49 @@ class AdminController extends Controller
     public function userDestroy(string $id)
     {
         $user = User::findOrFail($id);
+
         if ($user->id === auth()->id()) {
             return response()->json(['status' => 'error', 'message' => 'Cannot delete your own account.'], 422);
         }
+
         $user->tokens()->delete();
         $user->delete();
         $user->update(['is_active' => 0]);
         return response()->json(['status' => 'ok', 'message' => 'User deleted.']);
+    }
+    public function getLots()
+    {
+        $lots = Receiving::where('is_active', 1)
+            ->select('id', 'lot_no')
+            ->get();
+
+        if ($lots->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No lots found.'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'data' => $lots
+        ]);
     }
 
     // PATCH /api/admin/users/{id}/toggle-status
     public function userToggleStatus(string $id)
     {
         $user = User::findOrFail($id);
+
         if ($user->id === auth()->id()) {
             return response()->json(['status' => 'error', 'message' => 'Cannot disable your own account.'], 422);
         }
+
         $user->update(['is_active' => !$user->is_active, 'updated_by' => auth()->id()]);
-        if (!$user->is_active)
+
+        if (!$user->is_active) {
             $user->tokens()->delete();
+        }
 
         return response()->json([
             'status' => 'ok',
@@ -227,20 +261,48 @@ class AdminController extends Controller
     {
         $user = User::with(['modulePermissions.module'])->findOrFail($id);
 
+        // admin/management have full access — return flag so JS shows all menus
         if (!$user->isNormal()) {
             return response()->json([
                 'status' => 'ok',
-                'data' => ['full_access' => true, 'role' => $user->role, 'permissions' => []],
+                'data' => [
+                    'full_access' => true,
+                    'role' => $user->role,
+                    'permissions' => [],
+                ],
             ]);
         }
 
-        return response()->json(['status' => 'ok', 'data' => $user->modulePermissions]);
+        return response()->json([
+            'status' => 'ok',
+            'data' => $user->modulePermissions->map(fn($p) => [
+                'module_id' => $p->module_id,
+                'can_view' => (bool) $p->can_view,
+                'can_create' => (bool) $p->can_create,
+                'can_edit' => (bool) $p->can_edit,
+                'can_delete' => (bool) $p->can_delete,
+                'module' => $p->module ? [
+                    'id' => $p->module->id,
+                    'name' => $p->module->name,
+                    'slug' => $p->module->slug,
+                    'group' => $p->module->group,
+                ] : null,
+            ]),
+        ]);
     }
 
     // PUT /api/admin/users/{id}/permissions
     public function userUpdatePermissions(Request $request, string $id)
     {
         $user = User::findOrFail($id);
+
+        // Prevent overriding permissions on admin/management
+        if (!$user->isNormal()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Admin and Management users have full access. Permissions only apply to Normal users.',
+            ], 422);
+        }
 
         $request->validate([
             'permissions' => 'required|array',
@@ -292,24 +354,40 @@ class AdminController extends Controller
         ]);
     }
 
+    // ── HELPER: merge profile permissions → user permissions ──────
+    // Uses updateOrCreate so booleans are cast correctly.
+    // When a user has multiple profiles, permissions are MERGED with OR logic
+    // (if ANY profile grants can_create, the user gets can_create).
     private function applyProfilePermissionsToUser(User $user, array $profileIds): void
     {
-        if (!$this->hasProfilesTable())
+        if (!$this->hasProfilesTable() || empty($profileIds)) {
             return;
+        }
 
         $profilePerms = ProfileModulePermission::whereIn('profile_id', $profileIds)->get();
+
+        // Group by module_id and merge with OR — most-permissive wins
+        $merged = [];
         foreach ($profilePerms as $pp) {
-            UserModulePermission::updateOrInsert(
-                ['user_id' => $user->id, 'module_id' => $pp->module_id],
-                [
-                    'can_view' => $pp->can_view,
-                    'can_create' => $pp->can_create,
-                    'can_edit' => $pp->can_edit,
-                    'can_delete' => $pp->can_delete,
-                    'granted_by' => auth()->id(),
-                    'updated_at' => now(),
-                    'created_at' => now(),
-                ]
+            $mid = $pp->module_id;
+            if (!isset($merged[$mid])) {
+                $merged[$mid] = [
+                    'can_view' => false,
+                    'can_create' => false,
+                    'can_edit' => false,
+                    'can_delete' => false,
+                ];
+            }
+            $merged[$mid]['can_view'] = $merged[$mid]['can_view'] || (bool) $pp->can_view;
+            $merged[$mid]['can_create'] = $merged[$mid]['can_create'] || (bool) $pp->can_create;
+            $merged[$mid]['can_edit'] = $merged[$mid]['can_edit'] || (bool) $pp->can_edit;
+            $merged[$mid]['can_delete'] = $merged[$mid]['can_delete'] || (bool) $pp->can_delete;
+        }
+
+        foreach ($merged as $moduleId => $perms) {
+            UserModulePermission::updateOrCreate(
+                ['user_id' => $user->id, 'module_id' => $moduleId],
+                array_merge($perms, ['granted_by' => auth()->id()])
             );
         }
     }
@@ -334,6 +412,10 @@ class AdminController extends Controller
 
     public function roleStore(Request $request)
     {
+        if (!$this->hasRolesTable()) {
+            return response()->json(['status' => 'error', 'message' => 'Roles table not found.'], 404);
+        }
+
         $request->validate([
             'name' => 'required|string|max:100|unique:roles,name',
             'description' => 'nullable|string|max:255',
@@ -373,9 +455,11 @@ class AdminController extends Controller
     public function roleDestroy(string $id)
     {
         $role = Role::findOrFail($id);
+
         if ($role->users()->exists()) {
-            return response()->json(['status' => 'error', 'message' => 'Cannot delete a role that has users assigned.'], 422);
+            return response()->json(['status' => 'error', 'message' => 'Cannot delete a role with assigned users.'], 422);
         }
+
         $role->delete();
         return response()->json(['status' => 'ok', 'message' => 'Role deleted.']);
     }
@@ -407,6 +491,10 @@ class AdminController extends Controller
 
     public function profileStore(Request $request)
     {
+        if (!$this->hasProfilesTable()) {
+            return response()->json(['status' => 'error', 'message' => 'Profiles table not found.'], 404);
+        }
+
         $request->validate([
             'name' => 'required|string|max:100|unique:profiles,name',
             'description' => 'nullable|string|max:255',
@@ -446,17 +534,22 @@ class AdminController extends Controller
     public function profileDestroy(string $id)
     {
         $profile = Profile::findOrFail($id);
+
         if ($profile->users()->exists()) {
-            return response()->json(['status' => 'error', 'message' => 'Cannot delete a profile that has users assigned.'], 422);
+            return response()->json(['status' => 'error', 'message' => 'Cannot delete a profile with assigned users.'], 422);
         }
+
         $profile->modulePermissions()->delete();
         $profile->delete();
+
         return response()->json(['status' => 'ok', 'message' => 'Profile deleted.']);
     }
 
+    // PUT /api/admin/profiles/{id}/permissions
+    // After saving, push updated permissions to every assigned user
     public function profileUpdatePermissions(Request $request, string $id)
     {
-        $profile = Profile::findOrFail($id);
+        $profile = Profile::with('users.profiles')->findOrFail($id);
 
         $request->validate([
             'permissions' => 'required|array',
@@ -483,9 +576,15 @@ class AdminController extends Controller
 
         ProfileModulePermission::insert($perms);
 
+        // Push updated permissions to every user who has this profile assigned
+        foreach ($profile->users as $user) {
+            $userProfileIds = $user->profiles->pluck('id')->toArray();
+            $this->applyProfilePermissionsToUser($user, $userProfileIds);
+        }
+
         return response()->json([
             'status' => 'ok',
-            'message' => 'Profile permissions updated.',
+            'message' => 'Profile permissions updated and pushed to assigned users.',
             'data' => ProfileModulePermission::with('module')->where('profile_id', $profile->id)->get(),
         ]);
     }
@@ -510,6 +609,10 @@ class AdminController extends Controller
 
     public function moduleStore(Request $request)
     {
+        if (!Schema::hasTable('modules')) {
+            return response()->json(['status' => 'error', 'message' => 'Modules table not found.'], 404);
+        }
+
         $request->validate([
             'name' => 'required|string|max:100|unique:modules,name',
             'group' => 'nullable|string|max:50',
@@ -556,6 +659,7 @@ class AdminController extends Controller
         $module->profilePermissions()->delete();
         $module->userPermissions()->delete();
         $module->delete();
+
         return response()->json(['status' => 'ok', 'message' => 'Module deleted.']);
     }
 }
