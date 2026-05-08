@@ -2186,9 +2186,9 @@
                 <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
                 <td><input type="time"   class="ri" id="temp_time_${i}"   value="${data.record_time ?? ''}"></td>
                 <td><input type="number" class="ri" id="temp_inside_${i}" value="${data.inside_temp_before_charging ?? ''}" step="0.01" placeholder="°C"></td>
-                <td><input type="text"   class="ri" id="temp_pgc_${i}"    value="${data.process_gas_chamber_temp ?? ''}" placeholder="VARCHAR"></td>
-                <td><input type="text"   class="ri" id="temp_shell_${i}"  value="${data.shell_temp ?? ''}" placeholder="VARCHAR"></td>
-                <td><input type="text"   class="ri" id="temp_bag_${i}"    value="${data.bag_house_temp ?? ''}" placeholder="VARCHAR"></td>
+                <td><input type="number"   class="ri" id="temp_pgc_${i}"    value="${data.process_gas_chamber_temp ?? ''}" placeholder=""></td>
+                <td><input type="number"   class="ri" id="temp_shell_${i}"  value="${data.shell_temp ?? ''}" placeholder=""></td>
+                <td><input type="number"   class="ri" id="temp_bag_${i}"    value="${data.bag_house_temp ?? ''}" placeholder=""></td>
                 <td><button class="del-btn" onclick="removeRow('trow-${i}',null)">
                   <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                 </button></td>`;
