@@ -9,7 +9,7 @@ use App\Http\Controllers\Web\MaterialWebController;
 use App\Http\Controllers\Web\ReceivingWebController;
 use App\Http\Controllers\Web\BbsuWebController;
 use App\Http\Controllers\Web\AcidTestingWebController;
-use App\Http\Controllers\Web\Smeltingwebcontroller;
+use App\Http\Controllers\Web\SmeltingWebController;
 use App\Http\Controllers\Web\RefiningWebController;
 // Guest — login page
 Route::get('/', [AuthWebController::class, 'showLogin'])->name('login');
@@ -63,10 +63,10 @@ Route::prefix('admin/mes/bbsu')->name('admin.mes.bbsu.')->group(function () {
     Route::get('/{id}/edit', [BbsuWebController::class, 'edit'])->name('edit');
 });
 Route::prefix('admin/mes/smelting')->name('admin.mes.smelting.')->group(function () {
-    Route::get('/', [Smeltingwebcontroller::class, 'index'])->name('index');
-    Route::get('/create', [Smeltingwebcontroller::class, 'create'])->name('create');
-    Route::get('/{id}/edit', [Smeltingwebcontroller::class, 'edit'])->name('edit');
-    Route::delete('/{id}', [Smeltingwebcontroller::class, 'destroy'])->name('destroy');
+    Route::get('/', [SmeltingWebController::class, 'index'])->name('index');
+    Route::get('/create', [SmeltingWebController::class, 'create'])->name('create');
+    Route::get('/{id}/edit', [SmeltingWebController::class, 'edit'])->name('edit');
+    Route::delete('/{id}', [SmeltingWebController::class, 'destroy'])->name('destroy');
 
 });
 Route::prefix('admin/mes/refining')->name('admin.mes.refining.')->group(function () {
