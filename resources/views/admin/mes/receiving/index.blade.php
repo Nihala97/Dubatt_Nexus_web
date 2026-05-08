@@ -661,7 +661,7 @@
 @section('content')
 
     @php
-        $q = \App\Models\receiving::with(['createdBy'])->where('is_active', true);
+        $q = \App\Models\Receiving::with(['createdBy'])->where('is_active', true);
 
         if (request('status') !== null && request('status') !== '') {
             if (request('status') == '1') {
@@ -685,7 +685,7 @@
 
         $list_items = $q->orderByDesc('receipt_date')->orderByDesc('created_at')->paginate(20)->withQueryString();
 
-        $atBase = \App\Models\receiving::where('is_active', true);
+        $atBase = \App\Models\Receiving::where('is_active', true);
         $totalAll = (clone $atBase)->count();
         $draftCnt = (clone $atBase)->where('status', 0)->count();
         $submittedCnt = (clone $atBase)->where('status', '>=', 1)->count();
