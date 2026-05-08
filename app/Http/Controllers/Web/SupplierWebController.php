@@ -8,17 +8,17 @@ class SupplierWebController extends Controller
 {
     public function index()
     {
-        return view('admin.mes.Supplier.index');
+        return view('admin.mes.supplier.index');
     }
 
     public function create()
     {
-        return view('admin.mes.Supplier.form');
+        return view('admin.mes.supplier.form');
     }
 
     public function edit($id)
     {
-        return view('admin.mes.Supplier.form', ['item_id' => $id]);
+        return view('admin.mes.supplier.form', ['item_id' => $id]);
     }
     
 }
