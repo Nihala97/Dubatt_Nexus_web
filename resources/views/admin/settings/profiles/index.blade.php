@@ -1,16 +1,11 @@
-{{--
-resources/views/admin/settings/profiles/index.blade.php
-Profiles Management — list, create, edit, set default module permissions per profile
---}}
+{{-- resources/views/admin/settings/profiles/index.blade.php --}}
 @extends('admin.layouts.app')
 @section('title', 'Profiles')
 
 @section('breadcrumb')
     <a href="{{ route('admin.dashboard') }}" style="color:var(--text-muted);text-decoration:none">Dashboard</a>
-    <span style="margin:0 6px;color:var(--border)">/</span>
-    <span style="color:var(--text-muted)">Settings</span>
-    <span style="margin:0 6px;color:var(--border)">/</span>
-    <strong>Profiles</strong>
+    <span style="margin:0 6px;color:var(--border)">/</span><span style="color:var(--text-muted)">Settings</span>
+    <span style="margin:0 6px;color:var(--border)">/</span><strong>Profiles</strong>
 @endsection
 
 @push('styles')
@@ -20,8 +15,6 @@ Profiles Management — list, create, edit, set default module permissions per p
             --gd: #145f2d;
             --gl: #e8f5ed;
             --gxl: #f2faf5;
-            --white: #fff;
-            --bg: #f4f7f5;
             --bdr: #dde8e2;
             --txt: #1e2d26;
             --txtm: #3d5449;
@@ -35,12 +28,6 @@ Profiles Management — list, create, edit, set default module permissions per p
         *::before,
         *::after {
             box-sizing: border-box
-        }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: var(--bg);
-            color: var(--txt)
         }
 
         @keyframes spin {
@@ -61,7 +48,6 @@ Profiles Management — list, create, edit, set default module permissions per p
         .ph h2 {
             font-size: clamp(17px, 2.3vw, 22px);
             font-weight: 800;
-            color: var(--txt);
             letter-spacing: -.3px
         }
 
@@ -108,7 +94,7 @@ Profiles Management — list, create, edit, set default module permissions per p
         }
 
         .btn-outline {
-            background: var(--white);
+            background: #fff;
             color: var(--txtm);
             border: 1.5px solid var(--bdr)
         }
@@ -141,7 +127,7 @@ Profiles Management — list, create, edit, set default module permissions per p
         }
 
         .card {
-            background: var(--white);
+            background: #fff;
             border: 1px solid var(--bdr);
             border-radius: var(--r);
             box-shadow: var(--sh);
@@ -186,6 +172,7 @@ Profiles Management — list, create, edit, set default module permissions per p
         .filter-bar {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
             padding: 14px 20px;
             border-bottom: 1px solid var(--bdr);
             background: var(--gxl)
@@ -197,6 +184,7 @@ Profiles Management — list, create, edit, set default module permissions per p
             border-radius: 8px;
             font-family: 'Outfit', sans-serif;
             font-size: 12.5px;
+            color: var(--txt);
             background: #fff;
             outline: none;
             min-width: 220px;
@@ -225,14 +213,17 @@ Profiles Management — list, create, edit, set default module permissions per p
             background: var(--gl);
             padding: 9px 14px;
             border-bottom: 2px solid var(--bdr);
-            text-align: left
+            white-space: nowrap;
+            text-align: left;
+            vertical-align: middle
         }
 
         .dt tbody td {
             padding: 10px 14px;
             border-bottom: 1px solid #edf2ef;
             font-size: 12.5px;
-            vertical-align: middle
+            vertical-align: middle;
+            text-align: left
         }
 
         .dt tbody tr:last-child td {
@@ -241,16 +232,6 @@ Profiles Management — list, create, edit, set default module permissions per p
 
         .dt tbody tr:hover td {
             background: #f7fbf8
-        }
-
-        .badge-active {
-            background: #d1fae5;
-            color: #065f46
-        }
-
-        .badge-inactive {
-            background: #fee2e2;
-            color: #991b1b
         }
 
         .badge {
@@ -263,9 +244,20 @@ Profiles Management — list, create, edit, set default module permissions per p
             font-weight: 700
         }
 
+        .badge-active {
+            background: #d1fae5;
+            color: #065f46
+        }
+
+        .badge-inactive {
+            background: #fee2e2;
+            color: #991b1b
+        }
+
         .act-btns {
             display: flex;
-            gap: 5px
+            gap: 5px;
+            align-items: center
         }
 
         .tbl-state {
@@ -287,7 +279,6 @@ Profiles Management — list, create, edit, set default module permissions per p
             margin-right: 6px
         }
 
-        /* Modals */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -404,6 +395,8 @@ Profiles Management — list, create, edit, set default module permissions per p
             stroke: var(--txtmu);
             fill: none;
             stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
             pointer-events: none
         }
 
@@ -417,7 +410,7 @@ Profiles Management — list, create, edit, set default module permissions per p
             font-size: 13px;
             color: var(--txt);
             outline: none;
-            transition: border-color .18s
+            transition: border-color .18s, background .18s
         }
 
         .fi:focus {
@@ -442,7 +435,17 @@ Profiles Management — list, create, edit, set default module permissions per p
             display: block
         }
 
-        /* Permission grid */
+        .perm-group-label {
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--txtmu);
+            margin: 14px 0 6px;
+            border-bottom: 1px solid var(--bdr);
+            padding-bottom: 5px
+        }
+
         .perm-module {
             background: var(--gxl);
             border: 1px solid var(--bdr);
@@ -482,15 +485,19 @@ Profiles Management — list, create, edit, set default module permissions per p
             cursor: pointer
         }
 
-        .perm-group-label {
-            font-size: 9.5px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: var(--txtmu);
-            margin: 14px 0 6px;
-            border-bottom: 1px solid var(--bdr);
-            padding-bottom: 5px
+        .info-banner {
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+            border: 1px solid
+        }
+
+        .info-blue {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+            color: #1e40af
         }
     </style>
 @endpush
@@ -501,7 +508,7 @@ Profiles Management — list, create, edit, set default module permissions per p
             <h2>Profiles</h2>
             <p>Job profiles with default module permissions — assign to users to auto-apply access</p>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openProfileModal()">
+        <button class="btn btn-primary btn-sm" id="btnAddProfile" onclick="openProfileModal()">
             <svg viewBox="0 0 24 24">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
@@ -514,14 +521,12 @@ Profiles Management — list, create, edit, set default module permissions per p
         <div class="card-head">
             <div class="card-head-left">
                 <svg viewBox="0 0 24 24">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
                 </svg>
                 <span>All Profiles</span>
             </div>
-            <span id="tableCaption" style="font-size:11.5px;color:var(--txtmu)"></span>
+            <span id="caption" style="font-size:11.5px;color:var(--txtmu)"></span>
         </div>
         <div class="filter-bar">
             <input type="text" id="fSearch" placeholder="Search profiles…" oninput="onFilter()">
@@ -534,7 +539,7 @@ Profiles Management — list, create, edit, set default module permissions per p
                         <th>Description</th>
                         <th>Users</th>
                         <th>Status</th>
-                        <th style="width:160px">Actions</th>
+                        <th style="width:190px">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="profileTbody">
@@ -546,22 +551,22 @@ Profiles Management — list, create, edit, set default module permissions per p
         </div>
     </div>
 
-    {{-- Profile Form Modal --}}
-    <div class="modal-overlay" id="profileModal" onclick="if(event.target===this)closeProfileModal()">
-        <div class="modal-box" style="max-width:500px">
+    {{-- PROFILE FORM MODAL --}}
+    <div class="modal-overlay" id="profileModal" onclick="if(event.target===this)closeModal('profileModal')">
+        <div class="modal-box" style="max-width:480px">
             <div class="modal-head">
                 <span class="modal-title" id="profileModalTitle">Add Profile</span>
-                <button class="modal-close" onclick="closeProfileModal()">✕</button>
+                <button class="modal-close" onclick="closeModal('profileModal')">✕</button>
             </div>
             <div class="modal-body">
-                <div id="profileFormAlert" class="form-alert"></div>
+                <div id="profileAlert" class="form-alert"></div>
                 <div class="field">
                     <label>Profile Name <span style="color:var(--err)">*</span></label>
                     <div class="iw"><svg class="ico" viewBox="0 0 24 24">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                             <circle cx="12" cy="7" r="4" />
                         </svg>
-                        <input class="fi" type="text" id="p_name" placeholder="e.g. Acid Tester">
+                        <input class="fi" type="text" id="p_name" placeholder="e.g. Receiver">
                     </div>
                 </div>
                 <div class="field">
@@ -584,38 +589,38 @@ Profiles Management — list, create, edit, set default module permissions per p
                 </label>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline btn-sm" onclick="closeProfileModal()">Cancel</button>
-                <button class="btn btn-primary btn-sm" onclick="saveProfile()">
+                <button class="btn btn-outline btn-sm" onclick="closeModal('profileModal')">Cancel</button>
+                <button class="btn btn-primary btn-sm" id="profileSaveBtn" onclick="saveProfile()">
                     <svg viewBox="0 0 24 24">
                         <polyline points="20 6 9 17 4 12" />
-                    </svg> Save
+                    </svg> Save Profile
                 </button>
             </div>
         </div>
     </div>
 
-    {{-- Profile Permissions Modal --}}
-    <div class="modal-overlay" id="permModal" onclick="if(event.target===this)closePermModal()">
+    {{-- PERMISSIONS MODAL --}}
+    <div class="modal-overlay" id="permModal" onclick="if(event.target===this)closeModal('permModal')">
         <div class="modal-box" style="max-width:700px">
             <div class="modal-head">
-                <span class="modal-title" id="permModalTitle">Default Permissions</span>
-                <button class="modal-close" onclick="closePermModal()">✕</button>
+                <span class="modal-title" id="permTitle">Permissions</span>
+                <button class="modal-close" onclick="closeModal('permModal')">✕</button>
             </div>
             <div class="modal-body">
+                <div class="info-banner info-blue" style="margin-bottom:14px">
+                    Set the default module permissions for this profile. When this profile is assigned to a user,
+                    these permissions will be auto-applied.
+                </div>
                 <div id="permAlert" class="form-alert"></div>
-                <p style="font-size:12px;color:var(--txtmu);margin-bottom:14px">
-                    Set the default module permissions for this profile. When this profile is assigned to a user, these
-                    permissions will be auto-applied.
-                </p>
-                <div style="display:flex;gap:8px;margin-bottom:14px">
-                    <button class="btn btn-outline btn-xs" onclick="checkAllPerm(true)">Check All</button>
-                    <button class="btn btn-outline btn-xs" onclick="checkAllPerm(false)">Uncheck All</button>
+                <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+                    <button class="btn btn-outline btn-xs" onclick="checkAll(true)">Check All</button>
+                    <button class="btn btn-outline btn-xs" onclick="checkAll(false)">Uncheck All</button>
                 </div>
                 <div id="permGrid"></div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline btn-sm" onclick="closePermModal()">Cancel</button>
-                <button class="btn btn-primary btn-sm" onclick="saveProfilePermissions()">
+                <button class="btn btn-outline btn-sm" onclick="closeModal('permModal')">Cancel</button>
+                <button class="btn btn-primary btn-sm" id="permSaveBtn" onclick="savePermissions()">
                     <svg viewBox="0 0 24 24">
                         <polyline points="20 6 9 17 4 12" />
                     </svg> Save Permissions
@@ -628,153 +633,160 @@ Profiles Management — list, create, edit, set default module permissions per p
 @push('scripts')
     <script>
         let editProfileId = null, permProfileId = null, filterTimer = null;
-        let allModules = [];
+        let allProfiles = [], allModules = [];
 
-        async function init() {
-            const res = await apiFetch('/admin/modules');
-            if (res?.ok) { const d = await res.json(); allModules = d.data ?? []; }
+        (async function init() {
+            if (!can('settings_profiles', 'can_create')) document.getElementById('btnAddProfile').style.display = 'none';
+            await loadModules();
             loadProfiles();
+        })();
+
+        async function loadModules() {
+            try {
+                const r = await apiFetch('/admin/modules');
+                if (r?.ok) { const d = await r.json(); allModules = Array.isArray(d.data) ? d.data : []; }
+            } catch (e) { }
         }
-        init();
 
         async function loadProfiles() {
-            document.getElementById('profileTbody').innerHTML = `<tr><td colspan="5" class="tbl-state"><span class="spinner"></span>Loading…</td></tr>`;
-            const params = new URLSearchParams({ per_page: 100 });
-            const s = document.getElementById('fSearch').value;
-            if (s) params.set('search', s);
-            const res = await apiFetch(`/admin/profiles?${params}`);
-            if (!res?.ok) return;
+            document.getElementById('profileTbody').innerHTML = '<tr><td colspan="5" class="tbl-state"><span class="spinner"></span>Loading…</td></tr>';
+            const s = document.getElementById('fSearch').value.trim();
+            const p = new URLSearchParams({ per_page: 200 });
+            if (s) p.set('search', s);
+            const res = await apiFetch('/admin/profiles?' + p);
+            if (!res?.ok) { document.getElementById('profileTbody').innerHTML = '<tr><td colspan="5" class="tbl-state" style="color:var(--err)">Failed to load.</td></tr>'; return; }
             const json = await res.json();
-            const rows = json.data?.data ?? [];
-            document.getElementById('tableCaption').textContent = `${json.data?.total ?? rows.length} profiles`;
-            document.getElementById('profileTbody').innerHTML = rows.length ? rows.map(p => `
-          <tr>
-            <td style="font-weight:700">${esc(p.name)}</td>
-            <td style="color:var(--txtmu)">${esc(p.description ?? '—')}</td>
-            <td><span style="font-weight:700;color:var(--g)">${p.users_count ?? 0}</span></td>
-            <td>${p.is_active ? '<span class="badge badge-active">● Active</span>' : '<span class="badge badge-inactive">● Inactive</span>'}</td>
-            <td><div class="act-btns">
-              <button class="btn btn-outline btn-xs" onclick="openProfileModal(${p.id})">Edit</button>
-              <button class="btn btn-outline btn-xs" onclick="openPermModal(${p.id},'${esc(p.name)}')" style="color:var(--g)">Permissions</button>
-              <button class="btn btn-danger btn-xs" onclick="deleteProfile(${p.id},'${esc(p.name)}')">Delete</button>
-            </div></td>
-          </tr>
-        `).join('') : `<tr><td colspan="5" class="tbl-state">No profiles found.</td></tr>`;
+            allProfiles = json.data?.data ?? [];
+            document.getElementById('caption').textContent = allProfiles.length + ' profiles';
+            renderProfiles(allProfiles);
         }
 
+        function renderProfiles(rows) {
+            const canEdit = can('settings_profiles', 'can_edit'), canDel = can('settings_profiles', 'can_delete');
+            document.getElementById('profileTbody').innerHTML = rows.length ? rows.map(p => {
+                const eb = canEdit ? '<button class="btn btn-outline btn-xs" onclick="openProfileModal(' + p.id + ')">Edit</button>' : '';
+                const permb = canEdit ? '<button class="btn btn-outline btn-xs" onclick="openPermModal(' + p.id + ',\'' + esc(p.name) + '\')" style="color:var(--g)">Permissions</button>' : '';
+                const db = canDel ? '<button class="btn btn-danger btn-xs" onclick="delProfile(' + p.id + ',\'' + esc(p.name) + '\')">Delete</button>' : '';
+                return '<tr>'
+                    + '<td style="font-weight:700">' + esc(p.name) + '</td>'
+                    + '<td style="color:var(--txtmu)">' + esc(p.description || '—') + '</td>'
+                    + '<td><span style="font-weight:700;color:var(--g)">' + (p.users_count ?? 0) + '</span></td>'
+                    + '<td>' + (p.is_active ? '<span class="badge badge-active">● Active</span>' : '<span class="badge badge-inactive">● Inactive</span>') + '</td>'
+                    + '<td><div class="act-btns">' + eb + permb + db + '</div></td>'
+                    + '</tr>';
+            }).join('') : '<tr><td colspan="5" class="tbl-state">No profiles found.</td></tr>';
+        }
+
+        // ── Profile CRUD modal ─────────────────────────────────────────
         function openProfileModal(id = null) {
             editProfileId = id;
-            document.getElementById('p_name').value = '';
-            document.getElementById('p_desc').value = '';
-            document.getElementById('p_active').checked = true;
-            document.getElementById('profileFormAlert').className = 'form-alert';
+            document.getElementById('profileAlert').className = 'form-alert';
             document.getElementById('profileModalTitle').textContent = id ? 'Edit Profile' : 'Add Profile';
             if (id) {
-                apiFetch(`/admin/profiles/${id}`).then(r => r.json()).then(d => {
-                    const p = d.data;
-                    document.getElementById('p_name').value = p.name ?? '';
-                    document.getElementById('p_desc').value = p.description ?? '';
-                    document.getElementById('p_active').checked = !!p.is_active;
-                });
+                const prof = allProfiles.find(p => p.id === id);
+                document.getElementById('p_name').value = prof?.name ?? '';
+                document.getElementById('p_desc').value = prof?.description ?? '';
+                document.getElementById('p_active').checked = prof?.is_active ?? true;
+            } else {
+                document.getElementById('p_name').value = '';
+                document.getElementById('p_desc').value = '';
+                document.getElementById('p_active').checked = true;
             }
-            document.getElementById('profileModal').classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeProfileModal() {
-            document.getElementById('profileModal').classList.remove('open');
-            document.body.style.overflow = '';
-            editProfileId = null;
+            openModal('profileModal');
+            setTimeout(() => document.getElementById('p_name').focus(), 100);
         }
 
         async function saveProfile() {
-            const payload = { name: document.getElementById('p_name').value, description: document.getElementById('p_desc').value, is_active: document.getElementById('p_active').checked };
-            const method = editProfileId ? 'PUT' : 'POST';
-            const endpoint = editProfileId ? `/admin/profiles/${editProfileId}` : '/admin/profiles';
-            const res = await apiFetch(endpoint, { method, body: JSON.stringify(payload) });
+            const btn = document.getElementById('profileSaveBtn');
+            btn.disabled = true; btn.textContent = 'Saving…';
+            const payload = {
+                name: document.getElementById('p_name').value.trim(),
+                description: document.getElementById('p_desc').value.trim(),
+                is_active: document.getElementById('p_active').checked,
+            };
+            const res = await apiFetch(editProfileId ? '/admin/profiles/' + editProfileId : '/admin/profiles', {
+                method: editProfileId ? 'PUT' : 'POST', body: JSON.stringify(payload)
+            });
             const data = await res.json();
-            if (res.ok && data.status === 'ok') { closeProfileModal(); loadProfiles(); }
-            else { const el = document.getElementById('profileFormAlert'); el.className = 'form-alert error'; el.textContent = data.message ?? 'Error.'; }
+            btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"><polyline points="20 6 9 17 4 12"/></svg> Save Profile';
+            if (res.ok && data.status === 'ok') { closeModal('profileModal'); loadProfiles(); showToast(editProfileId ? 'Profile updated.' : 'Profile created.'); }
+            else { const e = document.getElementById('profileAlert'); e.className = 'form-alert error'; e.textContent = data.message ?? 'Something went wrong.'; }
         }
 
-        async function deleteProfile(id, name) {
-            if (!confirm(`Delete profile "${name}"?`)) return;
-            const res = await apiFetch(`/admin/profiles/${id}`, { method: 'DELETE' });
+        async function delProfile(id, name) {
+            if (!await showConfirm('Delete profile "' + name + '"? This cannot be undone.')) return;
+            const res = await apiFetch('/admin/profiles/' + id, { method: 'DELETE' });
             const data = await res.json();
-            if (res.ok) loadProfiles();
-            else alert(data.message ?? 'Cannot delete.');
+            if (res.ok) { loadProfiles(); showToast('Profile deleted.'); }
+            else alert(data.message ?? 'Cannot delete — profile may have assigned users.');
         }
 
-        // ── Profile Permissions Modal ──────────────────────────────────
-        async function openPermModal(id, name) {
-            permProfileId = id;
-            document.getElementById('permModalTitle').textContent = `Permissions — ${name}`;
+        // ── Permissions modal ──────────────────────────────────────────
+        async function openPermModal(profileId, name) {
+            permProfileId = profileId;
+            document.getElementById('permTitle').textContent = 'Permissions — ' + esc(name);
             document.getElementById('permAlert').className = 'form-alert';
-            document.getElementById('permGrid').innerHTML = `<div class="tbl-state"><span class="spinner"></span>Loading…</div>`;
-            document.getElementById('permModal').classList.add('open');
-            document.body.style.overflow = 'hidden';
+            renderPermGrid([]);
+            openModal('permModal');
 
-            const res = await apiFetch(`/admin/profiles/${id}`);
+            // Load existing permissions for this profile
+            const res = await apiFetch('/admin/profiles/' + profileId);
             if (!res?.ok) return;
-            const { data: profile } = await res.json();
-            const perms = profile.module_permissions ?? [];
-            const permMap = {};
-            perms.forEach(p => { permMap[p.module_id] = p; });
-            renderPermGrid(permMap);
+            const { data } = await res.json();
+            const perms = data?.module_permissions ?? [];
+            renderPermGrid(perms);
         }
 
-        function closePermModal() {
-            document.getElementById('permModal').classList.remove('open');
-            document.body.style.overflow = '';
-            permProfileId = null;
-        }
+        function renderPermGrid(perms) {
+            // Build map: module_id → perm row
+            const map = {};
+            perms.forEach(p => { map[p.module_id] = p; });
 
-        function renderPermGrid(permMap) {
+            // Group modules by group
             const groups = {};
-            allModules.forEach(m => {
-                const g = m.group ?? 'Other';
-                if (!groups[g]) groups[g] = [];
-                groups[g].push(m);
-            });
-            document.getElementById('permGrid').innerHTML = Object.entries(groups).map(([group, mods]) => `
-          <div class="perm-group-label">${esc(group)}</div>
-          ${mods.map(m => {
-                const p = permMap[m.id] ?? {};
-                return `<div class="perm-module">
-              <div class="perm-module-name">${esc(m.name)}</div>
-              <div class="perm-checks">
-                ${['view', 'create', 'edit', 'delete'].map(act => `
-                  <label class="perm-check">
-                    <input type="checkbox" data-mid="${m.id}" data-act="${act}"
-                      ${p[`can_${act}`] ? 'checked' : ''}>
-                    ${act.charAt(0).toUpperCase() + act.slice(1)}
-                  </label>
-                `).join('')}
-              </div>
-            </div>`;
-            }).join('')}
-        `).join('');
+            allModules.forEach(m => { const g = m.group || 'Other'; if (!groups[g]) groups[g] = []; groups[g].push(m); });
+
+            const grid = document.getElementById('permGrid');
+            if (!allModules.length) {
+                grid.innerHTML = '<div style="text-align:center;padding:24px;color:var(--txtmu)">No modules configured. Go to Settings → Modules.</div>';
+                return;
+            }
+            grid.innerHTML = Object.entries(groups).map(([g, mods]) =>
+                '<div class="perm-group-label">' + esc(g) + '</div>'
+                + mods.map(m => {
+                    const p = map[m.id] || {};
+                    return '<div class="perm-module"><div class="perm-module-name">' + esc(m.name) + '</div><div class="perm-checks">'
+                        + ['view', 'create', 'edit', 'delete'].map(a =>
+                            '<label class="perm-check"><input type="checkbox" data-mid="' + m.id + '" data-act="' + a + '" ' + (p['can_' + a] ? 'checked' : '') + '>' + a.charAt(0).toUpperCase() + a.slice(1) + '</label>'
+                        ).join('') + '</div></div>';
+                }).join('')
+            ).join('');
         }
 
-        function checkAllPerm(val) {
-            document.querySelectorAll('#permGrid input[type=checkbox]').forEach(cb => cb.checked = val);
-        }
+        function checkAll(v) { document.querySelectorAll('#permGrid input[type=checkbox]').forEach(c => c.checked = v); }
 
-        async function saveProfilePermissions() {
-            const moduleMap = {};
-            document.querySelectorAll('#permGrid input[type=checkbox]').forEach(cb => {
-                const mid = +cb.dataset.mid, act = cb.dataset.act;
-                if (!moduleMap[mid]) moduleMap[mid] = { module_id: mid, can_view: false, can_create: false, can_edit: false, can_delete: false };
-                moduleMap[mid][`can_${act}`] = cb.checked;
+        async function savePermissions() {
+            const btn = document.getElementById('permSaveBtn');
+            btn.disabled = true; btn.textContent = 'Saving…';
+            const modMap = {};
+            document.querySelectorAll('#permGrid input[type=checkbox]').forEach(c => {
+                const mid = +c.dataset.mid, act = c.dataset.act;
+                if (!modMap[mid]) modMap[mid] = { module_id: mid, can_view: false, can_create: false, can_edit: false, can_delete: false };
+                modMap[mid]['can_' + act] = c.checked;
             });
-            const permissions = Object.values(moduleMap);
-            const res = await apiFetch(`/admin/profiles/${permProfileId}/permissions`, { method: 'PUT', body: JSON.stringify({ permissions }) });
+            const res = await apiFetch('/admin/profiles/' + permProfileId + '/permissions', {
+                method: 'PUT', body: JSON.stringify({ permissions: Object.values(modMap) })
+            });
             const data = await res.json();
-            if (res.ok && data.status === 'ok') { closePermModal(); }
-            else { const el = document.getElementById('permAlert'); el.className = 'form-alert error'; el.textContent = data.message ?? 'Error.'; }
+            btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"><polyline points="20 6 9 17 4 12"/></svg> Save Permissions';
+            if (res.ok && data.status === 'ok') { closeModal('permModal'); showToast('Profile permissions saved and applied to assigned users.'); }
+            else { const e = document.getElementById('permAlert'); e.className = 'form-alert error'; e.textContent = data.message ?? 'Failed to save.'; }
         }
 
+        // ── Helpers ────────────────────────────────────────────────────
         function onFilter() { clearTimeout(filterTimer); filterTimer = setTimeout(loadProfiles, 350); }
-        function esc(s) { if (!s) return ''; return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+        function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
+        function esc(s) { return s == null ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
     </script>
 @endpush

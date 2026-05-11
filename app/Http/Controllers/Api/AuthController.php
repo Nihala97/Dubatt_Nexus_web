@@ -11,9 +11,6 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    /**
-     * POST /api/auth/login
-     */
     public function login(Request $request)
     {
         $request->validate([
@@ -38,15 +35,10 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // Update last login timestamp
         $user->update(['last_login_at' => now()]);
-
-        // Revoke old tokens (single session)
         $user->tokens()->delete();
 
         $token = $user->createToken('api-token')->plainTextToken;
-
-        // ✅ Log the login — get token ID after creation
         $tokenId = $user->tokens()->latest('id')->first()?->id;
 
         UserActivityLog::create([
@@ -58,6 +50,11 @@ class AuthController extends Controller
             'logged_at' => now(),
         ]);
 
+        // Load permissions for management + normal users (admin has full_access, no need)
+        if (!$user->isAdmin()) {
+            $user->load(['modulePermissions.module' => fn($q) => $q->where('is_active', true)->orderBy('sort_order')]);
+        }
+
         return response()->json([
             'status' => 'ok',
             'data' => [
@@ -68,15 +65,11 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * POST /api/auth/logout
-     */
     public function logout(Request $request)
     {
         $user = $request->user();
         $tokenId = $user->currentAccessToken()?->id;
 
-        // ✅ Log the logout — before revoking so token context is still available
         UserActivityLog::create([
             'user_id' => $user->id,
             'action' => 'logout',
@@ -88,20 +81,19 @@ class AuthController extends Controller
 
         $user->currentAccessToken()->delete();
 
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Logged out successfully.',
-        ]);
+        return response()->json(['status' => 'ok', 'message' => 'Logged out successfully.']);
     }
 
-    /**
-     * GET /api/auth/me
-     */
     public function me(Request $request)
     {
-        $user = $request->user()->load([
-            'modulePermissions.module' => fn($q) => $q->where('is_active', true)->orderBy('sort_order'),
-        ]);
+        $user = $request->user();
+
+        // Load permissions for management + normal users (not admin — they have full_access)
+        if (!$user->isAdmin()) {
+            $user->load([
+                'modulePermissions.module' => fn($q) => $q->where('is_active', true)->orderBy('sort_order'),
+            ]);
+        }
 
         return response()->json([
             'status' => 'ok',
@@ -109,9 +101,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * POST /api/auth/refresh
-     */
     public function refresh(Request $request)
     {
         $user = $request->user();
@@ -120,18 +109,44 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => 'ok',
-            'data' => [
-                'token' => $token,
-                'token_type' => 'Bearer',
-            ],
+            'data' => ['token' => $token, 'token_type' => 'Bearer'],
         ]);
     }
 
-    // ── Private Helpers ───────────────────────────────────────────
-
-    private function userResource(User $user): array
+    // ─────────────────────────────────────────────────────────────
+    // SINGLE SOURCE OF TRUTH for user payload sent to the browser.
+    //
+    // PERMISSION MODEL:
+    //   admin      → full_access: true  (sees everything, no checks)
+    //   management → full_access: false (permission-based, same as normal)
+    //   normal     → full_access: false (permission-based)
+    //
+    // ALWAYS returns both full_access and permissions fields so the
+    // JS can() function always has what it needs from localStorage.
+    // ─────────────────────────────────────────────────────────────
+    public function userResource(User $user): array
     {
-        $data = [
+        // ONLY admin gets full access — management is permission-based
+        $isFullAccess = $user->isAdmin();
+
+        $permissions = [];
+        // Load permissions for management AND normal users
+        if (!$isFullAccess && $user->relationLoaded('modulePermissions')) {
+            $permissions = $user->modulePermissions
+                ->filter(fn($p) => $p->module !== null)
+                ->map(fn($p) => [
+                    'module' => $p->module->slug,
+                    'module_name' => $p->module->name,
+                    'can_view' => (bool) $p->can_view,
+                    'can_create' => (bool) $p->can_create,
+                    'can_edit' => (bool) $p->can_edit,
+                    'can_delete' => (bool) $p->can_delete,
+                ])
+                ->values()
+                ->toArray();
+        }
+
+        return [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
@@ -139,25 +154,10 @@ class AuthController extends Controller
             'role' => $user->role,
             'department' => $user->department,
             'phone' => $user->phone,
-            'is_active' => $user->is_active,
+            'is_active' => (bool) $user->is_active,
             'last_login_at' => $user->last_login_at,
+            'full_access' => $isFullAccess,   // true ONLY for admin
+            'permissions' => $permissions,    // populated for management + normal
         ];
-
-        if ($user->isNormal() && $user->relationLoaded('modulePermissions')) {
-            $data['permissions'] = $user->modulePermissions->map(fn($p) => [
-                'module' => $p->module?->slug,
-                'module_name' => $p->module?->name,
-                'can_view' => $p->can_view,
-                'can_create' => $p->can_create,
-                'can_edit' => $p->can_edit,
-                'can_delete' => $p->can_delete,
-            ]);
-        }
-
-        if ($user->isAdmin() || $user->isManagement()) {
-            $data['full_access'] = true;
-        }
-
-        return $data;
     }
 }

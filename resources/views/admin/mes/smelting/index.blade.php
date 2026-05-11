@@ -1,7 +1,6 @@
 @extends('admin.layouts.app')
-@section('title', 'Smelting Batches')
 
-@section('breadcrumb')
+@section('title', 'Smelting Batches')@section('breadcrumb')
     <a href="{{ route('admin.dashboard') }}" style="color:var(--text-muted);text-decoration:none">Dashboard</a>
     <span style="margin:0 8px;color:var(--border)">/</span>
     <strong>Smelting Batches</strong>
@@ -694,7 +693,7 @@
                 </svg>
                 Back to Dashboard
             </a>
-            <a href="{{ route('admin.mes.smelting.create') }}" class="btn btn-primary">
+            <a href="{{ route('admin.mes.smelting.create') }}" class="btn btn-primary" data-permission="smelting,can_create">
                 <svg viewBox="0 0 24 24">
                     <line x1="12" y1="5" x2="12" y2="19" />
                     <line x1="5" y1="12" x2="19" y2="12" />
@@ -920,7 +919,7 @@
                         <td>{{ optional($batch->createdBy)->name ?? $batch->created_by ?? '—' }}</td>
                         <td>
                             <div class="actions-cell">
-                                <a href="{{ route('admin.mes.smelting.edit', $batch->id) }}" class="action-btn"
+                                <a href="{{ route('admin.mes.smelting.edit', $batch->id) }}" class="action-btn" data-permission="smelting,can_edit"
                                     title="{{ $batch->status >= 1 ? 'View' : 'Edit' }}">
                                     @if($batch->status >= 1)
                                         <svg viewBox="0 0 24 24">
@@ -938,7 +937,7 @@
                                     <form method="POST" action="{{ route('admin.mes.smelting.destroy', $batch->id) }}"
                                         onsubmit="return confirm('Delete batch {{ $batch->batch_no }}?')" style="display:contents">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="action-btn danger" title="Delete">
+                                        <button type="submit" class="action-btn danger" data-permission="smelting,can_delete" title="Delete">
                                             <svg viewBox="0 0 24 24">
                                                 <polyline points="3 6 5 6 21 6" />
                                                 <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
@@ -965,7 +964,7 @@
                                 <p>{{ request('search') || $activeFilters ? 'Try adjusting your filters.' : 'Create your first batch to get started.' }}
                                 </p>
                                 @if(!request('search') && !$activeFilters)
-                                    <a href="{{ route('admin.mes.smelting.create') }}" class="btn btn-primary">
+                                    <a href="{{ route('admin.mes.smelting.create') }}" class="btn btn-primary" data-permission="smelting,can_create">
                                         <svg viewBox="0 0 24 24">
                                             <line x1="12" y1="5" x2="12" y2="19" />
                                             <line x1="5" y1="12" x2="19" y2="12" />

@@ -669,185 +669,185 @@
                     </svg>
                     Back to Dashboard
                 </a>
-                <a href="{{ route('admin.mes.bbsu.create') }}" class="btn-primary">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        style="width:14px;height:14px;">
-                        <line x1="12" y1="5" x2="12" y2="19" />
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    Create
-                </a>
+                <a href="{{ route('admin.mes.bbsu.create') }}" class="btn-primary"data-permission="bbsu,can_create">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="width:14px;height:14px;">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        Create
+                    </a>
+                </div>
             </div>
-        </div>
 
-        <div class="summary-grid">
-            <div class="summary-card">
-                <div class="sc-icon primary">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <polyline points="14 2 14 8 20 8" />
-                        <line x1="16" y1="13" x2="8" y2="13" />
-                        <line x1="16" y1="17" x2="8" y2="17" />
-                        <polyline points="10 9 9 9 8 9" />
-                    </svg>
-                </div>
-                <div class="sc-info">
-                    <h4 id="scTotal" class="shimmer">—</h4>
-                    <p>Total Records</p>
-                </div>
-            </div>
-            <div class="summary-card">
-                <div class="sc-icon warning">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                </div>
-                <div class="sc-info">
-                    <h4 id="scPending" class="shimmer">—</h4>
-                    <p>Pending Drafts</p>
-                </div>
-            </div>
-            <div class="summary-card">
-                <div class="sc-icon success">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                        <polyline points="22 4 12 14.01 9 11.01" />
-                    </svg>
-                </div>
-                <div class="sc-info">
-                    <h4 id="scSubmitted" class="shimmer">—</h4>
-                    <p>Submitted Orders</p>
-                </div>
-            </div>
-            <div class="summary-card">
-                <div class="sc-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                        <line x1="16" y1="2" x2="16" y2="6" />
-                        <line x1="8" y1="2" x2="8" y2="6" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                    </svg>
-                </div>
-                <div class="sc-info">
-                    <h4>{{ date('M') }}</h4>
-                    <p>This Month</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="filter-card" id="filterCard">
-            <div class="filter-header" onclick="document.getElementById('filterCard').classList.toggle('open')">
-                <div class="fh-left">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-                    </svg>
-                    Filter Records
-                    <span class="fh-badge" id="filterBadge">0 filters</span>
-                </div>
-                <div class="fh-right"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <polyline points="6 9 12 15 18 9" />
-                    </svg></div>
-            </div>
-            <div class="filter-body">
-                <div class="filter-grid">
-                    <div class="f-group">
-                        <label>Status</label>
-                        <select id="fStatus">
-                            <option value="">All Statuses</option>
-                            <option value="0">Draft</option>
-                            <option value="1">Submitted</option>
-                        </select>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="sc-icon primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <polyline points="10 9 9 9 8 9" />
+                        </svg>
                     </div>
-                    <div class="f-group">
-                        <label>Supplier</label>
-                        <select id="fSupplier">
-                            <option value="">All Suppliers</option>
-                        </select>
+                    <div class="sc-info">
+                        <h4 id="scTotal" class="shimmer">—</h4>
+                        <p>Total Records</p>
                     </div>
-                    <div class="f-group"><label>Date From</label><input type="date" id="fDateFrom"></div>
-                    <div class="f-group"><label>Date To</label><input type="date" id="fDateTo"></div>
-                    <div class="f-group" style="display:flex;gap:10px;">
-                        <button onclick="applyFilters()" class="btn-primary"
-                            style="flex:1;justify-content:center;padding:10px 16px;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" style="width:14px;height:14px;">
-                                <circle cx="11" cy="11" r="8" />
-                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                            </svg>
-                            Apply Filters
-                        </button>
-                        <button onclick="clearFilters()" class="btn-white" style="padding:10px 16px;">Clear</button>
+                </div>
+                <div class="summary-card">
+                    <div class="sc-icon warning">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                    </div>
+                    <div class="sc-info">
+                        <h4 id="scPending" class="shimmer">—</h4>
+                        <p>Pending Drafts</p>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="sc-icon success">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                    </div>
+                    <div class="sc-info">
+                        <h4 id="scSubmitted" class="shimmer">—</h4>
+                        <p>Submitted Orders</p>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="sc-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                    </div>
+                    <div class="sc-info">
+                        <h4>{{ date('M') }}</h4>
+                        <p>This Month</p>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="list-card">
-            <div class="list-tabs">
-                <button class="list-tab active" onclick="switchTab(this, '')">All <span class="t-badge"
-                        id="tabAll">—</span></button>
-                <button class="list-tab" onclick="switchTab(this, '0')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" style="width:14px;height:14px;">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                    Draft <span class="t-badge" id="tabDraft">—</span>
-                </button>
-                <button class="list-tab" onclick="switchTab(this, '1')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" style="width:14px;height:14px;">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                        <polyline points="22 4 12 14.01 9 11.01" />
-                    </svg>
-                    Submitted <span class="t-badge" id="tabSubmitted">—</span>
-                </button>
-            </div>
-
-            <div class="list-toolbar">
-                <div class="search-input">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8" />
-                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    <input type="text" id="searchInput" placeholder="Search orders by number, supplier, material...">
+            <div class="filter-card" id="filterCard">
+                <div class="filter-header" onclick="document.getElementById('filterCard').classList.toggle('open')">
+                    <div class="fh-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                        </svg>
+                        Filter Records
+                        <span class="fh-badge" id="filterBadge">0 filters</span>
+                    </div>
+                    <div class="fh-right"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9" />
+                        </svg></div>
                 </div>
-                <div class="list-meta" id="listMeta">Loading...</div>
+                <div class="filter-body">
+                    <div class="filter-grid">
+                        <div class="f-group">
+                            <label>Status</label>
+                            <select id="fStatus">
+                                <option value="">All Statuses</option>
+                                <option value="0">Draft</option>
+                                <option value="1">Submitted</option>
+                            </select>
+                        </div>
+                        <div class="f-group">
+                            <label>Supplier</label>
+                            <select id="fSupplier">
+                                <option value="">All Suppliers</option>
+                            </select>
+                        </div>
+                        <div class="f-group"><label>Date From</label><input type="date" id="fDateFrom"></div>
+                        <div class="f-group"><label>Date To</label><input type="date" id="fDateTo"></div>
+                        <div class="f-group" style="display:flex;gap:10px;">
+                            <button onclick="applyFilters()" class="btn-primary"
+                                style="flex:1;justify-content:center;padding:10px 16px;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" style="width:14px;height:14px;">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                </svg>
+                                Apply Filters
+                            </button>
+                            <button onclick="clearFilters()" class="btn-white" style="padding:10px 16px;">Clear</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width:40px;padding-right:0;">
-                                <div class="checkbox-wrap"><input type="checkbox"></div>
-                            </th>
-                            <th>Date</th>
-                            <th>Doc No</th>
-                            <th>Start Time</th>
-                            <th>End Time</th>
-                            <th>Catgory</th>
-                            <th>Status</th>
-                            <th style="width:60px;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <tr>
-                            <td colspan="8" style="text-align:center;padding:40px;color:var(--gr-text-muted);">Loading...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <div class="list-card">
+                <div class="list-tabs">
+                    <button class="list-tab active" onclick="switchTab(this, '')">All <span class="t-badge"
+                            id="tabAll">—</span></button>
+                    <button class="list-tab" onclick="switchTab(this, '0')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" style="width:14px;height:14px;">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                        Draft <span class="t-badge" id="tabDraft">—</span>
+                    </button>
+                    <button class="list-tab" onclick="switchTab(this, '1')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" style="width:14px;height:14px;">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                        Submitted <span class="t-badge" id="tabSubmitted">—</span>
+                    </button>
+                </div>
 
-            <div class="pagination-wrapper">
-                <div class="list-meta" id="paginationMeta"></div>
-                <div class="paginator" id="paginator"></div>
+                <div class="list-toolbar">
+                    <div class="search-input">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <input type="text" id="searchInput" placeholder="Search orders by number, supplier, material...">
+                    </div>
+                    <div class="list-meta" id="listMeta">Loading...</div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:40px;padding-right:0;">
+                                    <div class="checkbox-wrap"><input type="checkbox"></div>
+                                </th>
+                                <th>Date</th>
+                                <th>Doc No</th>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                                <th>Catgory</th>
+                                <th>Status</th>
+                                <th style="width:60px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td colspan="8" style="text-align:center;padding:40px;color:var(--gr-text-muted);">Loading...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination-wrapper">
+                    <div class="list-meta" id="paginationMeta"></div>
+                    <div class="paginator" id="paginator"></div>
+                </div>
             </div>
         </div>
-    </div>
 @endsection
 
 @push('scripts')
@@ -933,11 +933,11 @@
                     <td><span class="status-badge ${s.cls}">${s.label}</span></td>
                     <td>
                         <div style="display:inline-flex;gap:6px">
-                            <a href="${EDIT_BASE}${item.id}/edit" style="width:30px;height:30px;border-radius:7px;background:#f0fdf4;display:inline-flex;align-items:center;justify-content:center;color:#1e7b51;text-decoration:none;" title="Edit / View">
+                            <a href="${EDIT_BASE}${item.id}/edit" data-permission="bbsu,can_edit" style="width:30px;height:30px;border-radius:7px;background:#f0fdf4;display:inline-flex;align-items:center;justify-content:center;color:#1e7b51;text-decoration:none;" title="Edit / View">
                                 <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             </a>
                             ${isDraft ? `
-                            <button style="width:30px;height:30px;border-radius:7px;border:none;background:#fff1f2;color:#ef4444;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;" onclick="deleteReceiving(${item.id}, event)" title="Delete">
+                            <button data-permission="bbsu,can_delete" style="width:30px;height:30px;border-radius:7px;border:none;background:#fff1f2;color:#ef4444;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;" onclick="deleteReceiving(${item.id}, event)" title="Delete">
                                 <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
                             </button>` : ''}
                         </div>

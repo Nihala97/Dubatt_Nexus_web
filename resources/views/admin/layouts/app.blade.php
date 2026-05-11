@@ -498,6 +498,48 @@
             }
         }
     </style>
+
+    {{--
+    ═══════════════════════════════════════════════════════════
+    SIDEBAR FLASH FIX
+    All nav items with data-permission start hidden via CSS.
+    JS reveals only the ones the user is allowed to see AFTER
+    permissions load. This prevents the "all menus flash"
+    blink that happens before JS runs on page refresh.
+
+    Settings menu also starts hidden — only shown for admin/management.
+    ═══════════════════════════════════════════════════════════
+    --}}
+    <style>
+        /* Hide ALL permission-gated nav items before JS runs */
+        [data-permission] {
+            display: none !important;
+        }
+
+        #settingsMenu {
+            display: none !important;
+        }
+
+        /* Once JS adds perm-ready to body, reveal allowed items.
+           Must use !important to beat the rule above. */
+        body.perm-ready [data-permission] {
+            display: flex !important;
+        }
+
+        body.perm-ready #settingsMenu {
+            display: block !important;
+        }
+
+        /* Items JS decides to HIDE get perm-off — beats perm-ready */
+        body.perm-ready [data-permission].perm-off {
+            display: none !important;
+        }
+
+        body.perm-ready #settingsMenu.perm-off {
+            display: none !important;
+        }
+    </style>
+
     @stack('styles')
 </head>
 
@@ -582,7 +624,7 @@
             <div class="nav-section-label" style="margin-top:8px;">Reports &amp; Dashboard</div>
 
             <a href="{{ route('admin.reports.materialInward') }}" data-label="Material Inward"
-                data-permission="report_material_inward"
+                data-permission="material_inward_rpt"
                 class="nav-item {{ request()->routeIs('admin.reports.materialInward') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -596,7 +638,7 @@
             </a>
 
             <a href="{{ route('admin.reports.acidTestStatus') }}" data-label="Acid Test Status"
-                data-permission="report_acid_test_status"
+                data-permission="acid_test_status_rpt"
                 class="nav-item {{ request()->routeIs('admin.reports.acidTestStatus') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -606,7 +648,7 @@
                 <span class="nav-label">Acid Test Status</span>
             </a>
 
-            <a href="{{ route('admin.reports.bbsu') }}" data-label="BBSU Dashboard" data-permission="report_bbsu"
+            <a href="{{ route('admin.reports.bbsu') }}" data-label="BBSU Dashboard" data-permission="bbsu_dashboard"
                 class="nav-item {{ request()->routeIs('admin.reports.bbsu') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -619,7 +661,7 @@
                 <span class="nav-label">BBSU Dashboard</span>
             </a>
             <a href="{{ route('admin.reports.smeltingDashboard') }}" data-label="Smelting Dashboard"
-                data-permission="report_smelting"
+                data-permission="smelting_report"
                 class="nav-item {{ request()->routeIs('admin.reports.smeltingDashboard') ? 'active' : '' }}">
 
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
@@ -631,7 +673,7 @@
                 <span class="nav-label">Smelting Dashboard</span>
             </a>
             <a href="{{ route('admin.reports.refiningDashboard') }}" data-label="Refining Dashboard"
-                data-permission="report_refining"
+                data-permission="refining_dashboard"
                 class="nav-item {{ request()->routeIs('admin.reports.refiningDashboard') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -641,7 +683,7 @@
                 <span class="nav-label">Refining Dashboard</span>
             </a>
             <a href="{{ route('admin.reports.user_activity') }}" data-label="User Activity Log"
-                data-permission="report_user_activity"
+                data-permission="user_activity_log"
                 class="nav-item {{ request()->routeIs('admin.reports.user_activity') ? 'active' : '' }}">
 
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
@@ -660,7 +702,7 @@
 
             <div class="nav-section-label" style="margin-top:8px;">Masters</div>
 
-            <a href="{{ route('admin.mes.supplier.index') }}" data-label="Supplier" data-permission="suppliers"
+            <a href="{{ route('admin.mes.supplier.index') }}" data-label="Supplier" data-permission="suppliers_master"
                 class="nav-item {{ request()->routeIs('admin.mes.supplier.*') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -670,7 +712,7 @@
                 <span class="nav-label">Suppliers</span>
             </a>
 
-            <a href="{{ route('admin.mes.material.index') }}" data-label="Material" data-permission="materials"
+            <a href="{{ route('admin.mes.material.index') }}" data-label="Material" data-permission="materials_master"
                 class="nav-item {{ request()->routeIs('admin.mes.material.*') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path
@@ -679,7 +721,7 @@
                 <span class="nav-label">Materials</span>
             </a>
             {{-- ── SETTINGS ─────────────────────────────────────────────────── --}}
-            <div id="settingsMenu" style="display: none;">
+            <div id="settingsMenu">
                 <div class="nav-section-label" style="margin-top:8px;">Settings</div>
 
 
@@ -795,83 +837,140 @@
         if (!_token || !_user) {
             window.location.href = LOGIN_URL;
         } else {
-            document.getElementById('sidebarAvatar').textContent = _user.name ? _user.name.charAt(0).toUpperCase() : '?';
+            // Set from cache immediately — enforceUIPermissions will update again after /me
+            const initials = (_user.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+            document.getElementById('sidebarAvatar').textContent = initials;
             document.getElementById('sidebarName').textContent = _user.name ?? 'User';
             document.getElementById('sidebarRole').textContent = _user.role ?? '—';
         }
 
-        // ── Permissions System ─────────────────────────────────────
-        window.userPermissions = JSON.parse(localStorage.getItem('user_permissions') || '[]');
+        // ═══════════════════════════════════════════════════════════
+        // PERMISSIONS SYSTEM
+        // ═══════════════════════════════════════════════════════════
+        //
+        // Single source of truth: localStorage key "auth_user"
+        // Structure set by AuthController::userResource():
+        //   auth_user.full_access  = true   (admin / management)
+        //   auth_user.permissions  = [
+        //     { module: 'receiving', can_view: true, can_create: true, ... },
+        //     { module: 'suppliers', can_view: true, ... },
+        //   ]
+        //
+        // HOW THE NO-FLASH WORKS:
+        //   CSS hides all [data-permission] items immediately on load.
+        //   After loadAndApplyPermissions() finishes (fresh /auth/me call),
+        //   body.perm-ready is added which un-hides them, then JS adds
+        //   .perm-off to items the user CANNOT see. Zero visible flash.
+        // ═══════════════════════════════════════════════════════════
 
         /**
-         * Fetch latest user info and permissions
+         * Returns the current user object from localStorage.
          */
-        async function loadUserPermissions() {
+        function getUser() {
+            return JSON.parse(localStorage.getItem('auth_user') || 'null');
+        }
+
+        /**
+         * Check if current user has permission for a module action.
+         * Used both in sidebar AND in page-level button gating.
+         *
+         * @param {string} moduleSlug  e.g. 'receiving', 'suppliers', 'users'
+         * @param {string} action      'can_view' | 'can_create' | 'can_edit' | 'can_delete'
+         * @returns {boolean}
+         */
+        function can(moduleSlug, action = 'can_view') {
+            const u = getUser();
+            if (!u) return false;
+
+            // ONLY admin has full access — sees everything without permission check.
+            // management and normal users must have explicit permission rows.
+            // Also check role directly as fallback for stale cached payloads.
+            if (u.full_access === true || u.role === 'admin') return true;
+
+            // management + normal: check their permission rows by module slug
+            const perms = Array.isArray(u.permissions) ? u.permissions : [];
+            const perm = perms.find(p => p.module === moduleSlug);
+            return perm ? !!perm[action] : false;
+        }
+
+        /**
+         * Apply permission rules to every [data-permission] element
+         * on the page (sidebar nav items, action buttons, etc.).
+         * data-permission="slug"            → checks can_view
+         * data-permission="slug,can_create" → checks can_create
+         */
+        function enforceUIPermissions() {
+            const u = getUser();
+
+            // --- Sidebar nav items ---
+            document.querySelectorAll('[data-permission]').forEach(el => {
+                const val = el.getAttribute('data-permission');
+                const parts = val.split(',');
+                const slug = parts[0].trim();
+                const action = (parts[1] || 'can_view').trim();
+
+                if (can(slug, action)) {
+                    el.classList.remove('perm-off');
+                } else {
+                    el.classList.add('perm-off');
+                }
+            });
+
+            // Settings menu — ONLY admin role
+            const settingsMenu = document.getElementById('settingsMenu');
+            if (settingsMenu) {
+                if (u && (u.full_access === true || u.role === 'admin')) {
+                    settingsMenu.classList.remove('perm-off');
+                } else {
+                    settingsMenu.classList.add('perm-off');
+                }
+            }
+
+            // --- Lift the blanket CSS hide so selectively visible items show ---
+            document.body.classList.add('perm-ready');
+
+            // --- Update avatar/name/role in sidebar footer ---
+            if (u) {
+                const initials = (u.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                document.getElementById('sidebarAvatar').textContent = initials;
+                document.getElementById('sidebarName').textContent = u.name ?? 'User';
+                document.getElementById('sidebarRole').textContent = u.role ?? '—';
+            }
+        }
+
+        /**
+         * Fetch fresh user data + permissions from /auth/me,
+         * persist to localStorage, then apply to UI.
+         * Runs on every page load so permissions are always current.
+         */
+        async function loadAndApplyPermissions() {
+            // ── STEP 1: Apply from cache IMMEDIATELY (no waiting) ──
+            // This shows the correct menu instantly even before the
+            // network call completes. Prevents blank sidebar on load.
+            enforceUIPermissions();
+
+            // ── STEP 2: Refresh from server in background ──────────
+            // Fetches latest permissions (in case admin changed them),
+            // updates localStorage, then re-applies to the sidebar.
             try {
                 const res = await apiFetch('/auth/me');
-                if (!res || !res.ok) return;
-                const json = await res.json();
-                console.log(json);
-                if (json.status === 'ok') {
-                    // Update user info in storage
-                    localStorage.setItem('auth_user', JSON.stringify(json.data));
-                    // Update permissions in storage
-                    const perms = json.data.permissions || [];
-                    localStorage.setItem('user_permissions', JSON.stringify(perms));
-                    window.userPermissions = perms;
-
-                    // If full_access is true, we store a special flag
-                    if (json.data.full_access) {
-                        localStorage.setItem('is_admin', '1');
-                    } else {
-                        localStorage.removeItem('is_admin');
+                if (res && res.ok) {
+                    const json = await res.json();
+                    if (json.status === 'ok' && json.data) {
+                        localStorage.setItem('auth_user', JSON.stringify(json.data));
+                        // Re-apply with fresh data from server
+                        enforceUIPermissions();
                     }
                 }
             } catch (e) {
-                console.error('Failed to load permissions:', e);
+                // Network failure is fine — already applied from cache in step 1
+                console.warn('Permission refresh failed, using cached data:', e);
             }
         }
 
-        /**
-         * Check if user has permission for a module/action
-         * @param {string} moduleSlug 
-         * @param {string} action 'can_view','can_create','can_edit','can_delete'
-         */
-        function can(moduleSlug, action = 'can_view') {
-            // Admins always have access
-            if (localStorage.getItem('is_admin') === '1') return true;
-
-            const perm = window.userPermissions.find(p => p.module === moduleSlug);
-            if (!perm) return false;
-
-            return !!perm[action];
-        }
-
-        function enforceUIPermissions() {
-            document.querySelectorAll('[data-permission]').forEach(el => {
-                const parts = el.getAttribute('data-permission').split(',');
-                const mod = parts[0];
-                const act = parts[1] || 'can_view';
-
-                if (!can(mod, act)) {
-                    el.style.display = 'none';
-                } else {
-                    el.style.display = '';
-                }
-            });
-
-            // Handle Settings Menu visibility for Admins
-            if (localStorage.getItem('is_admin') === '1') {
-                const settingsMenu = document.getElementById('settingsMenu');
-                if (settingsMenu) settingsMenu.style.display = 'block';
-            }
-        }
-
-        // Initial load
+        // Run on every page load
         if (_token) {
-            loadUserPermissions().then(() => {
-                enforceUIPermissions();
-            });
+            loadAndApplyPermissions();
         } else {
             enforceUIPermissions();
         }
