@@ -1018,6 +1018,9 @@
                         </select>
                         <select class="month-select ms-year" id="dashYearPicker" onchange="onMonthPickerChange()"></select>
                     </div>
+                    <div style="display:none">
+                        <span id="dashMonthBadge" class="dash-month-badge" style="display:none">—</span>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
