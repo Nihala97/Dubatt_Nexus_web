@@ -1017,10 +1017,10 @@
                             <option value="11">November</option>
                             <option value="12">December</option>
                         </select>
-                        <span class="picker-divider">/</span>
+                        <!-- <span class="picker-divider">/</span> -->
                         <select class="month-select ms-year" id="dashYearPicker" onchange="onMonthPickerChange()"></select>
                     </div>
-                    <span id="dashMonthBadge" class="dash-month-badge" style="display:none">—</span>
+                    <!-- <span id="dashMonthBadge" class="dash-month-badge" style="display:none">—</span> -->
                 </div>
             </div>
             <div class="card-body">
