@@ -1067,7 +1067,17 @@
         <div class="modal-box">
             <div class="modal-head">
                 <div class="modal-title" id="drillTitle">Batch Details</div>
-                <button class="modal-close" onclick="closeDrill()">✕</button>
+                <div style="display:flex;align-items:center;gap:8px">
+                    <button class="btn btn-excel btn-sm" onclick="exportDetailExcel()"
+                        style="padding:4px 10px;font-size:11px">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                        Download Excel
+                    </button>
+                    <button class="modal-close" onclick="closeDrill()">✕</button>
+                </div>
             </div>
             <div class="modal-body" id="drillBody"></div>
         </div>
@@ -1159,7 +1169,7 @@
                             <canvas id="chartDonut" width="180" height="180"></canvas>
                             <div class="donut-center">
                                 <div class="donut-total" id="donutTotal">—</div>
-                                <div class="donut-label">Total MT</div>
+                                <div class="donut-label">Total KG</div>
                             </div>
                         </div>
                         <div class="cat-legend" id="catLegend">
@@ -1207,7 +1217,7 @@
                             <canvas id="chartMatDonut" width="180" height="180"></canvas>
                             <div class="donut-center">
                                 <div class="donut-total" id="matDonutTotal">—</div>
-                                <div class="donut-label">Total MT</div>
+                                <div class="donut-label">Total KG</div>
                             </div>
                         </div>
                         <div class="cat-legend" id="matLegend">
@@ -1237,7 +1247,7 @@
                             <canvas id="chartDrossDonut" width="180" height="180"></canvas>
                             <div class="donut-center">
                                 <div class="donut-total" id="drossDonutTotal">—</div>
-                                <div class="donut-label">Dross MT</div>
+                                <div class="donut-label">Dross KG</div>
                             </div>
                         </div>
                         <div class="cat-legend" id="drossLegend">
@@ -1279,7 +1289,7 @@
                         <circle cx="12" cy="12" r="10" />
                         <polyline points="12 6 12 12 16 14" />
                     </svg>
-                    <span>Avg Production HR / MT — Category Wise</span>
+                    <span>Avg Production HR / KG — Category Wise</span>
                 </div>
             </div>
             <div class="card-body" style="padding:0">
@@ -1287,8 +1297,8 @@
                     <thead>
                         <tr>
                             <th>Category</th>
-                            <th class="num">Total Output (MT)</th>
-                            <th class="num">Avg HR / MT</th>
+                            <th class="num">Total Output (KG)</th>
+                            <th class="num">Avg HR / KG</th>
                             <th style="width:200px">Relative</th>
                         </tr>
                     </thead>
@@ -1426,9 +1436,9 @@
                             <th onclick="sortReport('batch_no')">Batch No</th>
                             <th onclick="sortReport('pot_no')">Pot</th>
                             <th>Material</th>
-                            <th class="num" onclick="sortReport('total_fg_qty')">FG Output (MT)</th>
-                            <th class="num">Dross (MT)</th>
-                            <th class="num">Raw Input (MT)</th>
+                            <th class="num" onclick="sortReport('total_fg_qty')">FG Output (KG)</th>
+                            <th class="num">Dross (KG)</th>
+                            <th class="num">Raw Input (KG)</th>
                             <th class="num" onclick="sortReport('lpg_consumption')">LPG (m³)</th>
                             <th class="num">LPG (Ltr)</th>
                             <th class="num">LPG2 (m³)</th>
@@ -1495,6 +1505,7 @@
         let rPage = 1, rSort = 'date', rDir = 'desc', rTimer = null;
         let allRows = [];
         let dashMonth, dashYear;
+        let currentDrillRow = null;
 
         // ════════════════════════════════════════════════════════════
         // INIT — build year dropdown, set current month/year, load data
@@ -1566,8 +1577,8 @@
 
         function showDashSkeleton() {
             document.getElementById('scRow').innerHTML = `
-                    <div class="sc green"><span class="skel" style="width:60%;height:10px;margin-bottom:10px"></span><span class="skel" style="width:80%;height:28px"></span></div>
-                    <div class="sc amber"><span class="skel" style="width:60%;height:10px;margin-bottom:10px"></span><span class="skel" style="width:80%;height:28px"></span></div>`;
+                                                        <div class="sc green"><span class="skel" style="width:60%;height:10px;margin-bottom:10px"></span><span class="skel" style="width:80%;height:28px"></span></div>
+                                                        <div class="sc amber"><span class="skel" style="width:60%;height:10px;margin-bottom:10px"></span><span class="skel" style="width:80%;height:28px"></span></div>`;
             document.getElementById('catHrBody').innerHTML =
                 '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--txtmu)"><span class="spinner"></span>Loading…</td></tr>';
         }
@@ -1580,50 +1591,50 @@
                 : null;
 
             document.getElementById('scRow').innerHTML = `
-                <div class="sc green" style="animation-delay:.05s">
-                    <svg class="sc-ico" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-                    <div class="sc-label">Total Production — ${esc(d.month_label)}</div>
-                    <div class="sc-val">${fmt(d.current_month_total, 1)}<span class="sc-unit">MT</span></div>
-                    ${pct !== null ? `<div class="sc-sub">${pct >= 0 ? '▲' : '▼'} ${Math.abs(pct)}% vs last month</div>` : ''}
-                </div>
-                <div class="sc amber" style="animation-delay:.1s">
-                    <svg class="sc-ico" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                    <div class="sc-label">Total Production — ${esc(d.prev_label)}</div>
-                    <div class="sc-val">${fmt(d.last_month_total, 1)}<span class="sc-unit">MT</span></div>
-                </div>`;
+                                                    <div class="sc green" style="animation-delay:.05s">
+                                                        <svg class="sc-ico" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                                                        <div class="sc-label">Total Production — ${esc(d.month_label)}</div>
+                                                        <div class="sc-val">${fmt(d.current_month_total, 1)}<span class="sc-unit">KG</span></div>
+                                                        ${pct !== null ? `<div class="sc-sub">${pct >= 0 ? '▲' : '▼'} ${Math.abs(pct)}% vs last month</div>` : ''}
+                                                    </div>
+                                                    <div class="sc amber" style="animation-delay:.1s">
+                                                        <svg class="sc-ico" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                                        <div class="sc-label">Total Production — ${esc(d.prev_label)}</div>
+                                                        <div class="sc-val">${fmt(d.last_month_total, 1)}<span class="sc-unit">KG</span></div>
+                                                    </div>`;
         }
 
         // ── Metrics (HR/MT, LPG/MT, O2/MT, Dross) ────────────────
         function renderMetrics() {
             const d = dashData;
             document.getElementById('metricRow').innerHTML = `
-                <div class="metric">
-                    <div class="metric-label">Avg HR / MT</div>
-                    <div class="metric-val" style="color:var(--amber)">${fmt(d.avg_hr_per_unit, 4)}</div>
-                    <div class="metric-unit">Hrs / MT</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">Avg LPG / MT</div>
-                    <div class="metric-val" style="color:var(--blue)">${fmt(d.avg_lpg_per_unit, 4)}</div>
-                    <div class="metric-unit">Ltr / MT</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">Avg O₂ / MT</div>
-                    <div class="metric-val" style="color:var(--teal)">${fmt(d.avg_o2_per_unit, 4)}</div>
-                    <div class="metric-unit">KG / MT</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">Dross Output</div>
-                    <div class="metric-val" style="color:var(--orange)">${fmt(d.dross_total, 3)}</div>
-                    <div class="metric-unit">MT this month</div>
-                </div>`;
+                                                    <div class="metric">
+                                                        <div class="metric-label">Avg HR / MT</div>
+                                                        <div class="metric-val" style="color:var(--amber)">${fmt(d.avg_hr_per_unit, 4)}</div>
+                                                        <div class="metric-unit">Hrs / MT</div>
+                                                    </div>
+                                                    <div class="metric">
+                                                        <div class="metric-label">Avg LPG / MT</div>
+                                                        <div class="metric-val" style="color:var(--blue)">${fmt(d.avg_lpg_per_unit, 4)}</div>
+                                                        <div class="metric-unit">Ltr / MT</div>
+                                                    </div>
+                                                    <div class="metric">
+                                                        <div class="metric-label">Avg O₂ / MT</div>
+                                                        <div class="metric-val" style="color:var(--teal)">${fmt(d.avg_o2_per_unit, 4)}</div>
+                                                        <div class="metric-unit">KG / MT</div>
+                                                    </div>
+                                                    <div class="metric">
+                                                        <div class="metric-label">Dross Output</div>
+                                                        <div class="metric-val" style="color:var(--orange)">${fmt(d.dross_total, 3)}</div>
+                                                        <div class="metric-unit">KG this month</div>
+                                                    </div>`;
         }
 
         // ── Category doughnut ─────────────────────────────────────
         function renderDonut() {
             const cats = dashData.by_category ?? [];
             const total = cats.reduce((s, c) => s + c.total_qty, 0);
-            document.getElementById('donutTotal').textContent = fmt(total, 1);
+            document.getElementById('donutTotal').textContent = fmt(total, 0);
             document.getElementById('donutMonthBadge').textContent = dashData.month_label;
 
             if (!cats.length) {
@@ -1635,22 +1646,22 @@
             charts['chartDonut'] = new Chart(ctx, donutConfig(
                 cats.map(c => c.category),
                 cats.map(c => c.total_qty),
-                'MT'
+                'KG'
             ));
 
             document.getElementById('catLegend').innerHTML = cats.map((c, i) => `
-                <div class="cat-legend-item">
-                    <div class="cat-dot" style="background:${COLORS[i % COLORS.length]}"></div>
-                    <div class="cat-name">${esc(c.category)}</div>
-                    <div><span class="cat-qty">${fmt(c.total_qty, 1)}</span><span class="cat-unit">MT</span></div>
-                </div>`).join('');
+                                                    <div class="cat-legend-item">
+                                                        <div class="cat-dot" style="background:${COLORS[i % COLORS.length]}"></div>
+                                                        <div class="cat-name">${esc(c.category)}</div>
+                                                        <div><span class="cat-qty">${fmt(c.total_qty, 1)}</span><span class="cat-unit">KG</span></div>
+                                                    </div>`).join('');
         }
 
         // ── Material-wise FG doughnut (NEW) ───────────────────────
         function renderMaterialDonut() {
             const mats = dashData.material_doughnut ?? [];
             const total = mats.reduce((s, m) => s + m.total_qty, 0);
-            document.getElementById('matDonutTotal').textContent = fmt(total, 1);
+            document.getElementById('matDonutTotal').textContent = fmt(total, 0);
             document.getElementById('matDonutBadge').textContent = dashData.month_label;
 
             const legend = document.getElementById('matLegend');
@@ -1663,25 +1674,25 @@
             charts['chartMatDonut'] = new Chart(ctx, donutConfig(
                 mats.map(m => m.material_name),
                 mats.map(m => m.total_qty),
-                'MT'
+                'KG'
             ));
 
             legend.innerHTML = mats.map((m, i) => `
-                <div class="cat-legend-item">
-                    <div class="cat-dot" style="background:${COLORS[i % COLORS.length]}"></div>
-                    <div class="cat-name" title="${esc(m.material_name)}">${esc(m.material_name)}</div>
-                    <div>
-                        <span class="cat-qty">${fmt(m.total_qty, 1)}</span><span class="cat-unit">MT</span>
-                        ${m.category ? `<span style="font-size:9px;color:var(--txtmu);margin-left:4px">(${esc(m.category)})</span>` : ''}
-                    </div>
-                </div>`).join('');
+                                                    <div class="cat-legend-item">
+                                                        <div class="cat-dot" style="background:${COLORS[i % COLORS.length]}"></div>
+                                                        <div class="cat-name" title="${esc(m.material_name)}">${esc(m.material_name)}</div>
+                                                        <div>
+                                                            <span class="cat-qty">${fmt(m.total_qty, 1)}</span><span class="cat-unit">KG</span>
+                                                            ${m.category ? `<span style="font-size:9px;color:var(--txtmu);margin-left:4px">(${esc(m.category)})</span>` : ''}
+                                                        </div>
+                                                    </div>`).join('');
         }
 
         // ── Dross-wise doughnut (NEW) ─────────────────────────────
         function renderDrossDonut() {
             const items = dashData.dross_doughnut ?? [];
             const total = items.reduce((s, d) => s + d.total_qty, 0);
-            document.getElementById('drossDonutTotal').textContent = fmt(total, 1);
+            document.getElementById('drossDonutTotal').textContent = fmt(total, 0);
             document.getElementById('drossDonutBadge').textContent = dashData.month_label;
 
             const legend = document.getElementById('drossLegend');
@@ -1698,22 +1709,22 @@
             charts['chartDrossDonut'] = new Chart(ctx, donutConfig(
                 items.map(d => d.material_name),
                 items.map(d => d.total_qty),
-                'MT',
+                'KG',
                 drossColors
             ));
 
             legend.innerHTML = items.map((d, i) => `
-                <div class="cat-legend-item">
-                    <div class="cat-dot" style="background:${drossColors[i % drossColors.length]}"></div>
-                    <div class="cat-name" title="${esc(d.material_name)}">${esc(d.material_name)}</div>
-                    <div>
-                        <span class="cat-qty" style="color:var(--orange)">${fmt(d.total_qty, 1)}</span><span class="cat-unit">MT</span>
-                    </div>
-                </div>`).join('');
+                                                    <div class="cat-legend-item">
+                                                        <div class="cat-dot" style="background:${drossColors[i % drossColors.length]}"></div>
+                                                        <div class="cat-name" title="${esc(d.material_name)}">${esc(d.material_name)}</div>
+                                                        <div>
+                                                            <span class="cat-qty" style="color:var(--orange)">${fmt(d.total_qty, 1)}</span><span class="cat-unit">KG</span>
+                                                        </div>
+                                                    </div>`).join('');
         }
 
         // ── Shared doughnut chart config factory ──────────────────
-        function donutConfig(labels, data, unit = 'MT', colors = COLORS) {
+        function donutConfig(labels, data, unit = 'KG', colors = COLORS) {
             return {
                 type: 'doughnut',
                 data: {
@@ -1753,7 +1764,7 @@
                 data: {
                     labels: data.map(d => 'D' + d.day),
                     datasets: [{
-                        label: 'FG Output (MT)',
+                        label: 'FG Output (KG)',
                         data: data.map(d => d.qty),
                         borderColor: '#15803d',
                         backgroundColor: 'rgba(21,128,61,.12)',
@@ -1779,7 +1790,7 @@
                         x: { grid: { color: '#edf2ef' }, ticks: { font: { family: 'Outfit', size: 10 }, color: '#6b8a78' } },
                         y: {
                             grid: { color: '#edf2ef' }, ticks: { font: { family: 'Outfit', size: 10 }, color: '#6b8a78' },
-                            title: { display: true, text: 'MT', font: { family: 'Outfit', size: 10 }, color: '#6b8a78' }
+                            title: { display: true, text: 'KG', font: { family: 'Outfit', size: 10 }, color: '#6b8a78' }
                         }
                     }
                 }
@@ -1798,23 +1809,23 @@
             }
 
             grid.innerHTML = pots.map(p => `
-                <div class="pot-card">
-                    <div class="pot-card-head">
-                        <span class="pot-no">🫙 ${esc(p.pot_no)}</span>
-                        <span class="pot-batches">${p.batch_count} batch${p.batch_count !== 1 ? 'es' : ''}</span>
-                    </div>
-                    <div class="pot-card-body">
-                        <div class="pot-total-label">Total FG Output</div>
-                        <div class="pot-total">${fmt(p.total_fg_qty, 1)} <span style="font-size:11px;color:var(--txtmu);font-weight:500">MT</span></div>
-                        <div style="margin-top:10px">
-                            ${(p.materials ?? []).slice(0, 5).map(m => `
-                                <div class="pot-mat">
-                                    <span class="pot-mat-name" title="${esc(m.material_name)}">${esc(m.material_name)}</span>
-                                    <span class="pot-mat-qty">${fmt(m.total_qty, 1)} MT</span>
-                                </div>`).join('')}
-                        </div>
-                    </div>
-                </div>`).join('');
+                                                    <div class="pot-card">
+                                                        <div class="pot-card-head">
+                                                            <span class="pot-no">🫙 ${esc(p.pot_no)}</span>
+                                                            <span class="pot-batches">${p.batch_count} batch${p.batch_count !== 1 ? 'es' : ''}</span>
+                                                        </div>
+                                                        <div class="pot-card-body">
+                                                            <div class="pot-total-label">Total FG Output</div>
+                                                            <div class="pot-total">${fmt(p.total_fg_qty, 1)} <span style="font-size:11px;color:var(--txtmu);font-weight:500">KG</span></div>
+                                                            <div style="margin-top:10px">
+                                                                ${(p.materials ?? []).slice(0, 5).map(m => `
+                                                                    <div class="pot-mat">
+                                                                        <span class="pot-mat-name" title="${esc(m.material_name)}">${esc(m.material_name)}</span>
+                                                                        <span class="pot-mat-qty">${fmt(m.total_qty, 1)} KG</span>
+                                                                    </div>`).join('')}
+                                                            </div>
+                                                        </div>
+                                                    </div>`).join('');
         }
 
         // ── Avg HR / MT table (formula fixed in controller) ───────
@@ -1827,19 +1838,19 @@
             }
             const maxHr = Math.max(...rows.map(r => r.avg_hr_unit), 0.001);
             tbody.innerHTML = rows.map(r => `
-                <tr>
-                    <td style="font-weight:600">${esc(r.category)}</td>
-                    <td class="num" style="font-weight:700;color:var(--g)">${fmt(r.total_qty, 3)}</td>
-                    <td class="num">${fmt(r.avg_hr_unit, 4)} <span style="font-size:10px;color:var(--txtmu)">Hrs/MT</span></td>
-                    <td>
-                        <div class="bar-cell">
-                            <div class="bar-track">
-                                <div class="bar-fill" style="width:${Math.round((r.avg_hr_unit / maxHr) * 100)}%"></div>
-                            </div>
-                            <span style="font-size:10px;color:var(--txtmu);min-width:32px;text-align:right">${Math.round((r.avg_hr_unit / maxHr) * 100)}%</span>
-                        </div>
-                    </td>
-                </tr>`).join('');
+                                                    <tr>
+                                                        <td style="font-weight:600">${esc(r.category)}</td>
+                                                        <td class="num" style="font-weight:700;color:var(--g)">${fmt(r.total_qty, 3)}</td>
+                                                        <td class="num">${fmt(r.avg_hr_unit, 4)} <span style="font-size:10px;color:var(--txtmu)">Hrs/MT</span></td>
+                                                        <td>
+                                                            <div class="bar-cell">
+                                                                <div class="bar-track">
+                                                                    <div class="bar-fill" style="width:${Math.round((r.avg_hr_unit / maxHr) * 100)}%"></div>
+                                                                </div>
+                                                                <span style="font-size:10px;color:var(--txtmu);min-width:32px;text-align:right">${Math.round((r.avg_hr_unit / maxHr) * 100)}%</span>
+                                                            </div>
+                                                        </td>
+                                                    </tr>`).join('');
         }
 
         // ════════════════════════════════════════════════════════════
@@ -1920,31 +1931,31 @@
                     ? '<span class="badge-st st-1">Submitted</span>'
                     : '<span class="badge-st st-0">Draft</span>';
                 return `<tr>
-                    <td style="white-space:nowrap">${r.date}</td>
-                    <td style="font-weight:600">${esc(r.batch_no)}</td>
-                    <td>${esc(r.pot_no)}</td>
-                    <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${esc(r.material_name)}</td>
-                    <td class="num" style="font-weight:700;color:var(--g)">${fmt(r.total_fg_qty, 3)}</td>
-                    <td class="num" style="color:var(--orange)">${fmt(r.total_dross_qty, 3)}</td>
-                    <td class="num">${fmt(r.total_raw_qty, 3)}</td>
-                    <td class="num">${fmt(r.lpg_consumption, 3)}</td>
-                    <td class="num">${fmt(r.lpg_consumption_ltr, 3)}</td>
-                    <td class="num">${fmt(r.lpg2_consumption, 3)}</td>
-                    <td class="num">${fmt(r.lpg2_consumption_ltr, 3)}</td>
-                    <td class="num">${fmt(r.electricity_consumption, 3)}</td>
-                    <td class="num">${fmt(r.oxygen_flow_nm3, 3)}</td>
-                    <td class="num">${fmt(r.oxygen_consumption, 3)}</td>
-                    <td class="num">${fmt(r.total_process_time, 0)}</td>
-                    <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${esc(r.remarks)}</td>
-                    <td>${st}</td>
-                    <td style="text-align:center">
-                        <button onclick="openDrill(${r.id})"
-                            style="padding:4px 10px;border-radius:6px;border:1.5px solid var(--bdr);background:var(--white);font-size:11px;font-weight:700;cursor:pointer;color:var(--g);font-family:'Outfit',sans-serif;transition:all .15s"
-                            onmouseover="this.style.borderColor='var(--g)'" onmouseout="this.style.borderColor='var(--bdr)'">
-                            View
-                        </button>
-                    </td>
-                </tr>`;
+                                                        <td style="white-space:nowrap">${r.date}</td>
+                                                        <td style="font-weight:600">${esc(r.batch_no)}</td>
+                                                        <td>${esc(r.pot_no)}</td>
+                                                        <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${esc(r.material_name)}</td>
+                                                        <td class="num" style="font-weight:700;color:var(--g)">${fmt(r.total_fg_qty, 3)}</td>
+                                                        <td class="num" style="color:var(--orange)">${fmt(r.total_dross_qty, 3)}</td>
+                                                        <td class="num">${fmt(r.total_raw_qty, 3)}</td>
+                                                        <td class="num">${fmt(r.lpg_consumption, 3)}</td>
+                                                        <td class="num">${fmt(r.lpg_consumption_ltr, 3)}</td>
+                                                        <td class="num">${fmt(r.lpg2_consumption, 3)}</td>
+                                                        <td class="num">${fmt(r.lpg2_consumption_ltr, 3)}</td>
+                                                        <td class="num">${fmt(r.electricity_consumption, 3)}</td>
+                                                        <td class="num">${fmt(r.oxygen_flow_nm3, 3)}</td>
+                                                        <td class="num">${fmt(r.oxygen_consumption, 3)}</td>
+                                                        <td class="num">${fmt(r.total_process_time, 0)}</td>
+                                                        <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${esc(r.remarks)}</td>
+                                                        <td>${st}</td>
+                                                        <td style="text-align:center">
+                                                            <button onclick="openDrill(${r.id})"
+                                                                style="padding:4px 10px;border-radius:6px;border:1.5px solid var(--bdr);background:var(--white);font-size:11px;font-weight:700;cursor:pointer;color:var(--g);font-family:'Outfit',sans-serif;transition:all .15s"
+                                                                onmouseover="this.style.borderColor='var(--g)'" onmouseout="this.style.borderColor='var(--bdr)'">
+                                                                View
+                                                            </button>
+                                                        </td>
+                                                    </tr>`;
             }).join('');
 
             [['ftFg', ftFg], ['ftDross', ftDr], ['ftRaw', ftRaw], ['ftLpg', ftLpg], ['ftLpgL', ftLpgL],
@@ -1960,9 +1971,9 @@
         function renderSummaryBadges(s) {
             if (!s) return;
             document.getElementById('reportSummary').innerHTML = [
-                ['FG Output', fmt(s.total_fg_qty, 3) + ' MT', '#15803d'],
-                ['Dross', fmt(s.total_dross_qty, 3) + ' MT', '#ea580c'],
-                ['Raw Input', fmt(s.total_raw_qty, 3) + ' MT', '#2563eb'],
+                ['FG Output', fmt(s.total_fg_qty, 3) + ' KG', '#15803d'],
+                ['Dross', fmt(s.total_dross_qty, 3) + ' KG', '#ea580c'],
+                ['Raw Input', fmt(s.total_raw_qty, 3) + ' KG', '#2563eb'],
                 ['LPG Total', fmt(s.total_lpg, 3), '#d97706'],
                 ['LPG2 Total', fmt(s.total_lpg2, 3), '#d97706'],
                 ['Electricity', fmt(s.total_electricity, 3), '#7c3aed'],
@@ -2002,51 +2013,112 @@
         function openDrill(batchId) {
             const row = allRows.find(r => r.id === batchId);
             if (!row) return;
+            currentDrillRow = row;
             document.getElementById('drillTitle').textContent = `Batch ${row.batch_no} — ${row.date}`;
 
             const fgHtml = (row.fg_details ?? []).map(f => `
-                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #edf2ef;font-size:12.5px">
-                    <span style="color:var(--txtm)">${esc(f.material)} <span style="font-size:10px;color:var(--txtmu)">(${esc(f.category)})</span></span>
-                    <strong style="color:var(--g)">${fmt(f.qty, 3)} MT</strong>
-                </div>`).join('') || '<div style="color:var(--txtmu);font-size:12px;padding:8px 0">No FG data</div>';
+                                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #edf2ef;font-size:12.5px">
+                                    <span style="color:var(--txtm)">${esc(f.material)} <span style="font-size:10px;color:var(--txtmu)">(${esc(f.category)})</span></span>
+                                    <strong style="color:var(--g)">${fmt(f.qty, 3)} KG</strong>
+                                </div>`).join('') || '<div style="color:var(--txtmu);font-size:12px;padding:8px 0">No FG data</div>';
 
             const drossHtml = (row.dross_details ?? []).map(d => `
-                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #edf2ef;font-size:12.5px">
-                    <span style="color:var(--txtm)">${esc(d.material)}</span>
-                    <strong style="color:var(--orange)">${fmt(d.qty, 3)} MT</strong>
-                </div>`).join('') || '<div style="color:var(--txtmu);font-size:12px;padding:8px 0">No dross data</div>';
+                                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #edf2ef;font-size:12.5px">
+                                    <span style="color:var(--txtm)">${esc(d.material)}</span>
+                                    <strong style="color:var(--orange)">${fmt(d.qty, 3)} KG</strong>
+                                </div>`).join('') || '<div style="color:var(--txtmu);font-size:12px;padding:8px 0">No dross data</div>';
+
+            const rawMatRows = row.raw_materials ?? [];
+            const rawHtml = rawMatRows.length ? `
+                                <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--bdr)">
+                                    <table style="width:100%;border-collapse:collapse;font-size:12px">
+                                        <thead>
+                                            <tr style="background:var(--gl)">
+                                                <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:left;border-bottom:2px solid var(--bdr)">Material</th>
+                                                <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:left;border-bottom:2px solid var(--bdr)">Smelting Batch</th>
+                                                <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:right;border-bottom:2px solid var(--bdr)">Qty (KG)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${rawMatRows.map(r => `<tr>
+                                                <td style="padding:6px 10px;border-bottom:1px solid #edf2ef">${esc(r.material)}</td>
+                                                <td style="padding:6px 10px;border-bottom:1px solid #edf2ef;color:var(--txtmu)">${esc(r.smelting_batch)}</td>
+                                                <td style="padding:6px 10px;border-bottom:1px solid #edf2ef;text-align:right;font-weight:700;color:var(--blue)">${fmt(r.qty, 3)}</td>
+                                            </tr>`).join('')}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr style="background:var(--gl)">
+                                                <td colspan="2" style="padding:7px 10px;font-size:10px;color:var(--txtmu);text-align:right;font-weight:700;border-top:2px solid var(--bdr)">TOTAL</td>
+                                                <td style="padding:7px 10px;text-align:right;font-weight:800;color:var(--g);border-top:2px solid var(--bdr)">${fmt(rawMatRows.reduce((s, r) => s + parseFloat(r.qty || 0), 0), 3)}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>` : '<div style="color:var(--txtmu);font-size:12px;padding:8px 0">No raw material data</div>';
+
+            const chemRows = row.chemicals ?? [];
+            const chemHtml = chemRows.length ? `
+                                <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--bdr)">
+                                    <table style="width:100%;border-collapse:collapse;font-size:12px">
+                                        <thead>
+                                            <tr style="background:var(--gl)">
+                                                <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:left;border-bottom:2px solid var(--bdr)">Chemical / Metal</th>
+                                                <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:left;border-bottom:2px solid var(--bdr)">Smelting Batch</th>
+                                                <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:right;border-bottom:2px solid var(--bdr)">Qty (KG)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${chemRows.map(c => `<tr>
+                                                <td style="padding:6px 10px;border-bottom:1px solid #edf2ef">${esc(c.chemical)}</td>
+                                                <td style="padding:6px 10px;border-bottom:1px solid #edf2ef;color:var(--txtmu)">${esc(c.smelting_batch)}</td>
+                                                <td style="padding:6px 10px;border-bottom:1px solid #edf2ef;text-align:right;font-weight:700;color:var(--purple)">${fmt(c.qty, 3)}</td>
+                                            </tr>`).join('')}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr style="background:var(--gl)">
+                                                <td colspan="2" style="padding:7px 10px;font-size:10px;color:var(--txtmu);text-align:right;font-weight:700;border-top:2px solid var(--bdr)">TOTAL</td>
+                                                <td style="padding:7px 10px;text-align:right;font-weight:800;color:var(--g);border-top:2px solid var(--bdr)">${fmt(chemRows.reduce((s, c) => s + parseFloat(c.qty || 0), 0), 3)}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>` : '<div style="color:var(--txtmu);font-size:12px;padding:8px 0">No chemical / metal data</div>';
 
             const procHtml = (row.process_details ?? []).map(p => `
-                <tr style="font-size:12px">
-                    <td style="padding:5px 10px;border-bottom:1px solid #edf2ef;font-weight:600">${esc(p.process)}</td>
-                    <td style="padding:5px 10px;border-bottom:1px solid #edf2ef;color:var(--txtm)">${p.start}</td>
-                    <td style="padding:5px 10px;border-bottom:1px solid #edf2ef;color:var(--txtm)">${p.end}</td>
-                    <td style="padding:5px 10px;border-bottom:1px solid #edf2ef;text-align:right;font-variant-numeric:tabular-nums">${fmt(p.total_time, 1)} min</td>
-                </tr>`).join('') || '<tr><td colspan="4" style="padding:12px;text-align:center;color:var(--txtmu)">No process data</td></tr>';
+                                <tr style="font-size:12px">
+                                    <td style="padding:5px 10px;border-bottom:1px solid #edf2ef;font-weight:600">${esc(p.process)}</td>
+                                    <td style="padding:5px 10px;border-bottom:1px solid #edf2ef;color:var(--txtm)">${p.start}</td>
+                                    <td style="padding:5px 10px;border-bottom:1px solid #edf2ef;color:var(--txtm)">${p.end}</td>
+                                    <td style="padding:5px 10px;border-bottom:1px solid #edf2ef;text-align:right;font-variant-numeric:tabular-nums">${fmt(p.total_time, 1)} min</td>
+                                </tr>`).join('') || '<tr><td colspan="4" style="padding:12px;text-align:center;color:var(--txtmu)">No process data</td></tr>';
 
             document.getElementById('drillBody').innerHTML = `
-                <div class="two-col" style="gap:20px;margin-bottom:16px">
-                    <div>
-                        <div class="section-divider">📦 Finished Goods Output</div>
-                        ${fgHtml}
-                        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px">
-                            <strong>Total</strong>
-                            <strong style="color:var(--g)">${fmt(row.total_fg_qty, 3)} MT</strong>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="section-divider">🪨 Dross Output</div>
-                        ${drossHtml}
-                        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px">
-                            <strong>Total</strong>
-                            <strong style="color:var(--orange)">${fmt(row.total_dross_qty, 3)} MT</strong>
-                        </div>
-                    </div>
-                </div>
+                                <div class="two-col" style="gap:20px;margin-bottom:16px">
+                                    <div>
+                                        <div class="section-divider">📦 Finished Goods Output</div>
+                                        ${fgHtml}
+                                        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px">
+                                            <strong>Total</strong>
+                                            <strong style="color:var(--g)">${fmt(row.total_fg_qty, 3)} KG</strong>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="section-divider">🪨 Dross Output</div>
+                                        ${drossHtml}
+                                        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px">
+                                            <strong>Total</strong>
+                                            <strong style="color:var(--orange)">${fmt(row.total_dross_qty, 3)} KG</strong>
+                                        </div>
+                                    </div>
+                                </div>
 
-                <div class="section-divider">⚡ Consumption Summary</div>
-                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px">
-                    ${[
+                                <div class="section-divider">🧱 Lead Raw Materials</div>
+                                <div style="margin-bottom:16px">${rawHtml}</div>
+
+                                <div class="section-divider">⚗️ Chemicals &amp; Metals</div>
+                                <div style="margin-bottom:16px">${chemHtml}</div>
+
+                                <div class="section-divider">⚡ Consumption Summary</div>
+                                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px">
+                                    ${[
                     ['LPG (m³)', row.lpg_consumption, '#d97706'],
                     ['LPG (Ltr)', row.lpg_consumption_ltr, '#d97706'],
                     ['LPG2 (m³)', row.lpg2_consumption, '#b45309'],
@@ -2056,27 +2128,27 @@
                     ['O₂ Cons (KG)', row.oxygen_consumption, '#0d9488'],
                     ['Process (min)', row.total_process_time, '#2563eb'],
                 ].map(([l, v, c]) => `
-                        <div style="background:var(--gxl);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;text-align:center">
-                            <div style="font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--txtmu);margin-bottom:4px">${l}</div>
-                            <div style="font-size:16px;font-weight:800;color:${c};letter-spacing:-.5px">${fmt(v, 3)}</div>
-                        </div>`).join('')}
-                </div>
+                                        <div style="background:var(--gxl);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;text-align:center">
+                                            <div style="font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--txtmu);margin-bottom:4px">${l}</div>
+                                            <div style="font-size:16px;font-weight:800;color:${c};letter-spacing:-.5px">${fmt(v, 3)}</div>
+                                        </div>`).join('')}
+                                </div>
 
-                <div class="section-divider">🔄 Process Details</div>
-                <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--bdr)">
-                    <table style="width:100%;border-collapse:collapse">
-                        <thead>
-                            <tr style="background:var(--gl)">
-                                <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:left;border-bottom:2px solid var(--bdr)">Process</th>
-                                <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:left;border-bottom:2px solid var(--bdr)">Start</th>
-                                <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:left;border-bottom:2px solid var(--bdr)">End</th>
-                                <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:right;border-bottom:2px solid var(--bdr)">Time</th>
-                            </tr>
-                        </thead>
-                        <tbody>${procHtml}</tbody>
-                    </table>
-                </div>
-                ${row.remarks && row.remarks !== '—'
+                                <div class="section-divider">🔄 Process Details</div>
+                                <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--bdr);margin-bottom:16px">
+                                    <table style="width:100%;border-collapse:collapse">
+                                        <thead>
+                                            <tr style="background:var(--gl)">
+                                                <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:left;border-bottom:2px solid var(--bdr)">Process</th>
+                                                <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:left;border-bottom:2px solid var(--bdr)">Start</th>
+                                                <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:left;border-bottom:2px solid var(--bdr)">End</th>
+                                                <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:right;border-bottom:2px solid var(--bdr)">Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>${procHtml}</tbody>
+                                    </table>
+                                </div>
+                                ${row.remarks && row.remarks !== '—'
                     ? `<div style="margin-top:12px;padding:10px 14px;background:var(--gxl);border-radius:8px;border:1px solid var(--bdr);font-size:12.5px;color:var(--txtm)"><strong style="color:var(--g)">Remarks:</strong> ${esc(row.remarks)}</div>`
                     : ''}`;
 
@@ -2088,6 +2160,76 @@
             if (e && e.target !== document.getElementById('drillModal')) return;
             document.getElementById('drillModal').classList.remove('open');
             document.body.style.overflow = '';
+        }
+        function exportDetailExcel() {
+            const r = currentDrillRow;
+            if (!r) return;
+            const wb = XLSX.utils.book_new();
+
+            // Sheet 1: Summary
+            const sumData = [
+                ['Field', 'Value'],
+                ['Batch No', r.batch_no], ['Date', r.date], ['Pot No', r.pot_no],
+                ['Material', r.material_name],
+                ['FG Output (KG)', r.total_fg_qty], ['Dross (KG)', r.total_dross_qty],
+                ['Raw Input (KG)', r.total_raw_qty],
+                ['LPG (m³)', r.lpg_consumption], ['LPG (Ltr)', r.lpg_consumption_ltr],
+                ['LPG2 (m³)', r.lpg2_consumption], ['LPG2 (Ltr)', r.lpg2_consumption_ltr],
+                ['Electricity', r.electricity_consumption],
+                ['O₂ Flow (NM³)', r.oxygen_flow_nm3], ['O₂ Cons (KG)', r.oxygen_consumption],
+                ['Process Time (min)', r.total_process_time],
+                ['Remarks', r.remarks], ['Status', r.status >= 1 ? 'Submitted' : 'Draft'],
+            ];
+            const ws1 = XLSX.utils.aoa_to_sheet(sumData);
+            ws1['!cols'] = [{ wch: 26 }, { wch: 20 }];
+            XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
+
+            // Sheet 2: FG Output
+            if (r.fg_details?.length) {
+                const fgData = [['Material', 'Category', 'Qty (KG)'],
+                ...r.fg_details.map(f => [f.material, f.category, f.qty])];
+                const ws2 = XLSX.utils.aoa_to_sheet(fgData);
+                ws2['!cols'] = [{ wch: 26 }, { wch: 18 }, { wch: 12 }];
+                XLSX.utils.book_append_sheet(wb, ws2, 'FG Output');
+            }
+
+            // Sheet 3: Dross
+            if (r.dross_details?.length) {
+                const drData = [['Material', 'Qty (KG)'],
+                ...r.dross_details.map(d => [d.material, d.qty])];
+                const ws3 = XLSX.utils.aoa_to_sheet(drData);
+                ws3['!cols'] = [{ wch: 26 }, { wch: 12 }];
+                XLSX.utils.book_append_sheet(wb, ws3, 'Dross Output');
+            }
+
+            // Sheet 4: Raw Materials
+            if (r.raw_materials?.length) {
+                const rmData = [['Material', 'Smelting Batch', 'Qty (KG)'],
+                ...r.raw_materials.map(m => [m.material, m.smelting_batch, m.qty])];
+                const ws4 = XLSX.utils.aoa_to_sheet(rmData);
+                ws4['!cols'] = [{ wch: 26 }, { wch: 18 }, { wch: 12 }];
+                XLSX.utils.book_append_sheet(wb, ws4, 'Raw Materials');
+            }
+
+            // Sheet 5: Chemicals & Metals
+            if (r.chemicals?.length) {
+                const chData = [['Chemical / Metal', 'Smelting Batch', 'Qty (KG)'],
+                ...r.chemicals.map(c => [c.chemical, c.smelting_batch, c.qty])];
+                const ws5 = XLSX.utils.aoa_to_sheet(chData);
+                ws5['!cols'] = [{ wch: 26 }, { wch: 18 }, { wch: 12 }];
+                XLSX.utils.book_append_sheet(wb, ws5, 'Chemicals & Metals');
+            }
+
+            // Sheet 6: Process Details
+            if (r.process_details?.length) {
+                const pdData = [['Process', 'Start', 'End', 'Time (min)'],
+                ...r.process_details.map(p => [p.process, p.start, p.end, p.total_time])];
+                const ws6 = XLSX.utils.aoa_to_sheet(pdData);
+                ws6['!cols'] = [{ wch: 22 }, { wch: 10 }, { wch: 10 }, { wch: 14 }];
+                XLSX.utils.book_append_sheet(wb, ws6, 'Process Details');
+            }
+
+            XLSX.writeFile(wb, `Refining_${r.batch_no}_${r.date_raw || r.date}.xlsx`);
         }
 
         // ════════════════════════════════════════════════════════════
@@ -2105,7 +2247,7 @@
             if (!all.length) return;
 
             const headers = ['Date', 'Batch No', 'Pot No', 'Material',
-                'FG Output (MT)', 'Dross (MT)', 'Raw Input (MT)',
+                'FG Output (KG)', 'Dross (KG)', 'Raw Input (KG)',
                 'LPG (m³)', 'LPG (Ltr)', 'LPG2 (m³)', 'LPG2 (Ltr)',
                 'Electricity', 'O₂ Flow (NM³)', 'O₂ Cons (KG)',
                 'Process Time (min)', 'Remarks', 'Status'];
@@ -2119,7 +2261,7 @@
                 r.total_process_time, r.remarks, r.status >= 1 ? 'Submitted' : 'Draft'
             ])];
 
-            const fgHeaders = ['Batch No', 'Date', 'Pot', 'Material (FG)', 'Category', 'Qty (MT)'];
+            const fgHeaders = ['Batch No', 'Date', 'Pot', 'Material (FG)', 'Category', 'Qty (KG)'];
             const fgData = [fgHeaders];
             all.forEach(r => (r.fg_details ?? []).forEach(f => {
                 fgData.push([r.batch_no, r.date, r.pot_no, f.material, f.category, f.qty]);
