@@ -999,7 +999,6 @@
                     </svg>
                     <span>BBSU Dashboard</span>
                 </div>
-                {{-- Month / Year picker — dashboard tab only --}}
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                     <div class="month-picker-row" id="monthPickerWrap">
                         <label>Period</label>
@@ -1017,7 +1016,6 @@
                             <option value="11">November</option>
                             <option value="12">December</option>
                         </select>
-                        <!-- <span class="picker-divider">/</span> -->
                         <select class="month-select ms-year" id="dashYearPicker" onchange="onMonthPickerChange()"></select>
                     </div>
                     <div style="display:none">
@@ -1363,9 +1361,16 @@
 
         // ── TABS ──────────────────────────────────────────────────────────
         function switchTab(tab, btn) {
-            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => {
+                p.classList.remove('active');
+            });
+
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+
             document.getElementById('tab-' + tab).classList.add('active');
+
             btn.classList.add('active');
         }
 
@@ -1373,6 +1378,7 @@
         function onMonthPickerChange() {
             dashMonth = parseInt(document.getElementById('dashMonthPicker').value);
             dashYear = parseInt(document.getElementById('dashYearPicker').value);
+
             loadDashboard();
             loadChart();
         }
@@ -1391,7 +1397,6 @@
 
         // ── DASHBOARD ─────────────────────────────────────────────────────
         async function loadDashboard() {
-            document.getElementById('dashMonthBadge').style.display = 'none';
             let res;
             try { res = await apiFetch(`${API_BBSU.dashboard}?month=${dashMonth}&year=${dashYear}`); }
             catch (e) { console.error('[BBSU Dash]', e); return; }
@@ -1407,8 +1412,6 @@
             renderMatStrip(d.output_materials ?? []);
             renderLastDay(d.last_day_batches ?? [], d.last_day_date ?? '');
 
-            const badge = document.getElementById('dashMonthBadge');
-            badge.textContent = ml; badge.style.display = '';
             ['dashMonthBadge2', 'dashMonthBadge3'].forEach(id => {
                 const el = document.getElementById(id); if (el) el.textContent = ml;
             });
@@ -1421,27 +1424,27 @@
                 { label: 'Selected Month Total', val: fmtNum(d.current_month_total), sub: (d.month_label || '') + ' · KG', cls: 'c-blue', icon: `<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>`, cats: d.current_month_by_category ?? [] },
                 { label: 'Year Total', val: fmtNum(d.year_total), sub: 'KG · Year ' + (d.selected_year ?? new Date().getFullYear()), cls: 'c-teal', icon: `<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>`, cats: [] },
                 { label: 'Avg HR / MT', val: d.avg_hr_per_mt, sub: 'Hrs per MT · batch duration (start→end)', cls: 'c-amber', icon: `<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>`, cats: [] },
-                { label: 'Avg Acid %', val: d.avg_acid_pct + '%', sub: 'Σ(Input KG × Acid%) ÷ Σ(Input KG)', cls: 'c-red', icon: `<path d="M10 2v7.31l-3.72 6.17A4 4 0 0 0 10 22h4a4 4 0 0 0 3.72-6.52L14 9.31V2"/>`, cats: [] },
+                { label: 'Avg Acid %', val: (document.getElementById('totalAcid')?.value ?? d.avg_acid_pct) + '%', sub: 'Σ(Input KG × Acid%) ÷ Σ(Input KG)', cls: 'c-red', icon: `<path d="M10 2v7.31l-3.72 6.17A4 4 0 0 0 10 22h4a4 4 0 0 0 3.72-6.52L14 9.31V2"/>`, cats: [] },
             ];
             grid.innerHTML = chips.map(c => `
-                <div class="sc-chip ${c.cls}">
-                    <svg class="sc-chip-ico" viewBox="0 0 24 24">${c.icon}</svg>
-                    <span class="sc-chip-label">${escHtml(c.label)}</span>
-                    <span class="sc-chip-val">${c.val}</span>
-                    <span class="sc-chip-sub">${escHtml(c.sub)}</span>
-                    ${c.cats.length ? `<div class="cat-pills-row">${c.cats.map(x => `<span class="cat-pill">${escHtml(x.category || '—')}: ${fmtNum(x.total_qty)} KG</span>`).join('')}</div>` : ''}
-                </div>`).join('');
+                                                                                        <div class="sc-chip ${c.cls}">
+                                                                                            <svg class="sc-chip-ico" viewBox="0 0 24 24">${c.icon}</svg>
+                                                                                            <span class="sc-chip-label">${escHtml(c.label)}</span>
+                                                                                            <span class="sc-chip-val">${c.val}</span>
+                                                                                            <span class="sc-chip-sub">${escHtml(c.sub)}</span>
+                                                                                            ${c.cats.length ? `<div class="cat-pills-row">${c.cats.map(x => `<span class="cat-pill">${escHtml(x.category || '—')}: ${fmtNum(x.total_qty)} KG</span>`).join('')}</div>` : ''}
+                                                                                        </div>`).join('');
         }
 
         function renderMatStrip(materials) {
             const wrap = document.getElementById('matStrip');
             if (!materials.length) { wrap.innerHTML = `<div class="dash-empty" style="width:100%">No output material data for selected month</div>`; return; }
             wrap.innerHTML = materials.map(m => `
-                <div class="mat-card">
-                    <div class="mat-card-name" title="${escHtml(m.material_name || m.material_code)}">${escHtml(m.material_name || m.material_code)}</div>
-                    <div class="mat-card-val">${fmtNum(m.total_qty)}</div>
-                    <div class="mat-card-unit">KG</div>
-                </div>`).join('');
+                                                                                        <div class="mat-card">
+                                                                                            <div class="mat-card-name" title="${escHtml(m.material_name || m.material_code)}">${escHtml(m.material_name || m.material_code)}</div>
+                                                                                            <div class="mat-card-val">${fmtNum(m.total_qty)}</div>
+                                                                                            <div class="mat-card-unit">KG</div>
+                                                                                        </div>`).join('');
         }
 
         function renderLastDay(batches, dateStr) {
@@ -1465,15 +1468,15 @@
                 const acidCls = acidVal > 10 ? 'acid-high' : acidVal > 7 ? 'acid-mid' : 'acid-ok';
 
                 return `<tr>
-                    <td style="font-weight:700">${escHtml(b.batch_no)}</td>
-                    <td>${escHtml(b.category || '—')}</td>
-                    <td>${escHtml(b.start_time || '—')}</td>
-                    <td>${escHtml(b.end_time || '—')}</td>
-                    <td class="num" style="font-weight:700">${fmtNum(b.total_input)}</td>
-                    <td class="num ${acidCls}">${fmtNum(b.avg_acid)}%</td>
-                    <td class="num">${fmtNum(b.total_hrs)}</td>
-                    <td style="text-align:center"><span class="badge-status ${statusClass}">● ${statusLabel}</span></td>
-                </tr>`;
+                                                                                            <td style="font-weight:700">${escHtml(b.batch_no)}</td>
+                                                                                            <td>${escHtml(b.category || '—')}</td>
+                                                                                            <td>${escHtml(b.start_time || '—')}</td>
+                                                                                            <td>${escHtml(b.end_time || '—')}</td>
+                                                                                            <td class="num" style="font-weight:700">${fmtNum(b.total_input)}</td>
+                                                                                            <td class="num ${acidCls}">${fmtNum(b.avg_acid)}%</td>
+                                                                                            <td class="num">${fmtNum(b.total_hrs)}</td>
+                                                                                            <td style="text-align:center"><span class="badge-status ${statusClass}">● ${statusLabel}</span></td>
+                                                                                        </tr>`;
             }).join('');
         }
 
@@ -1669,19 +1672,19 @@
                 const badge = `<span class="badge-status ${STATUS_CLS[r.status] || 'st-pending'}">● ${escHtml(r.status_label)}</span>`;
                 const mats = (r.output_materials || []).map(m => `<span class="mat-pill">${escHtml(m.material_name || m.material_code)}: ${fmtNum(m.qty)}</span>`).join('') || '—';
                 return `<tr>
-                    <td>${offset + i + 1} &nbsp;<small style="color:var(--txtmu)">${escHtml(r.doc_date)}</small></td>
-                    <td style="font-weight:600">${escHtml(r.batch_no)}</td>
-                    <td>${escHtml(r.category)}</td>
-                    <td>${escHtml(r.start_time)}</td>
-                    <td>${escHtml(r.end_time)}</td>
-                    <td style="text-align:center">${badge}</td>
-                    <td class="num">${fmtNum(r.total_input_qty)}</td>
-                    <td class="num">${fmtNum(r.avg_acid_pct)}%</td>
-                    <td class="num">${fmtNum(r.initial_power)}</td>
-                    <td class="num">${fmtNum(r.final_power)}</td>
-                    <td class="num">${fmtNum(r.total_power_hrs)}</td>
-                    <td>${mats}</td>
-                </tr>`;
+                                                                                            <td>${offset + i + 1} &nbsp;<small style="color:var(--txtmu)">${escHtml(r.doc_date)}</small></td>
+                                                                                            <td style="font-weight:600">${escHtml(r.batch_no)}</td>
+                                                                                            <td>${escHtml(r.category)}</td>
+                                                                                            <td>${escHtml(r.start_time)}</td>
+                                                                                            <td>${escHtml(r.end_time)}</td>
+                                                                                            <td style="text-align:center">${badge}</td>
+                                                                                            <td class="num">${fmtNum(r.total_input_qty)}</td>
+                                                                                            <td class="num">${fmtNum(r.avg_acid_pct)}%</td>
+                                                                                            <td class="num">${fmtNum(r.initial_power)}</td>
+                                                                                            <td class="num">${fmtNum(r.final_power)}</td>
+                                                                                            <td class="num">${fmtNum(r.total_power_hrs)}</td>
+                                                                                            <td>${mats}</td>
+                                                                                        </tr>`;
             }).join('');
             document.getElementById('footInput').textContent = fmtNum(totalInput);
             tfoot.style.display = '';
@@ -1740,15 +1743,15 @@
                 document.getElementById('drillTitle').textContent = `Batches — ${json.date || date}`;
                 if (!json.batches?.length) { body.innerHTML = `<div class="dash-empty">No batches for this date.</div>`; return; }
                 body.innerHTML = `<p style="font-size:11px;color:var(--txtmu);margin-bottom:12px">${json.batches.length} batch(es) on ${json.date || date}</p>
-                    <div style="overflow-x:auto"><table class="dt">
-                    <thead><tr><th>Batch No</th><th>Category</th><th>Start</th><th>End</th><th class="num">Input (KG)</th><th class="num">Acid %</th><th class="num">Pwr Hrs</th><th>Output Materials</th></tr></thead>
-                    <tbody>${json.batches.map(b => `<tr>
-                        <td style="font-weight:600">${escHtml(b.batch_no)}</td><td>${escHtml(b.category)}</td>
-                        <td>${escHtml(b.start_time)}</td><td>${escHtml(b.end_time)}</td>
-                        <td class="num">${fmtNum(b.total_input)}</td><td class="num">${fmtNum(b.avg_acid)}%</td>
-                        <td class="num">${fmtNum(b.total_hrs)}</td>
-                        <td>${(b.output_materials || []).map(m => `<span class="mat-pill">${escHtml(m.material_name || m.material_code)}: ${fmtNum(m.qty)} (${fmtNum(m.yield_pct)}%)</span>`).join('') || '—'}</td>
-                    </tr>`).join('')}</tbody></table></div>`;
+                                                                                            <div style="overflow-x:auto"><table class="dt">
+                                                                                            <thead><tr><th>Batch No</th><th>Category</th><th>Start</th><th>End</th><th class="num">Input (KG)</th><th class="num">Acid %</th><th class="num">Pwr Hrs</th><th>Output Materials</th></tr></thead>
+                                                                                            <tbody>${json.batches.map(b => `<tr>
+                                                                                                <td style="font-weight:600">${escHtml(b.batch_no)}</td><td>${escHtml(b.category)}</td>
+                                                                                                <td>${escHtml(b.start_time)}</td><td>${escHtml(b.end_time)}</td>
+                                                                                                <td class="num">${fmtNum(b.total_input)}</td><td class="num">${fmtNum(b.avg_acid)}%</td>
+                                                                                                <td class="num">${fmtNum(b.total_hrs)}</td>
+                                                                                                <td>${(b.output_materials || []).map(m => `<span class="mat-pill">${escHtml(m.material_name || m.material_code)}: ${fmtNum(m.qty)} (${fmtNum(m.yield_pct)}%)</span>`).join('') || '—'}</td>
+                                                                                            </tr>`).join('')}</tbody></table></div>`;
             } catch (e) { body.innerHTML = `<div style="color:var(--err);padding:20px">Error: ${escHtml(e.message)}</div>`; }
         }
         function closeDrill() { document.getElementById('drillModal').classList.remove('open'); }

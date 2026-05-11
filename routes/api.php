@@ -214,6 +214,8 @@ Route::middleware('auth:sanctum')->group(function () {
           Route::get('acid-test-status/filters', [\App\Http\Controllers\Api\ReportController::class, 'acidTestStatusFilters'])
                ->middleware('module:acid_test_status_rpt')
                ->name('acidTestStatus.filters');
+          Route::get('acid-test-status/{id}/detail', [\App\Http\Controllers\Api\ReportController::class, 'acidTestStatusDetail']);
+
 
           Route::get('bbsu/filters', [\App\Http\Controllers\Api\ReportController::class, 'bbsuFilters'])
                ->middleware('module:bbsu_dashboard')

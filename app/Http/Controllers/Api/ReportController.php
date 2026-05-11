@@ -318,118 +318,286 @@ class ReportController extends Controller
         ]);
     }
 
-    // ═════════════════════════════════════════════════════════════
-    // ACID TEST STATUS REPORT
-    // ═════════════════════════════════════════════════════════════
 
     public function acidTestStatus(Request $request)
     {
-        $allowedSorts = ['receipt_date', 'supplier_name', 'material_name'];
-        $sortBy = in_array($request->sort_by, $allowedSorts) ? $request->sort_by : 'receipt_date';
+        $allowedSorts = ['lot_number', 'supplier_name', 'vehicle_number', 'test_date'];
+        $sortBy = in_array($request->sort_by, $allowedSorts) ? $request->sort_by : 'test_date';
         $sortDir = $request->sort_dir === 'asc' ? 'asc' : 'desc';
         $perPage = min((int) ($request->per_page ?? 50), 500);
 
-        $query = Receiving::with(['supplier', 'material'])
+        // ── 1. All submitted Receiving lots ──────────────────────────────────────
+        $recvQuery = Receiving::with('supplier')
             ->where('status', 1)
-            ->when($request->filled('date_from'), fn($q) => $q->whereDate('receipt_date', '>=', $request->date_from))
-            ->when($request->filled('date_to'), fn($q) => $q->whereDate('receipt_date', '<=', $request->date_to))
-            ->when($request->filled('supplier_id'), fn($q) => $q->where('supplier_id', $request->supplier_id))
-            ->when($request->filled('material_id'), fn($q) => $q->where('material_id', $request->material_id))
-            ->when($request->filled('lot_no'), fn($q) => $q->where('lot_no', 'like', "%{$request->lot_no}%"));
+            ->when(
+                $request->filled('supplier_id'),
+                fn($q) => $q->where('supplier_id', $request->supplier_id)
+            )
+            ->when(
+                $request->filled('lot_no'),
+                fn($q) => $q->where('lot_no', 'like', "%{$request->lot_no}%")
+            )
+            ->when(
+                $request->filled('vehicle_no'),
+                fn($q) => $q->where('vehicle_number', 'like', "%{$request->vehicle_no}%")
+            );
 
-        $nativeSort = $sortBy === 'receipt_date';
-        $query->orderBy('receipt_date', $nativeSort ? $sortDir : 'desc');
+        $allReceiving = $recvQuery->get();
+        $recvLotNos = $allReceiving->pluck('lot_no')->filter()->unique();
 
-        $paginated = $query->paginate($perPage);
-
-        $lotNos = collect($paginated->items())->pluck('lot_no')->filter()->unique()->values()->toArray();
-        $acidTests = AcidTesting::whereIn('lot_number', $lotNos)
-            ->get(['id', 'lot_number', 'status'])
+        // ── 2. AcidTesting records keyed by lot_number ───────────────────────────
+        $acidByLot = AcidTesting::with(['supplier', 'details' => fn($q) => $q->where('is_active', 1)])
+            ->where('is_active', true)
+            ->whereIn('lot_number', $recvLotNos->toArray())
+            ->get()
             ->keyBy('lot_number');
 
-        $rows = collect($paginated->items())->map(function ($r) use ($acidTests) {
-            $at = $acidTests->get($r->lot_no);
+        // AcidTesting records with NO matching Receiving row (manually entered)
+        $acidOnly = AcidTesting::with(['supplier', 'details' => fn($q) => $q->where('is_active', 1)])
+            ->where('is_active', true)
+            ->whereNotIn('lot_number', $recvLotNos->toArray())
+            ->when(
+                $request->filled('supplier_id'),
+                fn($q) => $q->where('supplier_id', $request->supplier_id)
+            )
+            ->when(
+                $request->filled('lot_no'),
+                fn($q) => $q->where('lot_number', 'like', "%{$request->lot_no}%")
+            )
+            ->when(
+                $request->filled('vehicle_no'),
+                fn($q) => $q->where('vehicle_number', 'like', "%{$request->vehicle_no}%")
+            )
+            ->get();
+
+        // ── 3. Build unified row collection ──────────────────────────────────────
+        $rows = collect();
+
+        foreach ($allReceiving as $recv) {
+            $at = $acidByLot->get($recv->lot_no);
 
             if (!$at) {
-                $testStatusKey = 0;
-                $testStatusLabel = 'Test Not Done';
+                // ── Not Started ──────────────────────────────────────────────────
+                $rows->push([
+                    'acid_test_id' => null,
+                    'lot_number' => $recv->lot_no ?? '—',
+                    'vehicle_number' => $recv->vehicle_number ?? '—',
+                    'supplier_name' => $recv->supplier->supplier_name ?? '—',
+                    'test_date' => '—',
+                    'test_date_raw' => null,
+                    'received_qty' => (float) ($recv->received_qty ?? 0),
+                    'avg_pf_weight' => 0,
+                    'pallet_count' => 0,
+                    'test_status_key' => 0,
+                    'test_status' => 'Not Started',
+                ]);
             } elseif ((int) $at->status < 1) {
-                $testStatusKey = 1;
-                $testStatusLabel = 'In Progress';
+                // ── In Progress (draft) ──────────────────────────────────────────
+                $rows->push([
+                    'acid_test_id' => $at->id,
+                    'lot_number' => $recv->lot_no ?? '—',
+                    'vehicle_number' => $at->vehicle_number ?? $recv->vehicle_number ?? '—',
+                    'supplier_name' => $at->supplier->supplier_name ?? $recv->supplier->supplier_name ?? '—',
+                    'test_date' => $at->test_date ? \Carbon\Carbon::parse($at->test_date)->format('d/m/Y') : '—',
+                    'test_date_raw' => $at->test_date,
+                    'received_qty' => (float) ($at->received_qty ?? $recv->received_qty ?? 0),
+                    'avg_pf_weight' => (float) ($at->avg_pallet_and_foreign_weight ?? 0),
+                    'pallet_count' => $at->details->count(),
+                    'test_status_key' => 1,
+                    'test_status' => 'In Progress',
+                ]);
             } else {
-                $testStatusKey = 2;
-                $testStatusLabel = 'Testing Done';
+                // ── Testing Done (submitted) ─────────────────────────────────────
+                $rows->push([
+                    'acid_test_id' => $at->id,
+                    'lot_number' => $recv->lot_no ?? '—',
+                    'vehicle_number' => $at->vehicle_number ?? $recv->vehicle_number ?? '—',
+                    'supplier_name' => $at->supplier->supplier_name ?? $recv->supplier->supplier_name ?? '—',
+                    'test_date' => $at->test_date ? \Carbon\Carbon::parse($at->test_date)->format('d/m/Y') : '—',
+                    'test_date_raw' => $at->test_date,
+                    'received_qty' => (float) ($at->received_qty ?? $recv->received_qty ?? 0),
+                    'avg_pf_weight' => (float) ($at->avg_pallet_and_foreign_weight ?? 0),
+                    'pallet_count' => $at->details->count(),
+                    'test_status_key' => 2,
+                    'test_status' => 'Testing Done',
+                ]);
             }
+        }
 
-            return [
-                'id' => $r->id,
-                'lot_no' => $r->lot_no ?? '—',
-                'receipt_date' => $r->receipt_date
-                    ? Carbon::parse($r->receipt_date)->format('d/m/Y')
-                    : ($r->created_at?->format('d/m/Y') ?? '—'),
-                'receipt_date_raw' => $r->receipt_date ?? $r->created_at?->toDateString(),
-                'supplier_name' => $r->supplier->supplier_name ?? '—',
-                'material_name' => $r->material->material_name ?? $r->material->name ?? '—',
-                'category' => $r->material->category ?? $r->material->material_category ?? '—',
-                'unit' => $r->material->unit ?? $r->material->uom ?? 'KG',
-                'received_qty' => (float) ($r->received_qty ?? 0),
-                'test_status_key' => $testStatusKey,
-                'test_status' => $testStatusLabel,
-                'acid_test_id' => $at?->id,
-            ];
-        });
+        // Acid-only (no receiving record)
+        foreach ($acidOnly as $at) {
+            $key = (int) $at->status < 1 ? 1 : 2;
+            $label = $key === 1 ? 'In Progress' : 'Testing Done';
+            $rows->push([
+                'acid_test_id' => $at->id,
+                'lot_number' => $at->lot_number ?? '—',
+                'vehicle_number' => $at->vehicle_number ?? '—',
+                'supplier_name' => $at->supplier->supplier_name ?? '—',
+                'test_date' => $at->test_date ? \Carbon\Carbon::parse($at->test_date)->format('d/m/Y') : '—',
+                'test_date_raw' => $at->test_date,
+                'received_qty' => (float) ($at->received_qty ?? 0),
+                'avg_pf_weight' => (float) ($at->avg_pallet_and_foreign_weight ?? 0),
+                'pallet_count' => $at->details->count(),
+                'test_status_key' => $key,
+                'test_status' => $label,
+            ]);
+        }
 
+        // ── 4. Status filter ─────────────────────────────────────────────────────
         if ($request->filled('test_status')) {
-            $rows = $rows->filter(fn($r) => $r['test_status_key'] == (int) $request->test_status)->values();
-        }
-        if ($request->filled('category')) {
-            $rows = $rows->filter(fn($r) => $r['category'] === $request->category)->values();
+            $ts = (int) $request->test_status;
+            $rows = $rows->filter(fn($r) => $r['test_status_key'] === $ts)->values();
         }
 
-        if (!$nativeSort) {
-            $rows = $sortDir === 'asc'
-                ? $rows->sortBy($sortBy)->values()
-                : $rows->sortByDesc($sortBy)->values();
+        // ── 5. Date range filter (works on raw date) ─────────────────────────────
+        if ($request->filled('date_from') || $request->filled('date_to')) {
+            $rows = $rows->filter(function ($r) use ($request) {
+                $raw = $r['test_date_raw'];
+                if (!$raw)
+                    return false;
+                $d = \Carbon\Carbon::parse($raw)->toDateString();
+                if ($request->filled('date_from') && $d < $request->date_from)
+                    return false;
+                if ($request->filled('date_to') && $d > $request->date_to)
+                    return false;
+                return true;
+            })->values();
         }
+
+        // ── 6. Sort ───────────────────────────────────────────────────────────────
+        $rows = $sortDir === 'asc'
+            ? $rows->sortBy($sortBy, SORT_NATURAL | SORT_FLAG_CASE)->values()
+            : $rows->sortByDesc($sortBy, SORT_NATURAL | SORT_FLAG_CASE)->values();
+
+        // ── 7. Manual pagination ─────────────────────────────────────────────────
+        $total = $rows->count();
+        $currentPage = max(1, (int) ($request->page ?? 1));
+        $offset = ($currentPage - 1) * $perPage;
+        $pageRows = $rows->slice($offset, $perPage)->values();
+        $lastPage = max(1, (int) ceil($total / $perPage));
 
         return response()->json([
             'status' => 'ok',
-            'data' => $rows->values(),
+            'data' => $pageRows,
             'meta' => [
-                'total' => $paginated->total(),
-                'per_page' => $paginated->perPage(),
-                'current_page' => $paginated->currentPage(),
-                'last_page' => $paginated->lastPage(),
+                'total' => $total,
+                'per_page' => $perPage,
+                'current_page' => $currentPage,
+                'last_page' => $lastPage,
             ],
         ]);
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+
     public function acidTestStatusFilters()
     {
-        $suppliers = Supplier::where('is_active', true)
-            ->whereIn('id', Receiving::where('status', 1)->pluck('supplier_id')->unique())
+        $recvSupIds = Receiving::where('status', 1)->pluck('supplier_id')->filter()->unique();
+        $acidSupIds = AcidTesting::where('is_active', true)->pluck('supplier_id')->filter()->unique();
+
+        $suppliers = Supplier::whereIn('id', $recvSupIds->merge($acidSupIds)->unique())
             ->orderBy('supplier_name')
             ->get(['id', 'supplier_name']);
 
-        $materials = Material::where('is_active', true)
-            ->whereIn('id', Receiving::where('status', 1)->pluck('material_id')->unique())
-            ->orderBy('material_name')
-            ->get()
-            ->map(fn($m) => [
-                'id' => $m->id,
-                'name' => $m->material_name ?? $m->name ?? '—',
-                'unit' => $m->unit ?? $m->uom ?? 'KG',
-                'category' => $m->category ?? $m->material_category ?? '—',
-            ]);
+        return response()->json([
+            'status' => 'ok',
+            'data' => compact('suppliers'),
+        ]);
+    }
 
-        $categories = $materials
-            ->pluck('category')
-            ->filter(fn($c) => $c && $c !== '—')
-            ->unique()->sort()->values();
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    public function acidTestStatusDetail($id)
+    {
+        $test = AcidTesting::where('is_active', 1)
+            ->with([
+                'details' => fn($q) => $q->where('is_active', 1),
+                'supplier',
+                'createdBy',
+            ])
+            ->findOrFail($id);
+
+        if ((int) $test->status < 1) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Details are only available for submitted records.',
+            ], 422);
+        }
+
+        $company = \App\Models\Company::first();
+        $details = $test->details ?? collect();
+        $avgPF = (float) ($test->avg_pallet_and_foreign_weight ?? 0);
+
+        $totalGross = $details->sum('gross_weight');
+        $totalNet = $details->sum('net_weight');
+        $totalAvgPF = $avgPF * max($details->count(), 1);
+
+        $acidRows = $details->filter(fn($d) => ($d->initial_weight ?? 0) > 0)->values();
+        $totalInitial = $acidRows->sum('initial_weight');
+        $totalDrained = $acidRows->sum('drained_weight');
+        $totalWtDiff = $acidRows->sum('weight_difference');
+        $netAvgAcid = $totalInitial > 0
+            ? round(($totalWtDiff / $totalInitial) * 100, 2)
+            : 0;
 
         return response()->json([
             'status' => 'ok',
-            'data' => compact('suppliers', 'materials', 'categories'),
+            'data' => [
+                'test' => [
+                    'id' => $test->id,
+                    'lot_number' => $test->lot_number,
+                    'test_date' => $test->test_date
+                        ? \Carbon\Carbon::parse($test->test_date)->format('d/m/Y') : '—',
+                    'supplier_name' => $test->supplier->supplier_name ?? '—',
+                    'vehicle_number' => $test->vehicle_number ?? '—',
+                    'invoice_qty' => (float) ($test->invoice_qty ?? 0),
+                    'received_qty' => (float) ($test->received_qty ?? 0),
+                    'foreign_material_weight' => (float) ($test->foreign_material_weight ?? 0),
+                    'avg_pallet_weight' => (float) ($test->avg_pallet_weight ?? 0),
+                    'avg_pallet_and_foreign_weight' => $avgPF,
+                    'created_by_name' => optional($test->createdBy)->name ?? '—',
+                ],
+                'company' => [
+                    'company_name' => $company->company_name ?? '',
+                    'legal_name' => $company->legal_name ?? $company->company_name ?? '',
+                    'plot_number' => $company->plot_number ?? '',
+                    'zone' => $company->zone ?? '',
+                    'city' => $company->city ?? '',
+                    'country' => $company->country ?? '',
+                    'contact_phone' => $company->contact_phone ?? '',
+                    'contact_email' => $company->contact_email ?? '',
+                    'logo_path' => $company->logo_path ?? '',
+                    'document_prefix' => $company->document_prefix ?? 'DBR',
+                ],
+                'pallets' => $details->values()->map(fn($d, $i) => [
+                    'sr' => $i + 1,
+                    'pallet_no' => $d->pallet_no,
+                    'gross_weight' => (float) ($d->gross_weight ?? 0),
+                    'net_weight' => (float) ($d->net_weight ?? 0),
+                    'avg_pf' => $avgPF,
+                    'remarks' => $d->remarks ?? '',
+                ]),
+                'acid_rows' => $acidRows->map(fn($d, $j) => [
+                    'sr' => $j + 1,
+                    'pallet_no' => $d->pallet_no,
+                    'initial_weight' => (float) ($d->initial_weight ?? 0),
+                    'drained_weight' => (float) ($d->drained_weight ?? 0),
+                    'weight_difference' => (float) ($d->weight_difference
+                        ?? max(0, ($d->initial_weight ?? 0) - ($d->drained_weight ?? 0))),
+                    'avg_acid_pct' => (float) ($d->avg_acid_pct ?? 0),
+                    'ulab_type' => $d->ulab_type ?? '—',
+                    'remarks' => $d->remarks ?? '',
+                ])->values(),
+                'totals' => [
+                    'gross' => $totalGross,
+                    'net' => $totalNet,
+                    'avg_pf_total' => $totalAvgPF,
+                    'initial' => $totalInitial,
+                    'drained' => $totalDrained,
+                    'wt_diff' => $totalWtDiff,
+                    'net_avg_acid' => $netAvgAcid,
+                ],
+            ],
         ]);
     }
 
@@ -543,7 +711,11 @@ class ReportController extends Controller
                 ->where('bb.category', 'BBSU')
                 ->whereMonth('bb.doc_date', $selectedMonth)
                 ->whereYear('bb.doc_date', $selectedYear)
-                ->select('bb.id', DB::raw('SUM(bi.quantity) as total_qty'), DB::raw('AVG(bi.acid_percentage) as avg_acid_pct'))
+                ->select(
+                    'bb.id',
+                    DB::raw('SUM(bi.quantity) as total_qty'),
+                    DB::raw('SUM(bi.quantity * bi.acid_percentage) / NULLIF(SUM(bi.quantity), 0) as avg_acid_pct')
+                )
                 ->groupBy('bb.id')->get();
 
             $acidNumerator = $batchData->sum(fn($r) => $r->total_qty * $r->avg_acid_pct);
@@ -696,15 +868,16 @@ class ReportController extends Controller
 
         $daysInMonth = $selectedDate->copy()->daysInMonth;
 
-        // Avg hours/MT for selected month
         $rawHours = DB::table('bbsu_batches as bb')
             ->join('bbsu_input_details as bi', fn($j) =>
                 $j->on('bi.bbsu_batch_id', '=', 'bb.id')->where('bi.is_active', 1))
             ->whereMonth('bb.doc_date', $selectedMonth)->whereYear('bb.doc_date', $selectedYear)
-            ->where('bb.is_active', 1)->whereNotNull('bb.start_time')->whereNotNull('bb.end_time')
+            ->where('bb.is_active', 1)
+            ->where('bb.category', 'BBSU')
+            ->whereNotNull('bb.start_time')->whereNotNull('bb.end_time')
             ->selectRaw('DAY(bb.doc_date) as day,
-                ROUND(SUM(TIMESTAMPDIFF(SECOND,bb.start_time,bb.end_time))/3600
-                / NULLIF(SUM(bi.quantity)/1000,0),4) as avg_hrs')
+                    ROUND(SUM(TIMESTAMPDIFF(SECOND,bb.start_time,bb.end_time))/3600
+                    / NULLIF(SUM(bi.quantity)/1000,0),4) as avg_hrs')
             ->groupBy(DB::raw('DAY(bb.doc_date)'))->orderBy('day')->get()->keyBy('day');
 
         $avgHoursPerDay = collect(range(1, $daysInMonth))->map(fn($d) => [
@@ -720,8 +893,9 @@ class ReportController extends Controller
                 $j->on('bi.bbsu_batch_id', '=', 'bb.id')->where('bi.is_active', 1))
             ->whereMonth('bb.doc_date', $selectedMonth)->whereYear('bb.doc_date', $selectedYear)
             ->where('bb.is_active', 1)
+            ->where('bb.category', 'BBSU')
             ->selectRaw('DAY(bb.doc_date) as day,
-                ROUND(SUM(bp.total_power_consumption)/NULLIF(SUM(bi.quantity)/1000,0),4) as pwr_per_mt')
+        ROUND(SUM(bp.total_power_consumption)/NULLIF(SUM(bi.quantity)/1000,0),4) as pwr_per_mt')
             ->groupBy(DB::raw('DAY(bb.doc_date)'))->orderBy('day')->get()->keyBy('day');
 
         $pwrPerDay = collect(range(1, $daysInMonth))->map(fn($d) => [
@@ -1315,6 +1489,10 @@ class ReportController extends Controller
                 'total_time' => $p->total_time,
                 'firing_mode' => $p->firing_mode ?? '—',
             ])->values(),
+            'flux_chemicals' => $fluxChems->map(fn($f) => [
+                'chemical' => optional($f->chemical)->chemical_name ?? optional($f->chemical)->name ?? '—',
+                'qty' => $f->qty,
+            ])->values(),
         ];
     }
     public function refiningDashboard(Request $request): \Illuminate\Http\JsonResponse
@@ -1493,13 +1671,19 @@ class ReportController extends Controller
                     'total_qty' => round($g->sum('fg_qty'), 3),
                 ])->sortByDesc('total_qty')->values();
 
-            // FIX: LPG/MT = total LPG consumption (LTR) / (total output / 1000)
-            // lpg_consumption_ltr is already in litres; if not available, use lpg_consumption * 4.2
-            $totalLpgLtr = $curBatches->sum('lpg_consumption_ltr')
-                ?: ($curBatches->sum('lpg_consumption') * 4.2);
-            $avgLpgPerUnit = $totalOutputMT > 0
-                ? round($totalLpgLtr / $totalOutputMT, 4)
-                : 0;
+            $totalLpgLtr = $curBatches->sum(function ($b) {
+                $ltr = (float) ($b->lpg_consumption_ltr ?? 0);
+                if ($ltr > 0)
+                    return $ltr;
+                return (float) ($b->lpg_consumption ?? 0) * 4.2;
+            });
+            $totalLpg2Ltr = $curBatches->sum(function ($b) {
+                $ltr = (float) ($b->lpg2_consumption_ltr ?? 0);
+                if ($ltr > 0)
+                    return $ltr;
+                return (float) ($b->lpg2_consumption ?? 0) * 4.2;
+            });
+            $avgLpgPerUnit = $totalOutputMT > 0 ? round($totalLpgLtr / $totalOutputMT, 4) : 0;
 
             // ── 7. DAILY FG OUTPUT ────────────────────────────────
             $dailyOutput = \App\Models\RefiningFinishedGoodsSummary::join(
@@ -1728,6 +1912,19 @@ class ReportController extends Controller
                 'start' => $p->start_time ? \Carbon\Carbon::parse($p->start_time)->format('H:i') : '—',
                 'end' => $p->end_time ? \Carbon\Carbon::parse($p->end_time)->format('H:i') : '—',
                 'total_time' => $p->total_time,
+            ])->values(),
+            'raw_materials' => $rawMats->map(fn($r) => [
+                'material' => optional($r->rawMaterial)->material_name
+                    ?? optional($r->rawMaterial)->name ?? '—',
+                'smelting_batch' => $r->smelting_batch_no ?? '—',
+                'qty' => round($r->qty, 3),
+            ])->values(),
+
+            'chemicals' => $chems->map(fn($c) => [
+                'chemical' => optional($c->chemical)->chemical_name
+                    ?? optional($c->chemical)->name ?? '—',
+                'smelting_batch' => $c->smelting_batch_no ?? '—',
+                'qty' => round($c->qty, 3),
             ])->values(),
             'remarks' => $b->remarks ?? '—',
             'status' => $b->status,

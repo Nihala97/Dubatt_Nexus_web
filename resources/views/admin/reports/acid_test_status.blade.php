@@ -1,10 +1,3 @@
-{{--
-resources/views/admin/reports/acid_test_status.blade.php
-Acid Test Status Report — data from acid_test_header only
-Columns: Date · Lot No · Supplier · Material · Category · Unit · Qty · Test Status
-Sort: date · supplier · material
-Filter: date range, supplier, material, category, test status, lot no
---}}
 @extends('admin.layouts.app')
 
 @section('title', 'Acid Test Status Report')
@@ -19,7 +12,7 @@ Filter: date range, supplier, material, category, test status, lot no
 
 @push('styles')
     <style>
-        /* ── Design tokens ───────────────────────────────────────────── */
+        /* ── tokens ──────────────────────────────────────────────────────────────── */
         :root {
             --g: #1a7a3a;
             --gd: #145f2d;
@@ -54,7 +47,7 @@ Filter: date range, supplier, material, category, test status, lot no
             }
         }
 
-        /* ── Page header ─────────────────────────────────────────────── */
+        /* ── page header ─────────────────────────────────────────────────────────── */
         .ph {
             display: flex;
             align-items: flex-start;
@@ -77,7 +70,7 @@ Filter: date range, supplier, material, category, test status, lot no
             margin-top: 2px
         }
 
-        /* ── Buttons ─────────────────────────────────────────────────── */
+        /* ── buttons ─────────────────────────────────────────────────────────────── */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -132,7 +125,7 @@ Filter: date range, supplier, material, category, test status, lot no
             transform: translateY(-1px)
         }
 
-        /* ── Card ────────────────────────────────────────────────────── */
+        /* ── card ────────────────────────────────────────────────────────────────── */
         .card {
             background: var(--white);
             border: 1px solid var(--bdr);
@@ -180,7 +173,7 @@ Filter: date range, supplier, material, category, test status, lot no
             padding: 20px
         }
 
-        /* ── Filter grid ─────────────────────────────────────────────── */
+        /* ── filter grid ─────────────────────────────────────────────────────────── */
         .fg {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -251,7 +244,7 @@ Filter: date range, supplier, material, category, test status, lot no
             background-position: right 10px center
         }
 
-        /* ── Summary chips ───────────────────────────────────────────── */
+        /* ── summary chips ───────────────────────────────────────────────────────── */
         .summary-row {
             display: flex;
             gap: 12px;
@@ -286,7 +279,7 @@ Filter: date range, supplier, material, category, test status, lot no
             line-height: 1
         }
 
-        .chip.chip-notdone .chip-val {
+        .chip.chip-notstart .chip-val {
             color: #b45309
         }
 
@@ -298,7 +291,7 @@ Filter: date range, supplier, material, category, test status, lot no
             color: #065f46
         }
 
-        /* ── Data table ──────────────────────────────────────────────── */
+        /* ── table ───────────────────────────────────────────────────────────────── */
         .tbl-wrap {
             overflow-x: auto;
             border-radius: 8px;
@@ -393,7 +386,7 @@ Filter: date range, supplier, material, category, test status, lot no
             font-variant-numeric: tabular-nums
         }
 
-        /* ── Test status badges ──────────────────────────────────────── */
+        /* ── status badges ───────────────────────────────────────────────────────── */
         .ts-badge {
             display: inline-flex;
             align-items: center;
@@ -412,13 +405,13 @@ Filter: date range, supplier, material, category, test status, lot no
             flex-shrink: 0
         }
 
-        .ts-notdone {
+        .ts-notstart {
             background: #fef3c7;
             color: #92400e;
             border: 1px solid #fde68a
         }
 
-        .ts-notdone .ts-dot {
+        .ts-notstart .ts-dot {
             background: #f59e0b
         }
 
@@ -442,7 +435,49 @@ Filter: date range, supplier, material, category, test status, lot no
             background: #10b981
         }
 
-        /* ── Pagination ──────────────────────────────────────────────── */
+        /* ── pallet pill ─────────────────────────────────────────────────────────── */
+        .pallet-pill {
+            background: #ede9fe;
+            color: #5b21b6;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11.5px;
+            font-weight: 700;
+            white-space: nowrap
+        }
+
+        /* ── action buttons ──────────────────────────────────────────────────────── */
+        .act-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            border: 1.5px solid var(--bdr);
+            background: var(--white);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--txtmu);
+            transition: all .15s;
+            text-decoration: none
+        }
+
+        .act-btn:hover {
+            border-color: var(--g);
+            color: var(--g)
+        }
+
+        .act-btn svg {
+            width: 13px;
+            height: 13px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round
+        }
+
+        /* ── pagination ──────────────────────────────────────────────────────────── */
         .pag {
             display: flex;
             align-items: center;
@@ -493,7 +528,7 @@ Filter: date range, supplier, material, category, test status, lot no
             cursor: default
         }
 
-        /* ── Empty / loading states ──────────────────────────────────── */
+        /* ── loading/empty ───────────────────────────────────────────────────────── */
         .state-row td {
             text-align: center;
             padding: 40px 20px;
@@ -513,6 +548,204 @@ Filter: date range, supplier, material, category, test status, lot no
             margin-right: 6px
         }
 
+        /* ═══════════════════════════════════════════════════════════════════════════
+                       DETAIL MODAL
+                    ═══════════════════════════════════════════════════════════════════════════ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .55);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px
+        }
+
+        .modal-overlay.open {
+            display: flex
+        }
+
+        .modal-box {
+            background: #fff;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 900px;
+            max-height: 92vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .25)
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 22px;
+            border-bottom: 2px solid var(--bdr);
+            background: var(--gl);
+            flex-shrink: 0
+        }
+
+        .modal-header h3 {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--txt);
+            margin: 0
+        }
+
+        .modal-header-meta {
+            font-size: 12px;
+            color: var(--txtmu);
+            margin-top: 2px
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1.5px solid var(--bdr);
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--txtmu);
+            transition: all .15s
+        }
+
+        .modal-close:hover {
+            border-color: var(--err);
+            color: var(--err)
+        }
+
+        .modal-close svg {
+            width: 15px;
+            height: 15px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round
+        }
+
+        .modal-body {
+            overflow-y: auto;
+            padding: 20px 22px;
+            flex: 1
+        }
+
+        .modal-footer {
+            padding: 12px 22px;
+            border-top: 1px solid var(--bdr);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-shrink: 0;
+            background: var(--gl)
+        }
+
+        /* modal info grid */
+        .mig {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px 20px;
+            margin-bottom: 20px;
+            background: var(--gxl);
+            border: 1px solid var(--bdr);
+            border-radius: 10px;
+            padding: 14px 16px
+        }
+
+        .mig-item {
+            display: flex;
+            flex-direction: column;
+            gap: 3px
+        }
+
+        .mig-lbl {
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: .7px;
+            text-transform: uppercase;
+            color: var(--txtmu)
+        }
+
+        .mig-val {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--txt)
+        }
+
+        /* modal sub-section */
+        .msec-title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--g);
+            text-decoration: underline;
+            margin: 20px 0 10px;
+            text-align: center
+        }
+
+        /* modal table */
+        .mt {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11.5px
+        }
+
+        .mt thead th {
+            background: var(--gl);
+            color: var(--g);
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: .7px;
+            text-transform: uppercase;
+            padding: 7px 10px;
+            border: 1px solid var(--bdr);
+            text-align: center
+        }
+
+        .mt tbody td {
+            padding: 6px 10px;
+            border: 1px solid #e0ece5;
+            text-align: center;
+            vertical-align: middle
+        }
+
+        .mt tbody tr:hover td {
+            background: #f7fbf8
+        }
+
+        .mt tfoot td {
+            background: var(--gl);
+            font-weight: 700;
+            color: var(--g);
+            padding: 7px 10px;
+            border: 1px solid var(--bdr);
+            text-align: center;
+            font-size: 12px
+        }
+
+        .mt .lft {
+            text-align: left
+        }
+
+        .mt .num {
+            text-align: right;
+            font-variant-numeric: tabular-nums
+        }
+
+        .big-acid {
+            font-size: 16px;
+            font-weight: 900;
+            text-decoration: underline;
+            color: var(--g)
+        }
+
         @media(max-width:700px) {
             .fg {
                 grid-template-columns: 1fr 1fr
@@ -520,6 +753,10 @@ Filter: date range, supplier, material, category, test status, lot no
 
             .summary-row {
                 gap: 8px
+            }
+
+            .mig {
+                grid-template-columns: 1fr 1fr
             }
         }
 
@@ -533,11 +770,11 @@ Filter: date range, supplier, material, category, test status, lot no
 
 @section('content')
 
-    {{-- Page header --}}
+    {{-- ── Page header ──────────────────────────────────────────────────────── --}}
     <div class="ph">
         <div>
             <h2>Acid Test Status Report</h2>
-            <p>Lot-level view of all acid test records with their current test progress</p>
+            <p>All received lots with their current acid-testing progress</p>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-excel btn-sm" id="btnExcel" onclick="exportExcel()">
@@ -546,14 +783,13 @@ Filter: date range, supplier, material, category, test status, lot no
                     <polyline points="14 2 14 8 20 8" />
                     <line x1="16" y1="13" x2="8" y2="13" />
                     <line x1="16" y1="17" x2="8" y2="17" />
-                    <polyline points="10 9 9 9 8 9" />
                 </svg>
                 Export Excel
             </button>
         </div>
     </div>
 
-    {{-- ── FILTERS ──────────────────────────────────────────────────── --}}
+    {{-- ── Filters ───────────────────────────────────────────────────────────── --}}
     <div class="card">
         <div class="card-head">
             <div class="card-head-left">
@@ -613,31 +849,6 @@ Filter: date range, supplier, material, category, test status, lot no
                 </div>
 
                 <div class="field">
-                    <label>Category</label>
-                    <div class="iw">
-                        <svg class="ico" viewBox="0 0 24 24">
-                            <path d="M4 6h16M4 12h8m-8 6h16" />
-                        </svg>
-                        <select id="f_category" onchange="onCategoryChange()">
-                            <option value="">All Categories</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label>Material</label>
-                    <div class="iw">
-                        <svg class="ico" viewBox="0 0 24 24">
-                            <path
-                                d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14" />
-                        </svg>
-                        <select id="f_material_id" onchange="onFilterChange()">
-                            <option value="">All Materials</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="field">
                     <label>Test Status</label>
                     <div class="iw">
                         <svg class="ico" viewBox="0 0 24 24">
@@ -646,7 +857,7 @@ Filter: date range, supplier, material, category, test status, lot no
                         </svg>
                         <select id="f_test_status" onchange="onFilterChange()">
                             <option value="">All Statuses</option>
-                            <option value="0">Test Not Done</option>
+                            <option value="0">Not Started</option>
                             <option value="1">In Progress</option>
                             <option value="2">Testing Done</option>
                         </select>
@@ -661,6 +872,19 @@ Filter: date range, supplier, material, category, test status, lot no
                             <line x1="21" y1="21" x2="16.65" y2="16.65" />
                         </svg>
                         <input type="text" id="f_lot_no" placeholder="Search lot…" oninput="onFilterChange()">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Vehicle No</label>
+                    <div class="iw">
+                        <svg class="ico" viewBox="0 0 24 24">
+                            <rect x="1" y="3" width="15" height="13" rx="2" />
+                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                            <circle cx="5.5" cy="18.5" r="2.5" />
+                            <circle cx="18.5" cy="18.5" r="2.5" />
+                        </svg>
+                        <input type="text" id="f_vehicle_no" placeholder="Search vehicle…" oninput="onFilterChange()">
                     </div>
                 </div>
 
@@ -688,15 +912,15 @@ Filter: date range, supplier, material, category, test status, lot no
         </div>
     </div>
 
-    {{-- ── SUMMARY CHIPS ─────────────────────────────────────────────── --}}
+    {{-- ── Summary chips ─────────────────────────────────────────────────────── --}}
     <div class="summary-row" id="summaryRow" style="display:none!important">
         <div class="chip">
             <span class="chip-label">Total Lots</span>
             <span class="chip-val" id="smTotal">—</span>
         </div>
-        <div class="chip chip-notdone">
-            <span class="chip-label">Test Not Done</span>
-            <span class="chip-val" id="smNotDone">—</span>
+        <div class="chip chip-notstart">
+            <span class="chip-label">Not Started</span>
+            <span class="chip-val" id="smNotStart">—</span>
         </div>
         <div class="chip chip-progress">
             <span class="chip-label">In Progress</span>
@@ -708,7 +932,7 @@ Filter: date range, supplier, material, category, test status, lot no
         </div>
     </div>
 
-    {{-- ── REPORT TABLE ──────────────────────────────────────────────── --}}
+    {{-- ── Report table ──────────────────────────────────────────────────────── --}}
     <div class="card">
         <div class="card-head">
             <div class="card-head-left">
@@ -727,8 +951,8 @@ Filter: date range, supplier, material, category, test status, lot no
             <table class="dt" id="reportTable">
                 <thead>
                     <tr>
-                        <th class="sortable" data-col="receipt_date" onclick="sortBy('receipt_date')">
-                            Date
+                        <th class="sortable" data-col="lot_number" onclick="sortBy('lot_number')">
+                            Lot No
                             <span class="sort-ico">
                                 <svg class="ico-asc" viewBox="0 0 24 24">
                                     <polyline points="18 15 12 9 6 15" />
@@ -738,7 +962,17 @@ Filter: date range, supplier, material, category, test status, lot no
                                 </svg>
                             </span>
                         </th>
-                        <th>Lot No</th>
+                        <th class="sortable" data-col="vehicle_number" onclick="sortBy('vehicle_number')">
+                            Vehicle No
+                            <span class="sort-ico">
+                                <svg class="ico-asc" viewBox="0 0 24 24">
+                                    <polyline points="18 15 12 9 6 15" />
+                                </svg>
+                                <svg class="ico-desc" viewBox="0 0 24 24">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </span>
+                        </th>
                         <th class="sortable" data-col="supplier_name" onclick="sortBy('supplier_name')">
                             Supplier
                             <span class="sort-ico">
@@ -750,8 +984,8 @@ Filter: date range, supplier, material, category, test status, lot no
                                 </svg>
                             </span>
                         </th>
-                        <th class="sortable" data-col="material_name" onclick="sortBy('material_name')">
-                            Material
+                        <th class="sortable" data-col="test_date" onclick="sortBy('test_date')">
+                            Test Date
                             <span class="sort-ico">
                                 <svg class="ico-asc" viewBox="0 0 24 24">
                                     <polyline points="18 15 12 9 6 15" />
@@ -761,23 +995,24 @@ Filter: date range, supplier, material, category, test status, lot no
                                 </svg>
                             </span>
                         </th>
-                        <th>Category</th>
-                        <th>Unit</th>
-                        <th class="num">Qty (KG)</th>
+                        <th class="num">In-House Wt (KG)</th>
+                        <th class="num">Avg P&amp;F Wt (KG)</th>
+                        <th style="text-align:center">Pallets</th>
                         <th style="text-align:center">Test Status</th>
+                        <th style="text-align:center">Details</th>
                     </tr>
                 </thead>
                 <tbody id="reportBody">
                     <tr class="state-row">
-                        <td colspan="8"><span class="spinner"></span>Loading…</td>
+                        <td colspan="9"><span class="spinner"></span>Loading…</td>
                     </tr>
                 </tbody>
                 <tfoot id="reportFoot" style="display:none">
                     <tr>
-                        <td colspan="6" style="text-align:right;font-size:10.5px;letter-spacing:.5px;color:var(--txtmu)">
+                        <td colspan="4" style="text-align:right;font-size:10.5px;letter-spacing:.5px;color:var(--txtmu)">
                             PAGE TOTAL</td>
                         <td class="num" id="footQty"></td>
-                        <td></td>
+                        <td colspan="4"></td>
                     </tr>
                 </tfoot>
             </table>
@@ -789,97 +1024,73 @@ Filter: date range, supplier, material, category, test status, lot no
         </div>
     </div>
 
+    {{-- ════════════════════════════════════════════════════════════════════════
+    DETAIL MODAL
+    ════════════════════════════════════════════════════════════════════════ --}}
+    <div class="modal-overlay" id="detailModal" onclick="closeModalOutside(event)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div>
+                    <h3 id="modalTitle">Acid Test Detail</h3>
+                    <div class="modal-header-meta" id="modalMeta"></div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <button class="modal-close" onclick="closeModal()">
+                        <svg viewBox="0 0 24 24">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div style="text-align:center;padding:40px;color:var(--txtmu)">
+                    <span class="spinner"></span> Loading details…
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline btn-sm" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
     <script>
-        // ── State ───────────────────────────────────────────────────────────────
+        // ── State ────────────────────────────────────────────────────────────────────
         let currentPage = 1;
-        let currentSort = 'receipt_date';
+        let currentSort = 'test_date';
         let currentDir = 'desc';
         let filterTimer = null;
 
-        // All materials from server (used for category→material filtering)
-        let allMaterials = [];
-
-        // ════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
         // INIT
-        // ════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
         async function init() {
             await loadFilters();
             await loadReport();
         }
         init();
 
-        // ════════════════════════════════════════════════════════════════════════
-        // LOAD FILTER DROPDOWNS
-        // ════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
+        // FILTER DROPDOWNS
+        // ════════════════════════════════════════════════════════════════════════════
         async function loadFilters() {
             const res = await apiFetch('/reports/acid-test-status/filters');
             if (!res?.ok) return;
             const { data } = await res.json();
-
-            // Suppliers
-            const supSel = document.getElementById('f_supplier_id');
+            const sel = document.getElementById('f_supplier_id');
             (data.suppliers ?? []).forEach(s => {
                 const o = document.createElement('option');
                 o.value = s.id; o.textContent = s.supplier_name;
-                supSel.appendChild(o);
+                sel.appendChild(o);
             });
-
-            // Categories
-            const catSel = document.getElementById('f_category');
-            (data.categories ?? []).forEach(c => {
-                const o = document.createElement('option');
-                o.value = c; o.textContent = c;
-                catSel.appendChild(o);
-            });
-
-            // Materials (store all for dynamic filtering by category)
-            allMaterials = data.materials ?? [];
-            populateMaterialDropdown('');
         }
 
-        // Populate material dropdown, optionally filtered by category
-        function populateMaterialDropdown(category) {
-            const matSel = document.getElementById('f_material_id');
-            const prevVal = matSel.value;
-
-            matSel.innerHTML = '<option value="">All Materials</option>';
-            const list = category
-                ? allMaterials.filter(m => m.category === category)
-                : allMaterials;
-
-            list.forEach(m => {
-                const o = document.createElement('option');
-                o.value = m.id; o.textContent = m.name;
-                matSel.appendChild(o);
-            });
-
-            // Restore previous selection if still valid
-            if (prevVal && list.some(m => String(m.id) === String(prevVal))) {
-                matSel.value = prevVal;
-            }
-        }
-
-        // When category changes: re-populate materials then reload
-        function onCategoryChange() {
-            const cat = document.getElementById('f_category').value;
-            populateMaterialDropdown(cat);
-            // Reset material selection if it's no longer in the filtered list
-            const matSel = document.getElementById('f_material_id');
-            if (cat && matSel.value) {
-                const valid = allMaterials
-                    .filter(m => m.category === cat)
-                    .some(m => String(m.id) === matSel.value);
-                if (!valid) matSel.value = '';
-            }
-            onFilterChange();
-        }
-
-        // ════════════════════════════════════════════════════════════════════════
-        // LOAD REPORT DATA
-        // ════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
+        // LOAD REPORT
+        // ════════════════════════════════════════════════════════════════════════════
         async function loadReport(page = 1) {
             currentPage = page;
             setLoading(true);
@@ -888,10 +1099,9 @@ Filter: date range, supplier, material, category, test status, lot no
                 date_from: document.getElementById('f_date_from').value,
                 date_to: document.getElementById('f_date_to').value,
                 supplier_id: document.getElementById('f_supplier_id').value,
-                category: document.getElementById('f_category').value,
-                material_id: document.getElementById('f_material_id').value,
                 test_status: document.getElementById('f_test_status').value,
                 lot_no: document.getElementById('f_lot_no').value,
+                vehicle_no: document.getElementById('f_vehicle_no').value,
                 sort_by: currentSort,
                 sort_dir: currentDir,
                 per_page: document.getElementById('f_per_page').value,
@@ -901,7 +1111,6 @@ Filter: date range, supplier, material, category, test status, lot no
 
             const res = await apiFetch(`/reports/acid-test-status?${params.toString()}`);
             setLoading(false);
-
             if (!res?.ok) { renderError(); return; }
 
             const json = await res.json();
@@ -913,11 +1122,11 @@ Filter: date range, supplier, material, category, test status, lot no
             updateSortHeaders();
         }
 
-        // ════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
         // RENDER TABLE
-        // ════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
         const BADGE = {
-            0: `<span class="ts-badge ts-notdone"><span class="ts-dot"></span>Test Not Done</span>`,
+            0: `<span class="ts-badge ts-notstart"><span class="ts-dot"></span>Not Started</span>`,
             1: `<span class="ts-badge ts-progress"><span class="ts-dot"></span>In Progress</span>`,
             2: `<span class="ts-badge ts-done"><span class="ts-dot"></span>Testing Done</span>`,
         };
@@ -927,7 +1136,7 @@ Filter: date range, supplier, material, category, test status, lot no
             const tfoot = document.getElementById('reportFoot');
 
             if (!rows.length) {
-                tbody.innerHTML = `<tr class="state-row"><td colspan="8">No records found for the selected filters.</td></tr>`;
+                tbody.innerHTML = `<tr class="state-row"><td colspan="9">No records found.</td></tr>`;
                 tfoot.style.display = 'none';
                 return;
             }
@@ -935,57 +1144,62 @@ Filter: date range, supplier, material, category, test status, lot no
             let pageQty = 0;
             tbody.innerHTML = rows.map(r => {
                 pageQty += Number(r.received_qty) || 0;
+
+                const pallets = r.pallet_count > 0
+                    ? `<span class="pallet-pill">${r.pallet_count} pallet${r.pallet_count > 1 ? 's' : ''}</span>`
+                    : `<span style="color:var(--txtmu)">—</span>`;
+
+                // View button: only for Testing Done (status_key === 2)
+                const viewBtn = r.test_status_key === 2 && r.acid_test_id
+                    ? `<button class="act-btn" onclick="openDetail(${r.acid_test_id})" title="View Detail">
+                                        <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                   </button>`
+                    : `<span style="color:var(--txtmu);font-size:12px">—</span>`;
+
                 return `<tr>
-                    <td>${escHtml(r.receipt_date)}</td>
-                    <td style="font-weight:600">${escHtml(r.lot_no)}</td>
-                    <td>${escHtml(r.supplier_name)}</td>
-                    <td>${escHtml(r.material_name)}</td>
-                    <td>${escHtml(r.category)}</td>
-                    <td>${escHtml(r.unit)}</td>
-                    <td class="num">${fmtNum(r.received_qty)}</td>
-                    <td style="text-align:center">${BADGE[r.test_status_key] ?? escHtml(r.test_status)}</td>
-                </tr>`;
+                                <td style="font-weight:700">${escHtml(r.lot_number)}</td>
+                                <td>${escHtml(r.vehicle_number)}</td>
+                                <td>${escHtml(r.supplier_name)}</td>
+                                <td style="font-weight:600">${escHtml(r.test_date)}</td>
+                                <td class="num">${r.received_qty ? fmtNum(r.received_qty) + '<span style="font-size:11px;color:var(--txtmu);margin-left:3px">KG</span>' : '—'}</td>
+                                <td class="num">${r.avg_pf_weight ? fmtNum(r.avg_pf_weight, 3) + '<span style="font-size:11px;color:var(--txtmu);margin-left:3px">KG</span>' : '—'}</td>
+                                <td style="text-align:center">${pallets}</td>
+                                <td style="text-align:center">${BADGE[r.test_status_key] ?? escHtml(r.test_status)}</td>
+                                <td style="text-align:center">${viewBtn}</td>
+                            </tr>`;
             }).join('');
 
-            document.getElementById('footQty').textContent = fmtNum(pageQty);
+            document.getElementById('footQty').innerHTML =
+                fmtNum(pageQty) + '<span style="font-size:11px;color:var(--txtmu);margin-left:3px">KG</span>';
             tfoot.style.display = '';
         }
 
-        // ════════════════════════════════════════════════════════════════════════
-        // RENDER SUMMARY CHIPS
-        // ════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
+        // SUMMARY
+        // ════════════════════════════════════════════════════════════════════════════
         function renderSummary(rows, meta) {
-            document.getElementById('summaryRow').style.display = 'flex';
-
-            const notDone = rows.filter(r => r.test_status_key === 0).length;
-            const progress = rows.filter(r => r.test_status_key === 1).length;
-            const done = rows.filter(r => r.test_status_key === 2).length;
-
+            document.getElementById('summaryRow').style.cssText = 'display:flex';
             document.getElementById('smTotal').textContent = (meta?.total ?? rows.length).toLocaleString();
-            document.getElementById('smNotDone').textContent = notDone.toLocaleString();
-            document.getElementById('smProgress').textContent = progress.toLocaleString();
-            document.getElementById('smDone').textContent = done.toLocaleString();
-
+            document.getElementById('smNotStart').textContent = rows.filter(r => r.test_status_key === 0).length.toLocaleString();
+            document.getElementById('smProgress').textContent = rows.filter(r => r.test_status_key === 1).length.toLocaleString();
+            document.getElementById('smDone').textContent = rows.filter(r => r.test_status_key === 2).length.toLocaleString();
             document.getElementById('tableCaption').textContent = meta
                 ? `Showing ${rows.length} of ${meta.total.toLocaleString()} records`
                 : `${rows.length} records`;
         }
 
-        // ════════════════════════════════════════════════════════════════════════
-        // RENDER PAGINATION
-        // ════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
+        // PAGINATION
+        // ════════════════════════════════════════════════════════════════════════════
         function renderPagination(meta) {
             const bar = document.getElementById('pagBar');
             const info = document.getElementById('pagInfo');
             const btns = document.getElementById('pagBtns');
-
             if (!meta || meta.last_page <= 1) { bar.style.display = 'none'; return; }
             bar.style.display = 'flex';
-
             const from = (meta.current_page - 1) * meta.per_page + 1;
             const to = Math.min(meta.current_page * meta.per_page, meta.total);
             info.textContent = `${from}–${to} of ${meta.total.toLocaleString()}`;
-
             const pages = paginationRange(meta.current_page, meta.last_page);
             btns.innerHTML = [
                 `<button class="pag-btn" ${meta.current_page === 1 ? 'disabled' : ''} onclick="loadReport(${meta.current_page - 1})">‹</button>`,
@@ -995,7 +1209,6 @@ Filter: date range, supplier, material, category, test status, lot no
                 `<button class="pag-btn" ${meta.current_page === meta.last_page ? 'disabled' : ''} onclick="loadReport(${meta.current_page + 1})">›</button>`,
             ].join('');
         }
-
         function paginationRange(cur, last) {
             const delta = 2, range = [];
             for (let i = Math.max(2, cur - delta); i <= Math.min(last - 1, cur + delta); i++) range.push(i);
@@ -1006,139 +1219,247 @@ Filter: date range, supplier, material, category, test status, lot no
             return range;
         }
 
-        // ════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
         // SORT
-        // ════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
         function sortBy(col) {
             currentDir = (currentSort === col && currentDir === 'desc') ? 'asc' : 'desc';
             currentSort = col;
             loadReport(1);
         }
-
         function updateSortHeaders() {
             document.querySelectorAll('#reportTable thead th').forEach(th => {
                 th.classList.remove('sort-asc', 'sort-desc');
-                if (th.dataset.col === currentSort) {
+                if (th.dataset.col === currentSort)
                     th.classList.add(currentDir === 'asc' ? 'sort-asc' : 'sort-desc');
-                }
             });
         }
 
-        // ════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
         // FILTERS
-        // ════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
         function onFilterChange() {
             clearTimeout(filterTimer);
             filterTimer = setTimeout(() => loadReport(1), 350);
         }
-
         function resetFilters() {
-            ['f_date_from', 'f_date_to', 'f_lot_no'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = '';
+            ['f_date_from', 'f_date_to', 'f_lot_no', 'f_vehicle_no'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = '';
             });
-            ['f_supplier_id', 'f_category', 'f_material_id', 'f_test_status', 'f_per_page'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = id === 'f_per_page' ? '50' : '';
+            ['f_supplier_id', 'f_test_status', 'f_per_page'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = id === 'f_per_page' ? '50' : '';
             });
-            // Restore full material list
-            populateMaterialDropdown('');
-            currentSort = 'receipt_date';
-            currentDir = 'desc';
+            currentSort = 'test_date'; currentDir = 'desc';
             loadReport(1);
         }
 
-        // ════════════════════════════════════════════════════════════════════════
-        // EXPORT TO EXCEL
-        // ════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
+        // DETAIL MODAL
+        // ════════════════════════════════════════════════════════════════════════════
+        async function openDetail(acidTestId) {
+            // reset modal
+            document.getElementById('modalTitle').textContent = 'Acid Test Detail';
+            document.getElementById('modalMeta').textContent = '';
+            document.getElementById('modalBody').innerHTML =
+                `<div style="text-align:center;padding:40px;color:var(--txtmu)"><span class="spinner"></span> Loading…</div>`;
+            document.getElementById('detailModal').classList.add('open');
+
+            const res = await apiFetch(`/reports/acid-test-status/${acidTestId}/detail`);
+            if (!res?.ok) {
+                document.getElementById('modalBody').innerHTML =
+                    `<div style="text-align:center;padding:40px;color:var(--err)">Failed to load details.</div>`;
+                return;
+            }
+
+            const { data } = await res.json();
+            const t = data.test;
+            const totals = data.totals;
+
+            // Header
+            document.getElementById('modalTitle').textContent =
+                `LOT ${t.lot_number} — Acid Test Report`;
+            document.getElementById('modalMeta').textContent =
+                `${t.test_date} · ${t.supplier_name} · ${t.vehicle_number}`;
+
+
+            // ── Build modal body ───────────────────────────────────────────────────
+            let html = '';
+
+            // Info grid
+            html += `<div class="mig">
+                            <div class="mig-item"><span class="mig-lbl">Test Date</span><span class="mig-val">${esc(t.test_date)}</span></div>
+                            <div class="mig-item"><span class="mig-lbl">Lot No</span><span class="mig-val" style="font-size:16px;font-weight:900">${esc(t.lot_number)}</span></div>
+                            <div class="mig-item"><span class="mig-lbl">Supplier</span><span class="mig-val">${esc(t.supplier_name)}</span></div>
+                            <div class="mig-item"><span class="mig-lbl">Vehicle No</span><span class="mig-val">${esc(t.vehicle_number)}</span></div>
+                            <div class="mig-item"><span class="mig-lbl">Invoice Qty</span><span class="mig-val">${fmt(t.invoice_qty, 0)}</span></div>
+                            <div class="mig-item"><span class="mig-lbl">In-House Wt</span><span class="mig-val">${fmt(t.received_qty, 0)} KG</span></div>
+                            <div class="mig-item"><span class="mig-lbl">Foreign Material Wt</span><span class="mig-val">${fmt(t.foreign_material_weight, 0)} KG</span></div>
+                            <div class="mig-item"><span class="mig-lbl">Avg Pallet Wt</span><span class="mig-val">${fmt(t.avg_pallet_weight, 0)} KG</span></div>
+                            <div class="mig-item"><span class="mig-lbl">Recorded By</span><span class="mig-val">${esc(t.created_by_name)}</span></div>
+                        </div>`;
+
+            // ── Pallet Weight Table ────────────────────────────────────────────────
+            html += `<div class="msec-title">Incoming Scrap Battery — Pallet Weight</div>`;
+            html += `<table class="mt">
+                            <thead><tr>
+                                <th style="width:6%">SR.</th>
+                                <th>Pallet No</th>
+                                <th class="num">Gross Wt (KG)</th>
+                                <th class="num">Avg P&amp;F Wt (KG)</th>
+                                <th class="num">Net Wt (KG)</th>
+                                <th>Remarks</th>
+                            </tr></thead>
+                            <tbody>`;
+            data.pallets.forEach(p => {
+                html += `<tr>
+                                <td>${p.sr}</td>
+                                <td class="lft" style="font-weight:600">${esc(p.pallet_no)}</td>
+                                <td class="num">${fmt(p.gross_weight)}</td>
+                                <td class="num">${fmt(p.avg_pf)}</td>
+                                <td class="num">${fmt(p.net_weight)}</td>
+                                <td class="lft">${esc(p.remarks)}</td>
+                            </tr>`;
+            });
+            html += `</tbody>
+                            <tfoot><tr>
+                                <td colspan="2" style="text-align:right;font-size:9.5px;letter-spacing:.5px;color:var(--txtmu)">TOTAL (KG)</td>
+                                <td class="num">${fmt(totals.gross)}</td>
+                                <td class="num">${fmt(totals.avg_pf_total)}</td>
+                                <td class="num">${fmt(totals.net)}</td>
+                                <td></td>
+                            </tr></tfoot>
+                        </table>`;
+
+            // ── Acid Content Table ─────────────────────────────────────────────────
+            if (data.acid_rows.length) {
+                html += `<div class="msec-title" style="margin-top:24px">Acid Content Analysis in Scrap Battery</div>`;
+                html += `<table class="mt">
+                                <thead><tr>
+                                    <th style="width:6%">SR.</th>
+                                    <th>Pallet No</th>
+                                    <th class="num">Initial Wt (KG)</th>
+                                    <th class="num">Drained Wt (KG)</th>
+                                    <th class="num">Wt Diff (KG)</th>
+                                    <th class="num">Acid %</th>
+                                    <th>Stock Code</th>
+                                    <th>Remarks</th>
+                                </tr></thead>
+                                <tbody>`;
+                data.acid_rows.forEach(a => {
+                    html += `<tr>
+                                    <td>${a.sr}</td>
+                                    <td class="lft" style="font-weight:600">${esc(a.pallet_no)}</td>
+                                    <td class="num">${fmt(a.initial_weight)}</td>
+                                    <td class="num">${fmt(a.drained_weight)}</td>
+                                    <td class="num">${fmt(a.weight_difference)}</td>
+                                    <td class="num">${fmt(a.avg_acid_pct)}</td>
+                                    <td class="lft" style="font-weight:700">${esc(a.ulab_type)}</td>
+                                    <td class="lft">${esc(a.remarks)}</td>
+                                </tr>`;
+                });
+                html += `</tbody>
+                                <tfoot><tr>
+                                    <td colspan="2" style="text-align:right;font-size:9.5px;letter-spacing:.5px;color:var(--txtmu)">TOTAL (KG)</td>
+                                    <td class="num">${fmt(totals.initial)}</td>
+                                    <td class="num">${fmt(totals.drained)}</td>
+                                    <td class="num">${fmt(totals.wt_diff)}</td>
+                                    <td class="num"><span class="big-acid">${fmt(totals.net_avg_acid)}</span></td>
+                                    <td></td><td></td>
+                                </tr></tfoot>
+                            </table>`;
+            }
+
+            document.getElementById('modalBody').innerHTML = html;
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('open');
+        }
+        function closeModalOutside(e) {
+            if (e.target === document.getElementById('detailModal')) closeModal();
+        }
+
+        // ════════════════════════════════════════════════════════════════════════════
+        // EXPORT
+        // ════════════════════════════════════════════════════════════════════════════
         async function exportExcel() {
             const btn = document.getElementById('btnExcel');
             btn.disabled = true;
             btn.innerHTML = `<span class="spinner" style="border-top-color:#fff"></span> Exporting…`;
 
-            const exportRows = await fetchAllForExport();
+            const all = await fetchAllForExport();
 
             btn.disabled = false;
             btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Export Excel`;
 
-            if (!exportRows.length) return;
+            if (!all.length) return;
 
             const wsData = [
-                ['Date', 'Lot No', 'Supplier', 'Material', 'Category', 'Unit', 'Qty (KG)', 'Test Status'],
-                ...exportRows.map(r => [
-                    r.receipt_date,
-                    r.lot_no,
-                    r.supplier_name,
-                    r.material_name,
-                    r.category,
-                    r.unit,
-                    r.received_qty,
-                    r.test_status,
+                ['Lot No', 'Vehicle No', 'Supplier', 'Test Date', 'In-House Wt (KG)', 'Avg P&F Wt (KG)', 'Pallets', 'Test Status'],
+                ...all.map(r => [
+                    r.lot_number, r.vehicle_number, r.supplier_name, r.test_date,
+                    r.received_qty, r.avg_pf_weight || '', r.pallet_count, r.test_status,
                 ]),
             ];
 
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(wsData);
-            ws['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 26 }, { wch: 26 }, { wch: 20 }, { wch: 8 }, { wch: 12 }, { wch: 16 }];
+            ws['!cols'] = [{ wch: 16 }, { wch: 14 }, { wch: 26 }, { wch: 12 }, { wch: 16 }, { wch: 16 }, { wch: 8 }, { wch: 14 }];
             XLSX.utils.book_append_sheet(wb, ws, 'Acid Test Status');
-            XLSX.writeFile(wb, `Acid_Test_Status_Report_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.xlsx`);
+            XLSX.writeFile(wb, `Acid_Test_Status_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.xlsx`);
         }
 
         async function fetchAllForExport() {
-            const all = [];
-            let page = 1, lastPage = 1;
+            const all = []; let page = 1, lastPage = 1;
             do {
                 const params = new URLSearchParams({
                     date_from: document.getElementById('f_date_from').value,
                     date_to: document.getElementById('f_date_to').value,
                     supplier_id: document.getElementById('f_supplier_id').value,
-                    category: document.getElementById('f_category').value,
-                    material_id: document.getElementById('f_material_id').value,
                     test_status: document.getElementById('f_test_status').value,
                     lot_no: document.getElementById('f_lot_no').value,
-                    sort_by: currentSort,
-                    sort_dir: currentDir,
-                    per_page: 500,
-                    page,
+                    vehicle_no: document.getElementById('f_vehicle_no').value,
+                    sort_by: currentSort, sort_dir: currentDir,
+                    per_page: 500, page,
                 });
                 [...params.keys()].forEach(k => { if (!params.get(k)) params.delete(k); });
                 const res = await apiFetch(`/reports/acid-test-status?${params.toString()}`);
                 if (!res?.ok) break;
                 const json = await res.json();
                 all.push(...(json.data ?? []));
-                lastPage = json.meta?.last_page ?? 1;
-                page++;
+                lastPage = json.meta?.last_page ?? 1; page++;
             } while (page <= lastPage);
             return all;
         }
 
-        // ════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
         // UTILITIES
-        // ════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════════════
         function setLoading(on) {
             if (!on) return;
             document.getElementById('reportBody').innerHTML =
-                `<tr class="state-row"><td colspan="8"><span class="spinner"></span>Loading…</td></tr>`;
+                `<tr class="state-row"><td colspan="9"><span class="spinner"></span>Loading…</td></tr>`;
             document.getElementById('reportFoot').style.display = 'none';
             document.getElementById('pagBar').style.display = 'none';
         }
-
         function renderError() {
             document.getElementById('reportBody').innerHTML =
-                `<tr class="state-row"><td colspan="8" style="color:var(--err)">Failed to load data. Please try again.</td></tr>`;
+                `<tr class="state-row"><td colspan="9" style="color:var(--err)">Failed to load data. Please try again.</td></tr>`;
         }
-
-        function fmtNum(n) {
+        function fmtNum(n, d = 2) {
+            if (n === null || n === undefined || n === '' || Number(n) === 0) return '—';
+            return parseFloat(n).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
+        }
+        // modal helpers (no dash on zero for weights in tables)
+        function fmt(n, d = 2) {
             if (n === null || n === undefined || n === '') return '—';
-            return parseFloat(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return parseFloat(n).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
         }
-
-        function escHtml(str) {
+        function esc(str) {
             if (str === null || str === undefined) return '—';
-            return String(str)
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
+        function escHtml(str) { return esc(str); }
     </script>
 
     {{-- SheetJS (Apache-2.0) — client-side Excel export only --}}
