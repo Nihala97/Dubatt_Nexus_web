@@ -1,16 +1,11 @@
-{{--
-resources/views/admin/settings/roles/index.blade.php
-Roles Management — list, create, edit, delete
---}}
+{{-- resources/views/admin/settings/roles/index.blade.php --}}
 @extends('admin.layouts.app')
 @section('title', 'Roles')
 
 @section('breadcrumb')
     <a href="{{ route('admin.dashboard') }}" style="color:var(--text-muted);text-decoration:none">Dashboard</a>
-    <span style="margin:0 6px;color:var(--border)">/</span>
-    <span style="color:var(--text-muted)">Settings</span>
-    <span style="margin:0 6px;color:var(--border)">/</span>
-    <strong>Roles</strong>
+    <span style="margin:0 6px;color:var(--border)">/</span><span style="color:var(--text-muted)">Settings</span>
+    <span style="margin:0 6px;color:var(--border)">/</span><strong>Roles</strong>
 @endsection
 
 @push('styles')
@@ -20,8 +15,6 @@ Roles Management — list, create, edit, delete
             --gd: #145f2d;
             --gl: #e8f5ed;
             --gxl: #f2faf5;
-            --white: #fff;
-            --bg: #f4f7f5;
             --bdr: #dde8e2;
             --txt: #1e2d26;
             --txtm: #3d5449;
@@ -35,12 +28,6 @@ Roles Management — list, create, edit, delete
         *::before,
         *::after {
             box-sizing: border-box
-        }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: var(--bg);
-            color: var(--txt)
         }
 
         @keyframes spin {
@@ -61,7 +48,6 @@ Roles Management — list, create, edit, delete
         .ph h2 {
             font-size: clamp(17px, 2.3vw, 22px);
             font-weight: 800;
-            color: var(--txt);
             letter-spacing: -.3px
         }
 
@@ -108,7 +94,7 @@ Roles Management — list, create, edit, delete
         }
 
         .btn-outline {
-            background: var(--white);
+            background: #fff;
             color: var(--txtm);
             border: 1.5px solid var(--bdr)
         }
@@ -141,7 +127,7 @@ Roles Management — list, create, edit, delete
         }
 
         .card {
-            background: var(--white);
+            background: #fff;
             border: 1px solid var(--bdr);
             border-radius: var(--r);
             box-shadow: var(--sh);
@@ -227,14 +213,17 @@ Roles Management — list, create, edit, delete
             background: var(--gl);
             padding: 9px 14px;
             border-bottom: 2px solid var(--bdr);
-            text-align: left
+            white-space: nowrap;
+            text-align: left;
+            vertical-align: middle
         }
 
         .dt tbody td {
             padding: 10px 14px;
             border-bottom: 1px solid #edf2ef;
             font-size: 12.5px;
-            vertical-align: middle
+            vertical-align: middle;
+            text-align: left
         }
 
         .dt tbody tr:last-child td {
@@ -267,7 +256,8 @@ Roles Management — list, create, edit, delete
 
         .act-btns {
             display: flex;
-            gap: 5px
+            gap: 5px;
+            align-items: center
         }
 
         .tbl-state {
@@ -312,12 +302,13 @@ Roles Management — list, create, edit, delete
             background: #fff;
             border-radius: 14px;
             width: 100%;
-            max-width: 500px;
+            max-width: 480px;
             display: flex;
             flex-direction: column;
             box-shadow: 0 20px 60px rgba(0, 0, 0, .22);
             transform: translateY(12px);
-            transition: transform .2s
+            transition: transform .2s;
+            max-height: 90vh
         }
 
         .modal-overlay.open .modal-box {
@@ -362,7 +353,8 @@ Roles Management — list, create, edit, delete
 
         .modal-body {
             padding: 20px 22px;
-            overflow-y: auto
+            overflow-y: auto;
+            flex: 1
         }
 
         .modal-footer {
@@ -404,6 +396,8 @@ Roles Management — list, create, edit, delete
             stroke: var(--txtmu);
             fill: none;
             stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
             pointer-events: none
         }
 
@@ -417,7 +411,7 @@ Roles Management — list, create, edit, delete
             font-size: 13px;
             color: var(--txt);
             outline: none;
-            transition: border-color .18s
+            transition: border-color .18s, background .18s
         }
 
         .fi:focus {
@@ -448,9 +442,9 @@ Roles Management — list, create, edit, delete
     <div class="ph">
         <div>
             <h2>Roles</h2>
-            <p>Define system roles and assign them to users</p>
+            <p>Define system roles to group and identify users</p>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openModal()">
+        <button class="btn btn-primary btn-sm" id="btnAddRole" onclick="openModal()">
             <svg viewBox="0 0 24 24">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
@@ -467,7 +461,7 @@ Roles Management — list, create, edit, delete
                 </svg>
                 <span>All Roles</span>
             </div>
-            <span id="tableCaption" style="font-size:11.5px;color:var(--txtmu)"></span>
+            <span id="caption" style="font-size:11.5px;color:var(--txtmu)"></span>
         </div>
         <div class="filter-bar">
             <input type="text" id="fSearch" placeholder="Search roles…" oninput="onFilter()">
@@ -481,7 +475,7 @@ Roles Management — list, create, edit, delete
                         <th>Description</th>
                         <th>Users</th>
                         <th>Status</th>
-                        <th style="width:120px">Actions</th>
+                        <th style="width:130px">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="roleTbody">
@@ -493,7 +487,7 @@ Roles Management — list, create, edit, delete
         </div>
     </div>
 
-    {{-- Role Form Modal --}}
+    {{-- ROLE MODAL --}}
     <div class="modal-overlay" id="roleModal" onclick="if(event.target===this)closeModal()">
         <div class="modal-box">
             <div class="modal-head">
@@ -531,10 +525,10 @@ Roles Management — list, create, edit, delete
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
-                <button class="btn btn-primary btn-sm" onclick="saveRole()">
+                <button class="btn btn-primary btn-sm" id="saveBtn" onclick="saveRole()">
                     <svg viewBox="0 0 24 24">
                         <polyline points="20 6 9 17 4 12" />
-                    </svg> Save
+                    </svg> Save Role
                 </button>
             </div>
         </div>
@@ -544,53 +538,59 @@ Roles Management — list, create, edit, delete
 @push('scripts')
     <script>
         let editId = null, filterTimer = null;
+        let allRoles = [];
+
+        (function init() {
+            if (!can('settings_roles', 'can_create')) document.getElementById('btnAddRole').style.display = 'none';
+            loadRoles();
+        })();
 
         async function loadRoles() {
-            document.getElementById('roleTbody').innerHTML = `<tr><td colspan="6" class="tbl-state"><span class="spinner"></span>Loading…</td></tr>`;
-            const search = document.getElementById('fSearch').value;
-            const params = new URLSearchParams({ per_page: 100 });
-            if (search) params.set('search', search);
-            const res = await apiFetch(`/admin/roles?${params}`);
-            if (!res?.ok) { document.getElementById('roleTbody').innerHTML = `<tr><td colspan="6" class="tbl-state" style="color:var(--err)">Failed to load.</td></tr>`; return; }
+            document.getElementById('roleTbody').innerHTML = '<tr><td colspan="6" class="tbl-state"><span class="spinner"></span>Loading…</td></tr>';
+            const s = document.getElementById('fSearch').value.trim();
+            const p = new URLSearchParams({ per_page: 200 });
+            if (s) p.set('search', s);
+            const res = await apiFetch('/admin/roles?' + p);
+            if (!res?.ok) { document.getElementById('roleTbody').innerHTML = '<tr><td colspan="6" class="tbl-state" style="color:var(--err)">Failed to load.</td></tr>'; return; }
             const json = await res.json();
-            const rows = json.data?.data ?? [];
-            document.getElementById('tableCaption').textContent = `${json.data?.total ?? rows.length} roles`;
-            document.getElementById('roleTbody').innerHTML = rows.length ? rows.map(r => `
-          <tr>
-            <td style="font-weight:700">${esc(r.name)}</td>
-            <td><span style="font-family:monospace;font-size:12px;background:var(--gl);padding:2px 7px;border-radius:5px;color:var(--g)">${esc(r.slug)}</span></td>
-            <td style="color:var(--txtmu)">${esc(r.description ?? '—')}</td>
-            <td><span style="font-weight:700;color:var(--g)">${r.users_count ?? 0}</span></td>
-            <td>${r.is_active ? '<span class="badge badge-active">● Active</span>' : '<span class="badge badge-inactive">● Inactive</span>'}</td>
-            <td><div class="act-btns">
-              <button class="btn btn-outline btn-xs" onclick="openModal(${r.id})">Edit</button>
-              <button class="btn btn-danger btn-xs" onclick="deleteRole(${r.id},'${esc(r.name)}')">Delete</button>
-            </div></td>
-          </tr>
-        `).join('') : `<tr><td colspan="6" class="tbl-state">No roles found.</td></tr>`;
+            allRoles = json.data?.data ?? [];
+            document.getElementById('caption').textContent = allRoles.length + ' roles';
+            renderRoles(allRoles);
+        }
+
+        function renderRoles(rows) {
+            const canEdit = can('settings_roles', 'can_edit'), canDel = can('settings_roles', 'can_delete');
+            document.getElementById('roleTbody').innerHTML = rows.length ? rows.map(r => {
+                const eb = canEdit ? '<button class="btn btn-outline btn-xs" onclick="openModal(' + r.id + ')">Edit</button>' : '';
+                const db = canDel ? '<button class="btn btn-danger btn-xs" onclick="delRole(' + r.id + ',\'' + esc(r.name) + '\')">Delete</button>' : '';
+                return '<tr>'
+                    + '<td style="font-weight:700">' + esc(r.name) + '</td>'
+                    + '<td><span style="font-family:monospace;font-size:12px;background:var(--gl);padding:2px 7px;border-radius:5px;color:var(--g)">' + esc(r.slug) + '</span></td>'
+                    + '<td style="color:var(--txtmu)">' + esc(r.description || '—') + '</td>'
+                    + '<td><span style="font-weight:700;color:var(--g)">' + (r.users_count ?? 0) + '</span></td>'
+                    + '<td>' + (r.is_active ? '<span class="badge badge-active">● Active</span>' : '<span class="badge badge-inactive">● Inactive</span>') + '</td>'
+                    + '<td><div class="act-btns">' + eb + db + '</div></td>'
+                    + '</tr>';
+            }).join('') : '<tr><td colspan="6" class="tbl-state">No roles found.</td></tr>';
         }
 
         function openModal(id = null) {
             editId = id;
-            document.getElementById('r_name').value = '';
-            document.getElementById('r_desc').value = '';
-            document.getElementById('r_active').checked = true;
             document.getElementById('formAlert').className = 'form-alert';
             document.getElementById('modalTitle').textContent = id ? 'Edit Role' : 'Add Role';
             if (id) {
-                const row = document.querySelector(`#roleTbody tr td`);
-                // re-fetch for safety
-                apiFetch(`/admin/roles?per_page=100`).then(r => r.json()).then(d => {
-                    const role = (d.data?.data ?? []).find(r => r.id === id);
-                    if (role) {
-                        document.getElementById('r_name').value = role.name;
-                        document.getElementById('r_desc').value = role.description ?? '';
-                        document.getElementById('r_active').checked = !!role.is_active;
-                    }
-                });
+                const role = allRoles.find(r => r.id === id);
+                document.getElementById('r_name').value = role?.name ?? '';
+                document.getElementById('r_desc').value = role?.description ?? '';
+                document.getElementById('r_active').checked = role?.is_active ?? true;
+            } else {
+                document.getElementById('r_name').value = '';
+                document.getElementById('r_desc').value = '';
+                document.getElementById('r_active').checked = true;
             }
             document.getElementById('roleModal').classList.add('open');
             document.body.style.overflow = 'hidden';
+            setTimeout(() => document.getElementById('r_name').focus(), 100);
         }
 
         function closeModal() {
@@ -600,38 +600,31 @@ Roles Management — list, create, edit, delete
         }
 
         async function saveRole() {
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true; btn.textContent = 'Saving…';
             const payload = {
-                name: document.getElementById('r_name').value,
-                description: document.getElementById('r_desc').value,
+                name: document.getElementById('r_name').value.trim(),
+                description: document.getElementById('r_desc').value.trim(),
                 is_active: document.getElementById('r_active').checked,
             };
-            const method = editId ? 'PUT' : 'POST';
-            const endpoint = editId ? `/admin/roles/${editId}` : '/admin/roles';
-            const res = await apiFetch(endpoint, { method, body: JSON.stringify(payload) });
+            const res = await apiFetch(editId ? '/admin/roles/' + editId : '/admin/roles', {
+                method: editId ? 'PUT' : 'POST', body: JSON.stringify(payload)
+            });
             const data = await res.json();
-            if (res.ok && data.status === 'ok') { closeModal(); loadRoles(); }
-            else {
-                const el = document.getElementById('formAlert');
-                el.className = 'form-alert error';
-                el.textContent = data.message ?? 'Something went wrong.';
-            }
+            btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"><polyline points="20 6 9 17 4 12"/></svg> Save Role';
+            if (res.ok && data.status === 'ok') { closeModal(); loadRoles(); showToast(editId ? 'Role updated.' : 'Role created.'); }
+            else { const e = document.getElementById('formAlert'); e.className = 'form-alert error'; e.textContent = data.message ?? 'Something went wrong.'; }
         }
 
-        async function deleteRole(id, name) {
-            if (!confirm(`Delete role "${name}"?`)) return;
-            const res = await apiFetch(`/admin/roles/${id}`, { method: 'DELETE' });
+        async function delRole(id, name) {
+            if (!await showConfirm('Delete role "' + name + '"? This cannot be undone.')) return;
+            const res = await apiFetch('/admin/roles/' + id, { method: 'DELETE' });
             const data = await res.json();
-            if (res.ok) loadRoles();
-            else alert(data.message ?? 'Cannot delete.');
+            if (res.ok) { loadRoles(); showToast('Role deleted.'); }
+            else { alert(data.message ?? 'Cannot delete.'); }
         }
 
         function onFilter() { clearTimeout(filterTimer); filterTimer = setTimeout(loadRoles, 350); }
-
-        function esc(s) {
-            if (!s) return '';
-            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
-
-        loadRoles();
+        function esc(s) { return s == null ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
     </script>
 @endpush

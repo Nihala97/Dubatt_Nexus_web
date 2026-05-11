@@ -282,7 +282,7 @@ Variables: $test (AcidTesting with details + supplier), $company (Company)
                     </tr>
                     <tr>
                         <td class="lbl" style="border-left:none;border-bottom:none">INVOICE QTY</td>
-                        <td style="border-bottom:none">{{ number_format((float) ($test->invoice_qty ?? 0)) }} PCS</td>
+                        <td style="border-bottom:none">{{ number_format((float) ($test->invoice_qty ?? 0)) }}</td>
                         <td class="lbl" style="border-bottom:none;line-height:1.4">IN HOUSE<br>WEIGHBRIDGE<br>WEIGHT
                         </td>
                         <td style="border-right:none;border-bottom:none">

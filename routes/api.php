@@ -62,21 +62,21 @@ Route::middleware('auth:sanctum')->group(function () {
      // ═══════════════════════════════════════════════════════════
 
      // ── Suppliers (reference data) ────────────────────────────────────
-     Route::prefix('suppliers')->middleware('module:suppliers')->group(function () {
+     Route::prefix('suppliers')->middleware('module:suppliers_master')->group(function () {
           Route::get('/', [SupplierBatchController::class, 'index']);
           Route::get('/{id}', [SupplierBatchController::class, 'show']);
-          Route::post('/', [SupplierBatchController::class, 'store'])->middleware('module:suppliers,can_create');
-          Route::put('/{id}', [SupplierBatchController::class, 'update'])->middleware('module:suppliers,can_edit');
-          Route::delete('/{id}', [SupplierBatchController::class, 'destroy'])->middleware('module:suppliers,can_delete');
+          Route::post('/', [SupplierBatchController::class, 'store'])->middleware('module:suppliers_master,can_create');
+          Route::put('/{id}', [SupplierBatchController::class, 'update'])->middleware('module:suppliers_master,can_edit');
+          Route::delete('/{id}', [SupplierBatchController::class, 'destroy'])->middleware('module:suppliers_master,can_delete');
      });
 
      // ── Materials (reference data) ────────────────────────────────────
-     Route::prefix('materials')->middleware('module:materials')->group(function () {
+     Route::prefix('materials')->middleware('module:materials_master')->group(function () {
           Route::get('/', [MaterialBatchController::class, 'index']);
           Route::get('/{id}', [MaterialBatchController::class, 'show']);
-          Route::post('/', [MaterialBatchController::class, 'store'])->middleware('module:materials,can_create');
-          Route::put('/{id}', [MaterialBatchController::class, 'update'])->middleware('module:materials,can_edit');
-          Route::delete('/{id}', [MaterialBatchController::class, 'destroy'])->middleware('module:materials,can_delete');
+          Route::post('/', [MaterialBatchController::class, 'store'])->middleware('module:materials_master,can_create');
+          Route::put('/{id}', [MaterialBatchController::class, 'update'])->middleware('module:materials_master,can_edit');
+          Route::delete('/{id}', [MaterialBatchController::class, 'destroy'])->middleware('module:materials_master,can_delete');
      });
 
 
@@ -160,7 +160,7 @@ Route::middleware('auth:sanctum')->group(function () {
           Route::delete('/{id}', [SmeltingBatchController::class, 'destroy']);
           Route::post('/{id}/autosave', [SmeltingBatchController::class, 'autosave']);
           Route::post('/{id}/submit', [SmeltingBatchController::class, 'submit']);
-          Route::patch('/{id}/status', [SmeltingBatchController::class, 'updateStatus'])->middleware('module:smeltings,can_edit');
+          Route::patch('/{id}/status', [SmeltingBatchController::class, 'updateStatus'])->middleware('module:smelting,can_edit');
      });
 
      // ── Refining ──────────────────────────────────────────────────
@@ -196,43 +196,43 @@ Route::middleware('auth:sanctum')->group(function () {
      Route::prefix('reports')->name('reports.')->group(function () {
 
           Route::get('material-inward/filters', [\App\Http\Controllers\Api\ReportController::class, 'materialInwardFilters'])
-               ->middleware('module:report_material_inward')
+               ->middleware('module:material_inward_rpt')
                ->name('materialInward.filters');
 
           // ↓ FIXED: was '/reports/material-inward/dashboard' → now 'material-inward/dashboard'
           Route::get('material-inward/dashboard', [\App\Http\Controllers\Api\ReportController::class, 'materialInwardDashboard'])
-               ->middleware('module:report_material_inward')
+               ->middleware('module:material_inward_rpt')
                ->name('materialInward.dashboard');
 
           Route::get('material-inward', [\App\Http\Controllers\Api\ReportController::class, 'materialInward'])
-               ->middleware('module:report_material_inward')
+               ->middleware('module:material_inward_rpt')
                ->name('materialInward');
 
           Route::get('acid-test-status', [\App\Http\Controllers\Api\ReportController::class, 'acidTestStatus'])
-               ->middleware('module:report_acid_test_status')
+               ->middleware('module:acid_test_status_rpt')
                ->name('acidTestStatus');
           Route::get('acid-test-status/filters', [\App\Http\Controllers\Api\ReportController::class, 'acidTestStatusFilters'])
-               ->middleware('module:report_acid_test_status')
+               ->middleware('module:acid_test_status_rpt')
                ->name('acidTestStatus.filters');
 
           Route::get('bbsu/filters', [\App\Http\Controllers\Api\ReportController::class, 'bbsuFilters'])
-               ->middleware('module:report_bbsu')
+               ->middleware('module:bbsu_dashboard')
                ->name('bbsu.filters');
 
           Route::get('bbsu/dashboard', [\App\Http\Controllers\Api\ReportController::class, 'bbsuDashboard'])
-               ->middleware('module:report_bbsu')
+               ->middleware('module:bbsu_dashboard')
                ->name('bbsu.dashboard');
 
           Route::get('bbsu/report', [\App\Http\Controllers\Api\ReportController::class, 'bbsuReport'])
-               ->middleware('module:report_bbsu')
+               ->middleware('module:bbsu_dashboard')
                ->name('bbsu.report');
 
           Route::get('bbsu/chart', [\App\Http\Controllers\Api\ReportController::class, 'bbsuChart'])
-               ->middleware('module:report_bbsu')
+               ->middleware('module:bbsu_dashboard')
                ->name('bbsu.chart');
 
           Route::get('bbsu/drilldown', [\App\Http\Controllers\Api\ReportController::class, 'bbsuDrilldown'])
-               ->middleware('module:report_bbsu')
+               ->middleware('module:bbsu_dashboard')
                ->name('bbsu.drilldown');
 
           Route::get('smelting/dashboard', [\App\Http\Controllers\Api\ReportController::class, 'smeltingDashboard'])

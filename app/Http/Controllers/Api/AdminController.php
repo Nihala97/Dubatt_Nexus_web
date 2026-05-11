@@ -261,8 +261,8 @@ class AdminController extends Controller
     {
         $user = User::with(['modulePermissions.module'])->findOrFail($id);
 
-        // admin/management have full access — return flag so JS shows all menus
-        if (!$user->isNormal()) {
+        // ONLY admin has full access — return shortcut flag so JS shows full-access banner
+        if ($user->isAdmin()) {
             return response()->json([
                 'status' => 'ok',
                 'data' => [
@@ -273,6 +273,7 @@ class AdminController extends Controller
             ]);
         }
 
+        // management + normal users: return their actual permission rows
         return response()->json([
             'status' => 'ok',
             'data' => $user->modulePermissions->map(fn($p) => [
@@ -296,13 +297,15 @@ class AdminController extends Controller
     {
         $user = User::findOrFail($id);
 
-        // Prevent overriding permissions on admin/management
-        if (!$user->isNormal()) {
+        // Admin has full access — no point setting permissions for them
+        if ($user->isAdmin()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Admin and Management users have full access. Permissions only apply to Normal users.',
+                'message' => 'Admin users have full access. Permissions are not applicable.',
             ], 422);
         }
+
+        // management + normal users: allow permission updates
 
         $request->validate([
             'permissions' => 'required|array',

@@ -1,7 +1,4 @@
 <?php
-// ── app/Http/Middleware/CheckWebAuth.php ──────────────────────────
-// Protects web pages — redirects to login if no token in session
-
 namespace App\Http\Middleware;
 
 use Closure;

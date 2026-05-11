@@ -626,7 +626,8 @@
             <p>Refining log sheet — finished goods &amp; dross tracking</p>
         </div>
         <div class="page-header-actions">
-            <a href="{{ route('admin.mes.refining.create') }}" class="btn btn-primary">
+            <a href="{{ route('admin.mes.refining.create') }}" class="btn btn-primary"
+                data-permission="refining,can_create">
                 <svg viewBox="0 0 24 24">
                     <line x1="12" y1="5" x2="12" y2="19" />
                     <line x1="5" y1="12" x2="19" y2="12" />
@@ -791,14 +792,15 @@
                         </td>
                         <td style="text-align:center">
                             <div style="display:inline-flex;gap:6px">
-                                <a href="{{ route('admin.mes.refining.edit', $b->id) }}" class="act-btn edit" title="Edit">
+                                <a href="{{ route('admin.mes.refining.edit', $b->id) }}" class="act-btn edit"
+                                    data-permission="refining,can_edit" title="Edit">
                                     <svg viewBox="0 0 24 24">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                                     </svg>
                                 </a>
                                 @if($b->status == 0)
-                                    <button class="act-btn del" title="Delete"
+                                    <button class="act-btn del" data-permission="refining,can_delete" title="Delete"
                                         onclick="deleteBatch({{ $b->id }}, '{{ $b->batch_no }}')">
                                         <svg viewBox="0 0 24 24">
                                             <polyline points="3 6 5 6 21 6" />
@@ -822,7 +824,7 @@
                                 <p style="font-weight:600;color:var(--text)">No refining batches found</p>
                                 <p style="font-size:12.5px;margin-top:4px">Adjust filters or create a new batch</p>
                                 <a href="{{ route('admin.mes.refining.create') }}" class="btn btn-primary btn-sm"
-                                    style="margin-top:14px;display:inline-flex">
+                                    data-permission="refining,can_create" style="margin-top:14px;display:inline-flex">
                                     <svg viewBox="0 0 24 24">
                                         <line x1="12" y1="5" x2="12" y2="19" />
                                         <line x1="5" y1="12" x2="19" y2="12" />

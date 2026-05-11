@@ -1,16 +1,11 @@
-{{--
-resources/views/admin/settings/modules/index.blade.php
-Modules Management — list system modules, create, edit, toggle active
---}}
+{{-- resources/views/admin/settings/modules/index.blade.php --}}
 @extends('admin.layouts.app')
 @section('title', 'Modules')
 
 @section('breadcrumb')
     <a href="{{ route('admin.dashboard') }}" style="color:var(--text-muted);text-decoration:none">Dashboard</a>
-    <span style="margin:0 6px;color:var(--border)">/</span>
-    <span style="color:var(--text-muted)">Settings</span>
-    <span style="margin:0 6px;color:var(--border)">/</span>
-    <strong>Modules</strong>
+    <span style="margin:0 6px;color:var(--border)">/</span><span style="color:var(--text-muted)">Settings</span>
+    <span style="margin:0 6px;color:var(--border)">/</span><strong>Modules</strong>
 @endsection
 
 @push('styles')
@@ -20,8 +15,6 @@ Modules Management — list system modules, create, edit, toggle active
             --gd: #145f2d;
             --gl: #e8f5ed;
             --gxl: #f2faf5;
-            --white: #fff;
-            --bg: #f4f7f5;
             --bdr: #dde8e2;
             --txt: #1e2d26;
             --txtm: #3d5449;
@@ -35,12 +28,6 @@ Modules Management — list system modules, create, edit, toggle active
         *::before,
         *::after {
             box-sizing: border-box
-        }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: var(--bg);
-            color: var(--txt)
         }
 
         @keyframes spin {
@@ -61,7 +48,6 @@ Modules Management — list system modules, create, edit, toggle active
         .ph h2 {
             font-size: clamp(17px, 2.3vw, 22px);
             font-weight: 800;
-            color: var(--txt);
             letter-spacing: -.3px
         }
 
@@ -108,7 +94,7 @@ Modules Management — list system modules, create, edit, toggle active
         }
 
         .btn-outline {
-            background: var(--white);
+            background: #fff;
             color: var(--txtm);
             border: 1.5px solid var(--bdr)
         }
@@ -141,7 +127,7 @@ Modules Management — list system modules, create, edit, toggle active
         }
 
         .card {
-            background: var(--white);
+            background: #fff;
             border: 1px solid var(--bdr);
             border-radius: var(--r);
             box-shadow: var(--sh);
@@ -186,10 +172,10 @@ Modules Management — list system modules, create, edit, toggle active
         .filter-bar {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
             padding: 14px 20px;
             border-bottom: 1px solid var(--bdr);
-            background: var(--gxl);
-            flex-wrap: wrap
+            background: var(--gxl)
         }
 
         .filter-bar input,
@@ -199,6 +185,7 @@ Modules Management — list system modules, create, edit, toggle active
             border-radius: 8px;
             font-family: 'Outfit', sans-serif;
             font-size: 12.5px;
+            color: var(--txt);
             background: #fff;
             outline: none;
             transition: border-color .18s
@@ -231,14 +218,17 @@ Modules Management — list system modules, create, edit, toggle active
             background: var(--gl);
             padding: 9px 14px;
             border-bottom: 2px solid var(--bdr);
-            text-align: left
+            white-space: nowrap;
+            text-align: left;
+            vertical-align: middle
         }
 
         .dt tbody td {
             padding: 10px 14px;
             border-bottom: 1px solid #edf2ef;
             font-size: 12.5px;
-            vertical-align: middle
+            vertical-align: middle;
+            text-align: left
         }
 
         .dt tbody tr:last-child td {
@@ -269,19 +259,10 @@ Modules Management — list system modules, create, edit, toggle active
             color: #991b1b
         }
 
-        .group-pill {
-            display: inline-flex;
-            padding: 2px 9px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            background: var(--gl);
-            color: var(--g)
-        }
-
         .act-btns {
             display: flex;
-            gap: 5px
+            gap: 5px;
+            align-items: center
         }
 
         .tbl-state {
@@ -331,7 +312,8 @@ Modules Management — list system modules, create, edit, toggle active
             flex-direction: column;
             box-shadow: 0 20px 60px rgba(0, 0, 0, .22);
             transform: translateY(12px);
-            transition: transform .2s
+            transition: transform .2s;
+            max-height: 90vh
         }
 
         .modal-overlay.open .modal-box {
@@ -376,7 +358,8 @@ Modules Management — list system modules, create, edit, toggle active
 
         .modal-body {
             padding: 20px 22px;
-            overflow-y: auto
+            overflow-y: auto;
+            flex: 1
         }
 
         .modal-footer {
@@ -399,7 +382,7 @@ Modules Management — list system modules, create, edit, toggle active
             display: flex;
             flex-direction: column;
             gap: 5px;
-            margin-bottom: 14px
+            margin-bottom: 0
         }
 
         .field label {
@@ -424,6 +407,8 @@ Modules Management — list system modules, create, edit, toggle active
             stroke: var(--txtmu);
             fill: none;
             stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
             pointer-events: none
         }
 
@@ -437,7 +422,7 @@ Modules Management — list system modules, create, edit, toggle active
             font-size: 13px;
             color: var(--txt);
             outline: none;
-            transition: border-color .18s
+            transition: border-color .18s, background .18s
         }
 
         .fi:focus {
@@ -462,6 +447,17 @@ Modules Management — list system modules, create, edit, toggle active
             display: block
         }
 
+        .info-banner {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            border-radius: 8px;
+            padding: 9px 14px;
+            font-size: 12px;
+            margin-bottom: 14px;
+            line-height: 1.5
+        }
+
         @media(max-width:600px) {
             .fg2 {
                 grid-template-columns: 1fr
@@ -474,9 +470,9 @@ Modules Management — list system modules, create, edit, toggle active
     <div class="ph">
         <div>
             <h2>Modules</h2>
-            <p>System modules used for permission assignment across roles and profiles</p>
+            <p>System modules that can be permission-controlled per user or profile</p>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openModal()">
+        <button class="btn btn-primary btn-sm" id="btnAddModule" onclick="openModal()">
             <svg viewBox="0 0 24 24">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
@@ -496,22 +492,18 @@ Modules Management — list system modules, create, edit, toggle active
                 </svg>
                 <span>All Modules</span>
             </div>
-            <span id="tableCaption" style="font-size:11.5px;color:var(--txtmu)"></span>
+            <span id="caption" style="font-size:11.5px;color:var(--txtmu)"></span>
         </div>
         <div class="filter-bar">
             <input type="text" id="fSearch" placeholder="Search modules…" oninput="onFilter()">
             <select id="fGroup" onchange="onFilter()">
                 <option value="">All Groups</option>
-                <option value="Masters">Masters</option>
-                <option value="MES">MES</option>
-                <option value="Reports">Reports</option>
             </select>
         </div>
         <div class="tbl-wrap">
             <table class="dt">
                 <thead>
                     <tr>
-                        <th>#</th>
                         <th>Module Name</th>
                         <th>Slug</th>
                         <th>Group</th>
@@ -522,14 +514,14 @@ Modules Management — list system modules, create, edit, toggle active
                 </thead>
                 <tbody id="moduleTbody">
                     <tr>
-                        <td colspan="7" class="tbl-state"><span class="spinner"></span>Loading…</td>
+                        <td colspan="6" class="tbl-state"><span class="spinner"></span>Loading…</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    {{-- Module Form Modal --}}
+    {{-- MODULE FORM MODAL --}}
     <div class="modal-overlay" id="moduleModal" onclick="if(event.target===this)closeModal()">
         <div class="modal-box">
             <div class="modal-head">
@@ -537,8 +529,13 @@ Modules Management — list system modules, create, edit, toggle active
                 <button class="modal-close" onclick="closeModal()">✕</button>
             </div>
             <div class="modal-body">
+                <div class="info-banner">
+                    ⚠️ The <strong>Slug</strong> is used in code to check permissions (e.g.
+                    <code>middleware('module:receiving')</code>).
+                    Set it carefully — changing it later requires code changes too.
+                </div>
                 <div id="formAlert" class="form-alert"></div>
-                <div class="fg2">
+                <div class="fg2" style="margin-bottom:14px">
                     <div class="field">
                         <label>Module Name <span style="color:var(--err)">*</span></label>
                         <div class="iw"><svg class="ico" viewBox="0 0 24 24">
@@ -547,7 +544,16 @@ Modules Management — list system modules, create, edit, toggle active
                                 <rect x="14" y="14" width="7" height="7" />
                                 <rect x="3" y="14" width="7" height="7" />
                             </svg>
-                            <input class="fi" type="text" id="m_name" placeholder="e.g. Acid Testing">
+                            <input class="fi" type="text" id="m_name" placeholder="e.g. Receiving" oninput="autoSlug()">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Slug <span style="color:var(--err)">*</span></label>
+                        <div class="iw"><svg class="ico" viewBox="0 0 24 24">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                            </svg>
+                            <input class="fi" type="text" id="m_slug" placeholder="e.g. receiving">
                         </div>
                     </div>
                     <div class="field">
@@ -555,12 +561,7 @@ Modules Management — list system modules, create, edit, toggle active
                         <div class="iw"><svg class="ico" viewBox="0 0 24 24">
                                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
                             </svg>
-                            <select class="fi" id="m_group" style="padding-left:32px">
-                                <option value="">— Select Group —</option>
-                                <option value="Masters">Masters</option>
-                                <option value="MES">MES</option>
-                                <option value="Reports">Reports</option>
-                            </select>
+                            <input class="fi" type="text" id="m_group" placeholder="e.g. Masters, MES, Reports">
                         </div>
                     </div>
                     <div class="field">
@@ -573,20 +574,7 @@ Modules Management — list system modules, create, edit, toggle active
                                 <line x1="3" y1="12" x2="3.01" y2="12" />
                                 <line x1="3" y1="18" x2="3.01" y2="18" />
                             </svg>
-                            <input class="fi" type="number" id="m_sort" placeholder="0" min="0">
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Description</label>
-                        <div class="iw"><svg class="ico" viewBox="0 0 24 24">
-                                <line x1="8" y1="6" x2="21" y2="6" />
-                                <line x1="8" y1="12" x2="21" y2="12" />
-                                <line x1="8" y1="18" x2="21" y2="18" />
-                                <line x1="3" y1="6" x2="3.01" y2="6" />
-                                <line x1="3" y1="12" x2="3.01" y2="12" />
-                                <line x1="3" y1="18" x2="3.01" y2="18" />
-                            </svg>
-                            <input class="fi" type="text" id="m_desc" placeholder="Short description">
+                            <input class="fi" type="number" id="m_sort" placeholder="0" min="0" style="padding-left:32px">
                         </div>
                     </div>
                 </div>
@@ -598,10 +586,10 @@ Modules Management — list system modules, create, edit, toggle active
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
-                <button class="btn btn-primary btn-sm" onclick="saveModule()">
+                <button class="btn btn-primary btn-sm" id="saveBtn" onclick="saveModule()">
                     <svg viewBox="0 0 24 24">
                         <polyline points="20 6 9 17 4 12" />
-                    </svg> Save
+                    </svg> Save Module
                 </button>
             </div>
         </div>
@@ -610,58 +598,78 @@ Modules Management — list system modules, create, edit, toggle active
 
 @push('scripts')
     <script>
-        let editId = null, filterTimer = null;
+        let editId = null, filterTimer = null, allModules = [];
+
+        (function init() {
+            if (!can('settings_modules', 'can_create')) document.getElementById('btnAddModule').style.display = 'none';
+            loadModules();
+        })();
 
         async function loadModules() {
-            document.getElementById('moduleTbody').innerHTML = `<tr><td colspan="7" class="tbl-state"><span class="spinner"></span>Loading…</td></tr>`;
-            const params = new URLSearchParams();
-            const s = document.getElementById('fSearch').value;
+            document.getElementById('moduleTbody').innerHTML = '<tr><td colspan="6" class="tbl-state"><span class="spinner"></span>Loading…</td></tr>';
+            const s = document.getElementById('fSearch').value.trim();
             const g = document.getElementById('fGroup').value;
-            if (s) params.set('search', s);
-            if (g) params.set('group', g);
-            const res = await apiFetch(`/admin/modules?${params}`);
-            if (!res?.ok) return;
+            const p = new URLSearchParams({ per_page: 500 });
+            if (s) p.set('search', s);
+            if (g) p.set('group', g);
+            const res = await apiFetch('/admin/modules?' + p);
+            if (!res?.ok) { document.getElementById('moduleTbody').innerHTML = '<tr><td colspan="6" class="tbl-state" style="color:var(--err)">Failed to load.</td></tr>'; return; }
             const json = await res.json();
-            const rows = json.data ?? [];
-            document.getElementById('tableCaption').textContent = `${rows.length} modules`;
-            document.getElementById('moduleTbody').innerHTML = rows.length ? rows.map((m, i) => `
-          <tr>
-            <td style="color:var(--txtmu);font-size:12px">${i + 1}</td>
-            <td style="font-weight:700">${esc(m.name)}</td>
-            <td><span style="font-family:monospace;font-size:12px;background:var(--gl);padding:2px 7px;border-radius:5px;color:var(--g)">${esc(m.slug)}</span></td>
-            <td>${m.group ? `<span class="group-pill">${esc(m.group)}</span>` : '—'}</td>
-            <td style="color:var(--txtmu)">${m.sort_order ?? 0}</td>
-            <td>${m.is_active ? '<span class="badge badge-active">● Active</span>' : '<span class="badge badge-inactive">● Inactive</span>'}</td>
-            <td><div class="act-btns">
-              <button class="btn btn-outline btn-xs" onclick="openModal(${m.id})">Edit</button>
-              <button class="btn btn-danger btn-xs" onclick="deleteModule(${m.id},'${esc(m.name)}')">Delete</button>
-            </div></td>
-          </tr>
-        `).join('') : `<tr><td colspan="7" class="tbl-state">No modules found.</td></tr>`;
+            allModules = Array.isArray(json.data) ? json.data : [];
+            document.getElementById('caption').textContent = allModules.length + ' modules';
+
+            // Populate group filter
+            const groups = [...new Set(allModules.map(m => m.group).filter(Boolean))].sort();
+            const gSel = document.getElementById('fGroup');
+            const curG = gSel.value;
+            gSel.innerHTML = '<option value="">All Groups</option>' + groups.map(g => '<option value="' + esc(g) + '"' + (g === curG ? ' selected' : '') + '>' + esc(g) + '</option>').join('');
+
+            renderModules(allModules);
+        }
+
+        function renderModules(rows) {
+            const canEdit = can('settings_modules', 'can_edit'), canDel = can('settings_modules', 'can_delete');
+            document.getElementById('moduleTbody').innerHTML = rows.length ? rows.map(m => {
+                const eb = canEdit ? '<button class="btn btn-outline btn-xs" onclick="openModal(' + m.id + ')">Edit</button>' : '';
+                const db = canDel ? '<button class="btn btn-danger btn-xs" onclick="delModule(' + m.id + ',\'' + esc(m.name) + '\')">Delete</button>' : '';
+                return '<tr>'
+                    + '<td style="font-weight:700">' + esc(m.name) + '</td>'
+                    + '<td><code style="font-size:11.5px;background:var(--gl);padding:2px 7px;border-radius:5px;color:var(--g)">' + esc(m.slug) + '</code></td>'
+                    + '<td><span style="background:#f1f5f9;color:#475569;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700">' + esc(m.group || '—') + '</span></td>'
+                    + '<td style="color:var(--txtmu);text-align:center">' + (m.sort_order ?? 0) + '</td>'
+                    + '<td>' + (m.is_active ? '<span class="badge badge-active">● Active</span>' : '<span class="badge badge-inactive">● Inactive</span>') + '</td>'
+                    + '<td><div class="act-btns">' + eb + db + '</div></td>'
+                    + '</tr>';
+            }).join('') : '<tr><td colspan="6" class="tbl-state">No modules found.</td></tr>';
+        }
+
+        function autoSlug() {
+            if (editId) return; // don't auto-change slug when editing
+            const name = document.getElementById('m_name').value;
+            document.getElementById('m_slug').value = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
         }
 
         function openModal(id = null) {
             editId = id;
-            ['m_name', 'm_desc'].forEach(i => document.getElementById(i).value = '');
-            document.getElementById('m_group').value = '';
-            document.getElementById('m_sort').value = '0';
-            document.getElementById('m_active').checked = true;
             document.getElementById('formAlert').className = 'form-alert';
             document.getElementById('modalTitle').textContent = id ? 'Edit Module' : 'Add Module';
             if (id) {
-                apiFetch(`/admin/modules`).then(r => r.json()).then(d => {
-                    const m = (d.data ?? []).find(x => x.id === id);
-                    if (m) {
-                        document.getElementById('m_name').value = m.name;
-                        document.getElementById('m_desc').value = m.description ?? '';
-                        document.getElementById('m_group').value = m.group ?? '';
-                        document.getElementById('m_sort').value = m.sort_order ?? 0;
-                        document.getElementById('m_active').checked = !!m.is_active;
-                    }
-                });
+                const mod = allModules.find(m => m.id === id);
+                document.getElementById('m_name').value = mod?.name ?? '';
+                document.getElementById('m_slug').value = mod?.slug ?? '';
+                document.getElementById('m_group').value = mod?.group ?? '';
+                document.getElementById('m_sort').value = mod?.sort_order ?? 0;
+                document.getElementById('m_active').checked = mod?.is_active ?? true;
+            } else {
+                document.getElementById('m_name').value = '';
+                document.getElementById('m_slug').value = '';
+                document.getElementById('m_group').value = '';
+                document.getElementById('m_sort').value = 0;
+                document.getElementById('m_active').checked = true;
             }
             document.getElementById('moduleModal').classList.add('open');
             document.body.style.overflow = 'hidden';
+            setTimeout(() => document.getElementById('m_name').focus(), 100);
         }
 
         function closeModal() {
@@ -671,32 +679,33 @@ Modules Management — list system modules, create, edit, toggle active
         }
 
         async function saveModule() {
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true; btn.textContent = 'Saving…';
             const payload = {
-                name: document.getElementById('m_name').value,
-                group: document.getElementById('m_group').value,
-                description: document.getElementById('m_desc').value,
+                name: document.getElementById('m_name').value.trim(),
+                slug: document.getElementById('m_slug').value.trim(),
+                group: document.getElementById('m_group').value.trim(),
                 sort_order: parseInt(document.getElementById('m_sort').value) || 0,
                 is_active: document.getElementById('m_active').checked,
             };
-            const method = editId ? 'PUT' : 'POST';
-            const endpoint = editId ? `/admin/modules/${editId}` : '/admin/modules';
-            const res = await apiFetch(endpoint, { method, body: JSON.stringify(payload) });
+            const res = await apiFetch(editId ? '/admin/modules/' + editId : '/admin/modules', {
+                method: editId ? 'PUT' : 'POST', body: JSON.stringify(payload)
+            });
             const data = await res.json();
-            if (res.ok && data.status === 'ok') { closeModal(); loadModules(); }
-            else { const el = document.getElementById('formAlert'); el.className = 'form-alert error'; el.textContent = data.message ?? 'Error.'; }
+            btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"><polyline points="20 6 9 17 4 12"/></svg> Save Module';
+            if (res.ok && data.status === 'ok') { closeModal(); loadModules(); showToast(editId ? 'Module updated.' : 'Module created.'); }
+            else { const e = document.getElementById('formAlert'); e.className = 'form-alert error'; e.textContent = data.errors ? Object.values(data.errors).flat().join(' ') : (data.message ?? 'Something went wrong.'); }
         }
 
-        async function deleteModule(id, name) {
-            if (!confirm(`Delete module "${name}"? This will also remove all related permissions.`)) return;
-            const res = await apiFetch(`/admin/modules/${id}`, { method: 'DELETE' });
+        async function delModule(id, name) {
+            if (!await showConfirm('Delete module "' + name + '"? This will also remove all related permissions.')) return;
+            const res = await apiFetch('/admin/modules/' + id, { method: 'DELETE' });
             const data = await res.json();
-            if (res.ok) loadModules();
+            if (res.ok) { loadModules(); showToast('Module deleted.'); }
             else alert(data.message ?? 'Cannot delete.');
         }
 
         function onFilter() { clearTimeout(filterTimer); filterTimer = setTimeout(loadModules, 350); }
-        function esc(s) { if (!s) return ''; return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-
-        loadModules();
+        function esc(s) { return s == null ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
     </script>
 @endpush
