@@ -1883,7 +1883,7 @@
         return null;
       }
 
-      if (!foreignMaterialWeight || foreignMaterialWeight < 0) {
+      if (foreignMaterialWeight === null || foreignMaterialWeight < 0) {
         showAlert('Foreign Material Weight (KG) is required and cannot be negative.');
         document.getElementById('foreign_material_weight').focus();
         return null;
