@@ -640,10 +640,184 @@
             color: #cbd5e0;
             cursor: not-allowed;
         }
+
+        /* ── Searchable Dropdown (SDD) for filters ── */
+        .sdd {
+            display: block;
+            width: 100%;
+            position: relative;
+        }
+
+        .sdd-trigger {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 11px 8px 11px;
+            border: 1.5px solid var(--border, #e2e8f0);
+            border-radius: 8px;
+            background: var(--bg, #fff);
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--text, #2d3748);
+            cursor: pointer;
+            user-select: none;
+            gap: 6px;
+            transition: border-color .2s, box-shadow .2s;
+            min-height: 36px;
+            box-sizing: border-box;
+        }
+
+        .sdd-trigger:hover,
+        .sdd.open>.sdd-trigger {
+            border-color: #1e7b51;
+            background: #fff;
+        }
+
+        .sdd-trigger-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: left;
+        }
+
+        .sdd-trigger-text.placeholder {
+            color: #718096;
+        }
+
+        .sdd-trigger-chevron {
+            width: 13px;
+            height: 13px;
+            stroke: #718096;
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+            transition: transform .18s;
+        }
+
+        .sdd.open>.sdd-trigger .sdd-trigger-chevron {
+            transform: rotate(180deg);
+            stroke: #1e7b51;
+        }
+
+        .sdd-portal {
+            position: fixed;
+            z-index: 9999;
+            background: #fff;
+            border: 1.5px solid #1e7b51;
+            border-radius: 10px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, .16);
+            min-width: 220px;
+            overflow: hidden;
+            display: none;
+            animation: sddIn .12s ease;
+        }
+
+        .sdd-portal.visible {
+            display: block;
+        }
+
+        @keyframes sddIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .sdd-search-wrap {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            position: relative;
+        }
+
+        .sdd-search-ico {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 13px;
+            height: 13px;
+            stroke: #718096;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            pointer-events: none;
+        }
+
+        .sdd-search {
+            width: 100%;
+            padding: 7px 10px 7px 32px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 7px;
+            background: #f8f9fc;
+            font-family: inherit;
+            font-size: 13px;
+            color: #2d3748;
+            outline: none;
+            transition: border-color .18s;
+            box-sizing: border-box;
+        }
+
+        .sdd-search:focus {
+            border-color: #1e7b51;
+            background: #fff;
+        }
+
+        .sdd-list {
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+
+        .sdd-item {
+            padding: 8px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background .1s;
+            color: #2d3748;
+        }
+
+        .sdd-item:hover {
+            background: #f0f9f4;
+            color: #1e7b51;
+        }
+
+        .sdd-item.selected {
+            background: #e8f5ed;
+            color: #1e7b51;
+            font-weight: 600;
+        }
+
+        .sdd-empty {
+            padding: 18px 14px;
+            font-size: 12.5px;
+            color: #718096;
+            text-align: center;
+        }
     </style>
 @endpush
 
 @section('content')
+    <div class="sdd-portal" id="sddPortal">
+        <div class="sdd-search-wrap">
+            <svg class="sdd-search-ico" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input class="sdd-search" id="sddPortalSearch" placeholder="Search…" autocomplete="off"
+                oninput="sddPortalFilter(this.value)" onkeydown="if(event.key==='Escape') sddClosePortal()">
+        </div>
+        <div class="sdd-list" id="sddPortalList"></div>
+    </div>
     <div class="page-wrapper">
 
         <div class="top-action-bar">
@@ -762,9 +936,16 @@
                         </div>
                         <div class="f-group">
                             <label>Supplier</label>
-                            <select id="fSupplier">
-                                <option value="">All Suppliers</option>
-                            </select>
+                            <div class="sdd" id="sdd_fSupplier">
+                                <div class="sdd-trigger" onclick="toggleSdd('fSupplier')">
+                                    <span class="sdd-trigger-text placeholder" id="sdd_fSupplier_label"
+                                        data-placeholder="All Suppliers">All Suppliers</span>
+                                    <svg class="sdd-trigger-chevron" viewBox="0 0 24 24">
+                                        <polyline points="6 9 12 15 18 9" />
+                                    </svg>
+                                </div>
+                                <input type="hidden" id="fSupplier" name="fSupplier" value="">
+                            </div>
                         </div>
                         <div class="f-group"><label>Date From</label><input type="date" id="fDateFrom"></div>
                         <div class="f-group"><label>Date To</label><input type="date" id="fDateTo"></div>
@@ -869,12 +1050,12 @@
             const res = await apiFetch('/suppliers?per_page=200');
             if (!res?.ok) return;
             const data = await res.json();
-            const sel = document.getElementById('fSupplier');
-            (data.data.data || []).forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.id; opt.textContent = s.supplier_name;
-                sel.appendChild(opt);
-            });
+            const rawSuppliers = data.data.data || [];
+            const items = rawSuppliers.map(s => ({
+                value: String(s.id),
+                label: s.supplier_name,
+            }));
+            sddRegister('fSupplier', items, state.supplierId || null);
         }
 
         async function loadReceivings() {
@@ -1014,6 +1195,114 @@
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => { state.search = this.value; state.page = 1; loadReceivings(); }, 600);
         });
+
+        // ── SDD Engine ──────────────────────────────────────────────────
+        const sddRegistry = {};
+        let sddActiveField = null;
+
+        function sddRegister(fieldId, items, selectedValue = null) {
+            sddRegistry[fieldId] = { items, selected: null };
+            if (selectedValue) sddSelect(fieldId, String(selectedValue), false);
+            sddUpdateTrigger(fieldId);
+        }
+
+        function sddUpdateTrigger(fieldId) {
+            const reg = sddRegistry[fieldId];
+            const label = document.getElementById(`sdd_${fieldId}_label`);
+            const hidden = document.getElementById(fieldId);
+            if (!label) return;
+            if (reg?.selected) {
+                label.textContent = reg.selected.label;
+                label.classList.remove('placeholder');
+            } else {
+                label.textContent = label.dataset.placeholder || 'Select…';
+                label.classList.add('placeholder');
+            }
+            if (hidden) hidden.value = reg?.selected?.value ?? '';
+        }
+
+        function sddSelect(fieldId, value, submit = false) {
+            if (!sddRegistry[fieldId]) return;
+            const item = value
+                ? sddRegistry[fieldId].items.find(i => String(i.value) === String(value))
+                : null;
+            sddRegistry[fieldId].selected = item || null;
+            sddUpdateTrigger(fieldId);
+            sddClosePortal();
+            if (submit) applyFilters();
+        }
+
+        function toggleSdd(fieldId) {
+            if (sddActiveField === fieldId) { sddClosePortal(); return; }
+            sddOpenPortal(fieldId);
+        }
+
+        function sddOpenPortal(fieldId) {
+            const trigger = document.querySelector(`#sdd_${fieldId} .sdd-trigger`);
+            if (!trigger || !sddRegistry[fieldId]) return;
+            sddActiveField = fieldId;
+            document.querySelectorAll('.sdd.open').forEach(el => el.classList.remove('open'));
+            document.getElementById(`sdd_${fieldId}`)?.classList.add('open');
+
+            const portal = document.getElementById('sddPortal');
+            const rect = trigger.getBoundingClientRect();
+            const portalW = Math.max(rect.width, 260);
+            portal.style.width = portalW + 'px';
+            let left = rect.left;
+            if (left + portalW > window.innerWidth - 8) left = Math.max(8, window.innerWidth - portalW - 8);
+            portal.style.left = left + 'px';
+            portal.style.top = (rect.bottom + 4) + 'px';
+            portal.style.bottom = '';
+
+            sddPortalRender('');
+            portal.classList.add('visible');
+            const search = document.getElementById('sddPortalSearch');
+            if (search) { search.value = ''; setTimeout(() => search.focus(), 40); }
+        }
+
+        function sddClosePortal() {
+            document.getElementById('sddPortal')?.classList.remove('visible');
+            document.querySelectorAll('.sdd.open').forEach(el => el.classList.remove('open'));
+            sddActiveField = null;
+        }
+
+        function sddPortalRender(query) {
+            if (!sddActiveField || !sddRegistry[sddActiveField]) return;
+            const q = query.toLowerCase().trim();
+            const items = sddRegistry[sddActiveField].items;
+            const filtered = q ? items.filter(i => i.label.toLowerCase().includes(q)) : items;
+            const current = sddRegistry[sddActiveField].selected?.value ?? '';
+            const list = document.getElementById('sddPortalList');
+            if (!list) return;
+            if (!filtered.length) {
+                list.innerHTML = '<div class="sdd-empty">No results found</div>';
+                return;
+            }
+            // "All" option first
+            const allSel = !current ? ' selected' : '';
+            list.innerHTML = `<div class="sdd-item${allSel}" onclick="sddSelect('${sddActiveField}','',true)">All Suppliers</div>`
+                + filtered.map(item => {
+                    const sel = String(item.value) === String(current) ? ' selected' : '';
+                    return `<div class="sdd-item${sel}" onclick="sddSelect('${sddActiveField}','${item.value}',true)">${item.label}</div>`;
+                }).join('');
+        }
+
+        function sddPortalFilter(query) { sddPortalRender(query); }
+
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.sdd') && !e.target.closest('#sddPortal')) sddClosePortal();
+        });
+        document.addEventListener('scroll', () => {
+            if (sddActiveField) {
+                const trigger = document.querySelector(`#sdd_${sddActiveField} .sdd-trigger`);
+                if (trigger) {
+                    const rect = trigger.getBoundingClientRect();
+                    const portal = document.getElementById('sddPortal');
+                    portal.style.top = (rect.bottom + 4) + 'px';
+                    portal.style.left = rect.left + 'px';
+                }
+            }
+        }, true);
         function formatTimestamp(isoString) {
             const d = new Date(isoString);
             const dd = String(d.getDate()).padStart(2, '0');
