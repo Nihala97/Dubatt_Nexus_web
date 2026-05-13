@@ -1015,17 +1015,45 @@
             let allItems = [];
             let page = 1;
             let lastPage = 1;
+        
             do {
                 const sep = endpoint.includes('?') ? '&' : '?';
                 const res = await apiFetch(`${endpoint}${sep}per_page=500&page=${page}`);
                 if (!res?.ok) break;
+        
                 const json = await res.json();
-                // Laravel pagination wraps rows in json.data.data; json.data.last_page = total pages
-                const rows = json.data?.data ?? json.data ?? [];
-                lastPage = json.data?.last_page ?? 1;
-                allItems = allItems.concat(Array.isArray(rows) ? rows : []);
+                
+                // ── Debug: remove after fix confirmed ────────────────────────
+                console.log(`[fetchAllPages] ${endpoint} page=${page}`, JSON.stringify(json).slice(0, 300));
+                // ─────────────────────────────────────────────────────────────
+        
+                // Handle BOTH response shapes:
+                // Shape A: { data: { data: [...], last_page: N } }  ← paginated
+                // Shape B: { data: [...] }                          ← flat array
+                let rows = [];
+                let totalLastPage = 1;
+        
+                if (json?.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
+                    // Paginated Laravel response
+                    rows = Array.isArray(json.data.data) ? json.data.data : [];
+                    totalLastPage = json.data.last_page ?? json.data.lastPage ?? 1;
+                } else if (Array.isArray(json?.data)) {
+                    // Flat array response
+                    rows = json.data;
+                    totalLastPage = 1;
+                } else if (Array.isArray(json)) {
+                    // Raw array
+                    rows = json;
+                    totalLastPage = 1;
+                }
+        
+                lastPage = totalLastPage;
+                allItems = allItems.concat(rows);
                 page++;
+        
             } while (page <= lastPage);
+        
+            console.log(`[fetchAllPages] ${endpoint} TOTAL loaded: ${allItems.length}`);
             return allItems;
         }
 
