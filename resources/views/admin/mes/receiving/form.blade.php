@@ -1165,9 +1165,6 @@
             // autosaveTimer = setTimeout(() => saveForm(true), 3000);
         }
 
-        // ════════════════════════════════════════════════════════════════════
-        // INIT — unchanged
-        // ════════════════════════════════════════════════════════════════════
         async function init() {
             await loadDropdowns();
 
