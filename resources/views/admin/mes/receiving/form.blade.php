@@ -1027,9 +1027,6 @@
                 console.log(`[fetchAllPages] ${endpoint} page=${page}`, JSON.stringify(json).slice(0, 300));
                 // ─────────────────────────────────────────────────────────────
         
-                // Handle BOTH response shapes:
-                // Shape A: { data: { data: [...], last_page: N } }  ← paginated
-                // Shape B: { data: [...] }                          ← flat array
                 let rows = [];
                 let totalLastPage = 1;
         
@@ -1038,11 +1035,9 @@
                     rows = Array.isArray(json.data.data) ? json.data.data : [];
                     totalLastPage = json.data.last_page ?? json.data.lastPage ?? 1;
                 } else if (Array.isArray(json?.data)) {
-                    // Flat array response
                     rows = json.data;
                     totalLastPage = 1;
                 } else if (Array.isArray(json)) {
-                    // Raw array
                     rows = json;
                     totalLastPage = 1;
                 }
@@ -1058,25 +1053,28 @@
         }
 
         async function loadDropdowns() {
-            // Fetch ALL suppliers and materials — no record cap
             const [suppliers, materials] = await Promise.all([
                 fetchAllPages('/suppliers'),
                 fetchAllPages('/materials'),
             ]);
-
-            const supplierItems = suppliers.map(s => ({
-                value: String(s.id),
-                label: `${s.supplier_name} (${s.supplier_code})`,
-            }));
+        
+            const supplierItems = suppliers
+                .map(s => ({
+                    value: String(s.id),
+                    label: `${s.supplier_name} (${s.supplier_code})`,
+                }))
+                .sort((a, b) => a.label.localeCompare(b.label)); // ← ADD THIS
+        
             sddRegister('supplier_id', supplierItems);
-
-            const materialItems = materials.map(m => ({
-                value: String(m.id),
-                label: `${m.secondary_name} (${m.material_code})`,
-            }));
+        
+            const materialItems = materials
+                .map(m => ({
+                    value: String(m.id),
+                    label: `${m.secondary_name} (${m.material_code})`,
+                }))
+                .sort((a, b) => a.label.localeCompare(b.label)); // ← ADD THIS
+        
             sddRegister('material_id', materialItems);
-            console.log('SUPPLIER COUNT', suppliers.length);
-            console.log(suppliers);
         }
 
         // ════════════════════════════════════════════════════════════════════
