@@ -1047,6 +1047,8 @@
                 label: `${m.secondary_name} (${m.material_code})`,
             }));
             sddRegister('material_id', materialItems);
+            console.log('SUPPLIER COUNT', suppliers.length);
+            console.log(suppliers);
         }
 
         // ════════════════════════════════════════════════════════════════════
