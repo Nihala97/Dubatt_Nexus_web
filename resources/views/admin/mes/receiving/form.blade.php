@@ -1052,29 +1052,46 @@
             return allItems;
         }
 
-        async function loadDropdowns() {
+       async function loadDropdowns() {
             const [suppliers, materials] = await Promise.all([
                 fetchAllPages('/suppliers'),
                 fetchAllPages('/materials'),
             ]);
         
             const supplierItems = suppliers
+                .filter(s => s.supplier_name) // remove nulls
                 .map(s => ({
                     value: String(s.id),
                     label: `${s.supplier_name} (${s.supplier_code})`,
                 }))
-                .sort((a, b) => a.label.localeCompare(b.label)); // ← ADD THIS
+                .sort((a, b) => {
+                    const la = a.label.trim().toLowerCase();
+                    const lb = b.label.trim().toLowerCase();
+                    if (la < lb) return -1;
+                    if (la > lb) return 1;
+                    return 0;
+                });
         
             sddRegister('supplier_id', supplierItems);
         
             const materialItems = materials
+                .filter(m => m.secondary_name) // remove nulls
                 .map(m => ({
                     value: String(m.id),
                     label: `${m.secondary_name} (${m.material_code})`,
                 }))
-                .sort((a, b) => a.label.localeCompare(b.label)); // ← ADD THIS
+                .sort((a, b) => {
+                    const la = a.label.trim().toLowerCase();
+                    const lb = b.label.trim().toLowerCase();
+                    if (la < lb) return -1;
+                    if (la > lb) return 1;
+                    return 0;
+                });
         
             sddRegister('material_id', materialItems);
+        
+            console.log('SUPPLIER COUNT', suppliers.length);
+            console.log('First 5:', supplierItems.slice(0, 5).map(s => s.label));
         }
 
         // ════════════════════════════════════════════════════════════════════
