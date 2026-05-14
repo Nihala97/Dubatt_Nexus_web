@@ -1492,9 +1492,9 @@
       list.innerHTML = filtered.map(item => {
         const sel = String(item.value) === String(current);
         return `<div class="sdd-item${sel ? ' selected' : ''}" onclick="sddSelect('${sddActiveField}','${item.value}')">
-                              <div class="sdd-item-main">${item.label}</div>
-                              ${item.sub ? `<div class="sdd-item-sub">${item.sub}</div>` : ''}
-                            </div>`;
+                                      <div class="sdd-item-main">${item.label}</div>
+                                      ${item.sub ? `<div class="sdd-item-sub">${item.sub}</div>` : ''}
+                                    </div>`;
       }).join('');
     }
 
@@ -1778,39 +1778,39 @@
       const avgPFVal = parseFloat(document.getElementById('avg_pallet_foreign_weight').value || 0).toFixed(3);
 
       tr.innerHTML = `
-                          <td class="sr-n">${idx}</td>
-                          <td><input type="text" class="ri" id="pallet_no_${idx}" value="${data.pallet_no ?? ''}" placeholder="WP-${String(idx).padStart(2, '0')}"></td>
-                          <td>
-                            <select class="rsel" id="ulab_${idx}" onchange="onUlabChange(${idx})">
-                              ${ulabOpts}
-                            </select>
-                          </td>
-                          <td><input type="number" class="ri" id="gross_${idx}" step="0.001" placeholder="0.000" value="${data.gross_weight ?? ''}" oninput="calcRow(${idx})"></td>
-                          <td><input type="number" class="ri" id="avgpf_${idx}" readonly value="${avgPFVal}"></td>
-                          <td><input type="number" class="ri" id="net_${idx}" readonly></td>
-                          <td class="${cellDis}" id="cell_initial_${idx}">
-                            <input type="number" class="ri" id="initial_${idx}" step="0.001" placeholder="0.000"
-                              value="${data.initial_weight ?? ''}"
-                              ${isAcid ? '' : 'readonly tabindex="-1"'}
-                              oninput="calcRow(${idx})">
-                          </td>
-                          <td class="${cellDis}" id="cell_drained_${idx}">
-                            <input type="number" class="ri" id="drained_${idx}" step="0.001" placeholder="0.000"
-                              value="${data.drained_weight ?? ''}"
-                              ${isAcid ? '' : 'readonly tabindex="-1"'}
-                              oninput="calcRow(${idx})">
-                          </td>
-                          <td class="${cellDis}" id="cell_diff_${idx}">
-                            <input type="number" class="ri" id="diff_${idx}" readonly>
-                          </td>
-                          <td class="${cellDis}" id="cell_pct_${idx}">
-                            <input type="number" class="ri" id="acid_pct_${idx}" readonly>
-                          </td>
-                          <td style="text-align:center">
-                            ${idx > 1 ? `<button class="del-btn" onclick="removeRow(${idx})" title="Remove">
-                              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                            </button>` : ''}
-                          </td>`;
+                                  <td class="sr-n">${idx}</td>
+                                  <td><input type="text" class="ri" id="pallet_no_${idx}" value="${data.pallet_no ?? ''}" placeholder="WP-${String(idx).padStart(2, '0')}"></td>
+                                  <td>
+                                    <select class="rsel" id="ulab_${idx}" onchange="onUlabChange(${idx})">
+                                      ${ulabOpts}
+                                    </select>
+                                  </td>
+                                  <td><input type="number" class="ri" id="gross_${idx}" step="0.001" placeholder="0.000" value="${data.gross_weight ?? ''}" oninput="calcRow(${idx})"></td>
+                                  <td><input type="number" class="ri" id="avgpf_${idx}" readonly value="${avgPFVal}"></td>
+                                  <td><input type="number" class="ri" id="net_${idx}" readonly></td>
+                                  <td class="${cellDis}" id="cell_initial_${idx}">
+                                    <input type="number" class="ri" id="initial_${idx}" step="0.001" placeholder="0.000"
+                                      value="${data.initial_weight ?? ''}"
+                                      ${isAcid ? '' : 'readonly tabindex="-1"'}
+                                      oninput="calcRow(${idx})">
+                                  </td>
+                                  <td class="${cellDis}" id="cell_drained_${idx}">
+                                    <input type="number" class="ri" id="drained_${idx}" step="0.001" placeholder="0.000"
+                                      value="${data.drained_weight ?? ''}"
+                                      ${isAcid ? '' : 'readonly tabindex="-1"'}
+                                      oninput="calcRow(${idx})">
+                                  </td>
+                                  <td class="${cellDis}" id="cell_diff_${idx}">
+                                    <input type="number" class="ri" id="diff_${idx}" readonly>
+                                  </td>
+                                  <td class="${cellDis}" id="cell_pct_${idx}">
+                                    <input type="number" class="ri" id="acid_pct_${idx}" readonly>
+                                  </td>
+                                  <td style="text-align:center">
+                                    ${idx > 1 ? `<button class="del-btn" onclick="removeRow(${idx})" title="Remove">
+                                      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                    </button>` : ''}
+                                  </td>`;
 
       tbody.appendChild(tr);
       tr.style.opacity = '0'; tr.style.transform = 'translateY(-4px)';
@@ -1943,53 +1943,47 @@
     // ════════════════════════════════════════════════════════════════
     // SAVE / SUBMIT
     // ════════════════════════════════════════════════════════════════
-    async function saveForm(silent = false) {
+    async function saveForm() {
       const payload = buildPayload();
-      console.log("Payload", payload);
       if (!payload) return;
 
       const btn = document.getElementById('btnSave');
-      if (!silent) {
-        btn.disabled = true;
-        btn.innerHTML = `<svg viewBox="0 0 24 24" style="animation:spin .7s linear infinite;width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Saving…`;
-      }
+      btn.disabled = true;
+      btn.innerHTML = `<svg viewBox="0 0 24 24" style="animation:spin .7s linear infinite;width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Saving…`;
 
       const method = isCreate ? 'POST' : 'PUT';
       const endpoint = isCreate ? '/acid-testings' : `/acid-testings/${recordId}`;
 
       const res = await apiFetch(endpoint, { method, body: JSON.stringify(payload) });
-      if (!silent) {
-        btn.disabled = false;
-        btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> <span id="btnSaveLabel">${isCreate ? 'Create Record' : 'Save Changes'}</span>`;
-      }
+
+      btn.disabled = false;
+      btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> <span id="btnSaveLabel">${isCreate ? 'Create Record' : 'Save Changes'}</span>`;
 
       if (!res) return;
       const data = await res.json();
 
       if (res.ok && data.status === 'ok') {
-        if (!silent) {
-          if (isCreate) {
-            window.location.href = `{{ url('/admin/mes/acidTesting') }}/${data.data.id}/edit`;
-          } else {
-            showAlert('Saved successfully.', 'success');
-          }
+        if (isCreate) {
+          window.location.href = `{{ url('/admin/mes/acidTesting') }}/${data.data.id}/edit`;
         } else {
-          setDot('saved', 'Autosaved ' + new Date().toLocaleTimeString());
-          setTimeout(() => document.getElementById('autosaveStatus').style.display = 'none', 4000);
+          showAlert('Saved successfully.', 'success');
         }
       } else if (res.status === 422) {
-        if (!silent) showAlert(data.message ?? 'Fix the errors below.');
+        showAlert(data.message ?? 'Fix the errors below.');
       } else {
-        if (!silent) showAlert(data.message ?? 'Something went wrong.');
+        showAlert(data.message ?? 'Something went wrong.');
       }
     }
 
     async function submitRecord() {
       if (!confirm('Submit this record? It will be locked from further edits.')) return;
-      await saveForm(true);
+
+      // Do NOT save before submitting — submit acts on the already-saved draft.
       const res = await apiFetch(`/acid-testings/${recordId}/status`, {
-        method: 'PATCH', body: JSON.stringify({ status: 1 }),
+        method: 'PATCH',
+        body: JSON.stringify({ status: 1 }),
       });
+
       if (res?.ok) {
         showAlert('Submitted successfully.', 'success');
         setTimeout(() => window.location.href = '{{ route("admin.mes.acidTesting.index") }}', 1500);
@@ -2036,7 +2030,8 @@
       ['date', 'avg_pallet_weight', 'foreign_material_weight'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
-        if (on) el.setAttribute('disabled', ''); else el.removeAttribute('disabled');
+        if (on) el.setAttribute('disabled', '');
+        else el.removeAttribute('disabled');
       });
       document.querySelectorAll('.sdd-trigger,.sdd-search').forEach(el => {
         if (on) { el.style.pointerEvents = 'none'; el.style.opacity = '.6'; }
