@@ -36,7 +36,6 @@ class ReceivingController extends Controller
                     ->orWhere('vehicle_number', 'like', "%{$request->search}%");
             }))
             ->orderBy('created_at', 'desc')
-            ->orderBy('supplier_id', 'asc')
             ->paginate($request->per_page ?? 20);
 
         return response()->json([
