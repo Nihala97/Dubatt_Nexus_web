@@ -25,25 +25,9 @@ class AcidTestingController extends Controller
 
     // ─────────────────────────────────────────────────────────────
     // HELPER: Resolve matching AcidStockCondition from acid_stock_conditions
-    //
-    // Range rules (from DB data):
-    //   min_pct > 0  AND  max_pct > 0  → bounded range   e.g. 18% – 24%
-    //   min_pct > 0  AND  max_pct = 0  → open upper end  e.g. > 24%
-    //   min_pct = 0  AND  max_pct > 0  → bounded from 0  e.g. 0% – 1%
-    //   min_pct = 0  AND  max_pct = 0  → non-acid / dry  → excluded at query level
-    //
-    // Boundaries are INCLUSIVE on both ends:
-    //   18.00 <= acidPct <= 24.00  matches 1000001
-    //   Open-ended (max=0, min>0):  acidPct >= min  always matches upper
-    //
-    // ORDER: CAST(min_pct AS DECIMAL) ASC guarantees numeric sort even when
-    //   the column is stored as varchar/string in older MySQL schemas.
-    //   Tightest lower bound is checked first; first full match wins.
     // ─────────────────────────────────────────────────────────────
     private function resolveCondition(float $acidPct): ?AcidStockCondition
     {
-        // Exclude non-acid rows (min=0, max=0) at query level — no PHP skip needed.
-        // CAST ensures numeric ordering regardless of column type.
         $conditions = AcidStockCondition::where('is_active', true)
             ->where(function ($q) {
                 $q->where('min_pct', '>', 0)
@@ -56,14 +40,10 @@ class AcidTestingController extends Controller
             $min = (float) $condition->min_pct;
             $max = (float) $condition->max_pct;
 
-            // Lower bound — always inclusive
             if ($acidPct < $min) {
                 continue;
             }
 
-            // Upper bound:
-            //   max_pct = 0 with min_pct > 0 → open-ended (no ceiling)
-            //   otherwise                    → inclusive upper bound
             if ($max > 0 && $acidPct > $max) {
                 continue;
             }
@@ -76,11 +56,7 @@ class AcidTestingController extends Controller
 
     // ─────────────────────────────────────────────────────────────
     // HELPER: Compute Net Average Acid % for the entire batch
-    //
     //   Net Avg Acid % = (Σ weight_diff / Σ initial_weight) × 100
-    //   where weight_diff per pallet = initial_weight − drained_weight
-    //
-    // Only pallets with initial_weight > 0 contribute (acid-present rows).
     // ─────────────────────────────────────────────────────────────
     private function computeNetAvgAcidPct(array $details): float
     {
@@ -180,9 +156,7 @@ class AcidTestingController extends Controller
     // ─────────────────────────────────────────────────────────────
     public function lotCheck($lotNo)
     {
-        $receiving = Receiving::with('supplier')
-            ->where('lot_no', $lotNo)
-            ->first();
+        $receiving = Receiving::with('supplier')->where('lot_no', $lotNo)->first();
 
         if (!$receiving) {
             return response()->json([
@@ -259,7 +233,6 @@ class AcidTestingController extends Controller
             'details.*.net_weight' => 'required|numeric',
             'details.*.initial_weight' => 'nullable|numeric|min:0',
             'details.*.drained_weight' => 'nullable|numeric|min:0',
-            // stock_code and remarks are server-resolved — not accepted from client
         ]);
 
         if (AcidTesting::where('lot_number', $request->lot_number)->exists()) {
@@ -269,7 +242,6 @@ class AcidTestingController extends Controller
             ], 422);
         }
 
-        // Compute net avg acid% across all pallet rows
         $netAvgAcidPct = $this->computeNetAvgAcidPct($request->details);
 
         $header = AcidTesting::create([
@@ -328,7 +300,6 @@ class AcidTestingController extends Controller
             'details.*.net_weight' => 'required|numeric',
             'details.*.initial_weight' => 'nullable|numeric|min:0',
             'details.*.drained_weight' => 'nullable|numeric|min:0',
-            // stock_code and remarks are server-resolved — not accepted from client
         ]);
 
         $netAvgAcidPct = $request->has('details')
@@ -362,26 +333,52 @@ class AcidTestingController extends Controller
 
     // ─────────────────────────────────────────────────────────────
     // PATCH /api/acid-testings/{id}/status
+    //
+    // STOCK LEDGER LOGIC ON SUBMIT (status → 1):
+    //
+    //   OUT: The InHouse Weigh Bridge qty (received_qty on the header)
+    //        is deducted from the incoming raw material that was
+    //        received via the Receiving record.
+    //        → stockOut(rawMaterial, header->received_qty)
+    //
+    //   IN:  After acid testing, pallets are split into output
+    //        materials by their resolved stock_code (e.g. ULAB 18–24%,
+    //        ULAB >24%, dry type codes, etc.).
+    //        The Net Weight (net_weight) of each pallet detail row is
+    //        the actual output weight for that material.
+    //        We aggregate net_weight per stock_code across all active
+    //        detail rows, then post one stockIn per distinct stock_code.
+    //
+    //        NOTE: non-acid rows have stock_code = null — they are
+    //        matched by ulab_type instead (stored in the ulab_type col).
+    //        We look up the Material by stock_code first, then by
+    //        material_code / ulab_type as fallback.
+    //
     // ─────────────────────────────────────────────────────────────
     public function updateStatus(Request $request, $id)
     {
         $request->validate(['status' => 'required|integer|in:0,1,2,3,4']);
 
         $header = AcidTesting::with('details')->findOrFail($id);
-        $oldStatus = $header->status;
+        $oldStatus = (int) $header->status;
+        $newStatus = (int) $request->status;
 
         $header->update([
-            'status' => $request->status,
+            'status' => $newStatus,
             'updated_by' => auth()->id(),
         ]);
 
-        if ($request->status == 1 && $oldStatus != 1) {
-            // Stock OUT: deduct the incoming raw material
+        // ── Submitting (draft → submitted) ────────────────────────
+        if ($newStatus === 1 && $oldStatus !== 1) {
+
+            // ── STOCK OUT: deduct InHouse Weigh Bridge qty ────────
+            // received_qty on the header = InHouse Weigh Bridge (KG)
+            // This is the raw-material lot that came in via Receiving.
             $receiving = Receiving::where('lot_no', $header->lot_number)->first();
             if ($receiving && $receiving->material_id) {
                 $this->inventoryService->stockOut(
-                    $receiving->material_id,
-                    $header->received_qty,
+                    (int) $receiving->material_id,
+                    (float) $header->received_qty,   // InHouse Weigh Bridge (KG)
                     'AcidTesting',
                     $header->id,
                     $header->lot_number,
@@ -389,31 +386,57 @@ class AcidTestingController extends Controller
                 );
             }
 
-            // Stock IN: add output materials grouped by stock_code
-            // All rows share the same batch stock_code, so we aggregate
-            // net_weight per stock_code to avoid duplicate stock-in entries.
-            $grouped = $header->details
-                ->whereNotNull('stock_code')
-                ->groupBy('stock_code');
+            // ── STOCK IN: add output materials by Net Wt per stock_code ──
+            //
+            // Each detail row's net_weight is the actual usable output
+            // weight for that pallet after acid testing / sorting.
+            //
+            // For acid rows   : stock_code is the resolved condition code
+            //                   (e.g. 1000001 for 18–24%)
+            // For non-acid rows: stock_code is null; use ulab_type as the
+            //                   material identifier (stored in ulab_type col)
+            //
+            // We group by the effective material key and sum net_weight,
+            // then post one stockIn per group.
+            //
+            $activeDetails = $header->details->where('is_active', 1);
 
-            foreach ($grouped as $stockCode => $rows) {
-                $material = Material::where('stock_code', $stockCode)
-                    ->orWhere('material_code', $stockCode)
-                    ->first();
-
-                if ($material) {
-                    $totalNetWeight = $rows->sum('net_weight');
-                    $this->inventoryService->stockIn(
-                        $material->id,
-                        $totalNetWeight,
-                        'AcidTesting',
-                        $header->id,
-                        $header->lot_number,
-                        auth()->id()
-                    );
-                }
+            // Build a map: materialKey → total net_weight
+            // materialKey = stock_code if set, else ulab_type
+            $grouped = [];
+            foreach ($activeDetails as $row) {
+                $key = $row->stock_code ?? $row->ulab_type;
+                if (!$key)
+                    continue;                     // skip rows with no identifier
+                $netWt = (float) $row->net_weight;
+                if ($netWt <= 0)
+                    continue;               // skip zero-weight rows
+                $grouped[$key] = ($grouped[$key] ?? 0.0) + $netWt;
             }
-        } elseif ($request->status != 1 && $oldStatus == 1) {
+
+            foreach ($grouped as $materialKey => $totalNetWeight) {
+                // Look up Material: try stock_code first, then material_code
+                $material = Material::where('stock_code', $materialKey)->first()
+                    ?? Material::where('material_code', $materialKey)->first();
+
+                if (!$material) {
+                    // Log and continue — don't abort the whole submit
+                    \Log::warning("AcidTesting #{$header->id}: No material found for key '{$materialKey}'. Stock IN skipped for this group.");
+                    continue;
+                }
+
+                $this->inventoryService->stockIn(
+                    $material->id,
+                    $totalNetWeight,          // sum of net_weight for this stock_code
+                    'AcidTesting',
+                    $header->id,
+                    $header->lot_number,
+                    auth()->id()
+                );
+            }
+
+            // ── Un-submitting (submitted → draft/other) ───────────────
+        } elseif ($newStatus !== 1 && $oldStatus === 1) {
             $this->inventoryService->revertTransaction(
                 'AcidTesting',
                 $header->id,
@@ -424,7 +447,7 @@ class AcidTestingController extends Controller
         return response()->json([
             'status' => 'ok',
             'message' => 'Status updated.',
-            'data' => ['status' => $request->status],
+            'data' => ['status' => $newStatus],
         ]);
     }
 
@@ -486,31 +509,25 @@ class AcidTestingController extends Controller
     // PRIVATE: Sync / replace detail rows
     //
     // ulab_type = '5'  (acid / wet battery):
-    //   • Per-pallet acid% = (weight_diff / initial_weight) × 100
-    //     stored as avg_acid_pct for display/reference only.
-    //   • stock_code / ulab_type / remarks are resolved from the
-    //     NET AVERAGE acid% of the WHOLE BATCH (netAvgAcidPct),
-    //     NOT from each pallet's own acid%.
-    //     Rule: Net Avg Acid% = (Σ weight_diff / Σ initial_weight) × 100
-    //     All acid-present pallets in the batch share the same
-    //     stock_code because they belong to the same pallet load.
+    //   stock_code / ulab_type / remarks resolved from batch net avg acid%
+    //   (NOT per-pallet acid%). All acid pallets in the same batch share
+    //   the same stock_code because categorisation is batch-level.
     //
-    // ulab_type ∈ {1000024, 1000025, 1000026, 1000028}  (non-acid / dry types):
-    //   • No acid% calculation — ulab_type stored as-is
-    //   • stock_code column → null (no acid categorisation applies)
-    //   • remarks    column → description fetched by that stock_code
-    //   • initial_weight / drained_weight are null
+    // ulab_type ∈ non-acid codes:
+    //   stock_code → null
+    //   ulab_type  → stored as-is (used as material key at stock-in time)
+    //   remarks    → description fetched from AcidStockCondition
     // ─────────────────────────────────────────────────────────────
     private function syncDetails(
         AcidTesting $header,
         array $details,
-        float $netAvgAcidPct   // batch-level net avg acid% — used for ALL acid row categorisation
+        float $netAvgAcidPct
     ): void {
         // Soft-delete existing active rows
         AcidTestPercentageDetail::where('acid_test_id', $header->id)
             ->update(['is_active' => 0]);
 
-        // ── Pre-load non-acid descriptions in one query ───────────
+        // Pre-load non-acid descriptions in one query
         $nonAcidStockCodes = collect($details)
             ->pluck('ulab_type')
             ->map(fn($v) => (string) $v)
@@ -529,9 +546,7 @@ class AcidTestingController extends Controller
                 });
         }
 
-        // ── Resolve stock condition once for ALL acid rows using batch net avg acid% ──
-        // All acid-present pallets share the same stock_code because the
-        // categorisation is based on the full batch average, not per-pallet.
+        // Resolve stock condition once for ALL acid rows using batch net avg acid%
         $batchAcidCondition = $netAvgAcidPct > 0
             ? $this->resolveCondition($netAvgAcidPct)
             : null;
@@ -541,29 +556,22 @@ class AcidTestingController extends Controller
             $gross = (float) ($row['gross_weight'] ?? 0);
             $isAcid = ($frontUlabType === '5');
 
-            // initial / drained only exist for acid rows
             $initial = $isAcid ? (float) ($row['initial_weight'] ?? 0) : 0.0;
             $drained = $isAcid ? (float) ($row['drained_weight'] ?? 0) : 0.0;
-
             $weightDiff = $initial > 0 ? max(0.0, $initial - $drained) : 0.0;
 
-            // Per-pallet acid% = (weight_difference / initial_weight) × 100
-            // Stored for display/reference — NOT used for stock_code resolution.
+            // Per-pallet acid% — display/reference only, NOT used for stock_code resolution
             $perPalletAcidPct = $initial > 0
                 ? round(($weightDiff / $initial) * 100, 2)
                 : 0.0;
 
             if ($isAcid) {
-                // ── Categorise using the BATCH net avg acid% ─────────
-                // All acid rows in this batch get the same stock_code,
-                // derived from (Σ weight_diff / Σ initial_weight) × 100.
-                $dbUlabType = $batchAcidCondition?->stock_code;  // overwrites '5'
+                $dbUlabType = $batchAcidCondition?->stock_code;
                 $dbStockCode = $batchAcidCondition?->stock_code;
                 $dbRemarks = $batchAcidCondition?->description;
             } else {
-                // ── Non-acid: store as-is, look up description only ──
                 $dbUlabType = $frontUlabType;
-                $dbStockCode = null;
+                $dbStockCode = null;   // non-acid: no acid-condition stock_code
                 $dbRemarks = $nonAcidDescriptions[$frontUlabType] ?? null;
             }
 
@@ -577,7 +585,7 @@ class AcidTestingController extends Controller
                 'initial_weight' => $initial ?: null,
                 'drained_weight' => $drained ?: null,
                 'weight_difference' => $weightDiff ?: null,
-                'avg_acid_pct' => $perPalletAcidPct ?: null,  // per-pallet, display only
+                'avg_acid_pct' => $perPalletAcidPct ?: null,
                 'remarks' => $dbRemarks,
                 'status' => 0,
                 'is_active' => true,
