@@ -1,4 +1,3 @@
-
 @extends('admin.layouts.app')
 
 @section('title', isset($item_id) ? 'Edit Receiving' : 'Create Receiving')
@@ -922,9 +921,9 @@
             list.innerHTML = filtered.map(item => {
                 const sel = String(item.value) === String(current);
                 return `<div class="sdd-item${sel ? ' selected' : ''}" onclick="sddSelect('${sddActiveField}','${item.value}')">
-                        <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                        <span>${item.label}</span>
-                    </div>`;
+                                <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>${item.label}</span>
+                            </div>`;
             }).join('');
         }
 
@@ -1030,26 +1029,43 @@
             return allItems;
         }
 
+        // async function loadDropdowns() {
+        //     // Fetch ALL suppliers and materials — no record cap
+        //     const [suppliers, materials] = await Promise.all([
+        //         fetchAllPages('/suppliers'),
+        //         fetchAllPages('/materials'),
+        //     ]);
+
+        //     const supplierItems = suppliers.map(s => ({
+        //         value: String(s.id),
+        //         label: `${s.supplier_name} (${s.supplier_code})`,
+        //     }));
+        //     sddRegister('supplier_id', supplierItems);
+
+        //     const materialItems = materials.map(m => ({
+        //         value: String(m.id),
+        //         label: `${m.secondary_name} (${m.material_code})`,
+        //     }));
+        //     sddRegister('material_id', materialItems);
+        // }
         async function loadDropdowns() {
-            // Fetch ALL suppliers and materials — no record cap
-            const [suppliers, materials] = await Promise.all([
-                fetchAllPages('/suppliers'),
-                fetchAllPages('/materials'),
-            ]);
+            const supplierItems = @json(
+                $suppliers->map(fn($s) => [
+                    'value' => (string) $s->id,
+                    'label' => $s->supplier_name . ' (' . $s->supplier_code . ')',
+                ])->sortBy('label')->values()
+            );
 
-            const supplierItems = suppliers.map(s => ({
-                value: String(s.id),
-                label: `${s.supplier_name} (${s.supplier_code})`,
-            }));
+            const materialItems = @json(
+                $materials->map(fn($m) => [
+                    'value' => (string) $m->id,
+                    'label' => $m->secondary_name . ' (' . $m->material_code . ')',
+                ])->sortBy('label')->values()
+            );
+
             sddRegister('supplier_id', supplierItems);
-
-            const materialItems = materials.map(m => ({
-                value: String(m.id),
-                label: `${m.secondary_name} (${m.material_code})`,
-            }));
             sddRegister('material_id', materialItems);
         }
-
         // ════════════════════════════════════════════════════════════════════
         // LOAD RECORD — unchanged
         // ════════════════════════════════════════════════════════════════════
