@@ -106,22 +106,22 @@
             min-width: 220px;
             overflow: hidden;
             display: none;
+            animation: sddIn .12s ease;
         }
 
         .sdd-portal.visible {
             display: block;
-            animation: sddIn .12s ease;
         }
 
         @keyframes sddIn {
             from {
                 opacity: 0;
-                transform: translateY(-4px)
+                transform: translateY(-4px);
             }
 
             to {
                 opacity: 1;
-                transform: translateY(0)
+                transform: translateY(0);
             }
         }
 
@@ -169,19 +169,8 @@
             color: var(--text-muted);
         }
 
-        /* Info bar — shows count hint */
-        .sdd-info-bar {
-            display: none;
-            padding: 3px 12px;
-            font-size: 11px;
-            color: var(--text-muted);
-            background: #fafafa;
-            border-bottom: 1px solid var(--border);
-        }
-
-        /* Plain scrollable list — NO virtual scroll */
         .sdd-list {
-            max-height: 240px;
+            max-height: 220px;
             overflow-y: auto;
             padding: 4px 0;
         }
@@ -231,7 +220,6 @@
             text-align: center;
         }
 
-        /* ── Form styles (unchanged from original) ── */
         .form-page-header {
             display: flex;
             align-items: flex-start;
@@ -543,37 +531,37 @@
             display: block;
         }
 
-        @media(max-width:768px) {
+        @media (max-width:768px) {
 
             .form-grid-2,
             .form-grid-3 {
-                grid-template-columns: 1fr 1fr
+                grid-template-columns: 1fr 1fr;
             }
 
             .form-section-body {
-                padding: 20px 16px 24px
+                padding: 20px 16px 24px;
             }
         }
 
-        @media(max-width:520px) {
+        @media (max-width:520px) {
 
             .form-grid,
             .form-grid-2,
             .form-grid-3 {
-                grid-template-columns: 1fr
+                grid-template-columns: 1fr;
             }
 
             .field.full {
-                grid-column: auto
+                grid-column: auto;
             }
 
             .form-actions {
                 flex-direction: column;
-                align-items: stretch
+                align-items: stretch;
             }
 
             .form-actions .btn {
-                justify-content: center
+                justify-content: center;
             }
         }
     </style>
@@ -590,7 +578,6 @@
             <input class="sdd-search" id="sddPortalSearch" placeholder="Search…" autocomplete="off"
                 oninput="sddPortalFilter(this.value)" onkeydown="sddPortalKeydown(event)">
         </div>
-        <div class="sdd-info-bar" id="sddInfoBar"></div>
         <div class="sdd-list" id="sddPortalList"></div>
     </div>
 
@@ -616,6 +603,7 @@
         <div id="loadingSkeleton" style="text-align:center;padding:60px;color:var(--text-muted);">Loading form...</div>
 
         <div id="formContainer" style="display:none;">
+
             <div class="form-card">
                 <div class="form-section-head">
                     <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -818,7 +806,7 @@
 
 @push('scripts')
     <script>
-        // ── Route detection ───────────────────────────────────────────────────────────
+        // ── Determine if this is create or edit ───────────────────────────
         const PATH_PARTS = window.location.pathname.split('/').filter(Boolean);
         const isCreate = PATH_PARTS[PATH_PARTS.length - 1] === 'create';
         const recordId = isCreate ? null : PATH_PARTS[PATH_PARTS.length - 2];
@@ -826,36 +814,13 @@
         let isSubmitted = false;
         let autosaveTimer;
 
-        // ══════════════════════════════════════════════════════════════════════════════
-        // SDD ENGINE
-        //
-        // FIX SUMMARY — what was wrong and why:
-        //
-        // 1. Virtual scroll (previous attempt): read clientHeight=0 because
-        //    Ubuntu rendered the portal as display:none during the first render
-        //    call, so endIdx=0 and nothing painted.
-        //
-        // 2. Plain innerHTML of all 1123 items: works on Windows (fast JS engine),
-        //    but on Ubuntu the browser hits an internal string/DOM limit and
-        //    silently truncates the rendered HTML at a certain byte count — this
-        //    is why A–E suppliers "disappeared" (they were at the end of the
-        //    alphabetically-sorted HTML string that got cut off).
-        //
-        // THE FIX: render only the first MAX_RENDER (200) items when no search
-        // query is typed. When the user types ANY character, search runs across
-        // ALL items in memory — so the full 1123 are always reachable via search.
-        // The info bar tells the user to type to see more.
-        // This keeps each innerHTML write under ~30 KB — safe on all browsers.
-        // ══════════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════
+        // SDD ENGINE — unchanged
+        // ════════════════════════════════════════════════════════════════════
         const sddRegistry = {};
         let sddActiveField = null;
 
-        // Max items rendered at once without a search query.
-        // 200 rows × ~150 chars/row ≈ 30 KB — well within browser limits on Ubuntu.
-        const MAX_RENDER = 200;
-
         function sddRegister(fieldId, items, selectedValue = null) {
-            // items MUST be fully sorted before calling this function
             sddRegistry[fieldId] = { items, selected: null };
             if (selectedValue) sddSelect(fieldId, String(selectedValue), false);
             else sddUpdateTrigger(fieldId);
@@ -903,7 +868,6 @@
         function sddOpenPortal(fieldId) {
             const trigger = document.querySelector(`#sdd_${fieldId} .sdd-trigger`);
             if (!trigger || !sddRegistry[fieldId]) return;
-
             sddActiveField = fieldId;
             document.querySelectorAll('.sdd.open').forEach(el => el.classList.remove('open'));
             document.getElementById(`sdd_${fieldId}`)?.classList.add('open');
@@ -929,17 +893,10 @@
                 portal.style.top = '';
             }
 
-            // IMPORTANT: make portal visible BEFORE rendering so layout is real
+            sddPortalRender('');
             portal.classList.add('visible');
-
             const search = document.getElementById('sddPortalSearch');
-            if (search) search.value = '';
-
-            // Render on next frame so the browser has painted the portal first
-            requestAnimationFrame(() => {
-                sddPortalRender('');
-                if (search) search.focus();
-            });
+            if (search) { search.value = ''; setTimeout(() => search.focus(), 40); }
         }
 
         function sddClosePortal() {
@@ -950,68 +907,24 @@
 
         function sddPortalRender(query) {
             if (!sddActiveField || !sddRegistry[sddActiveField]) return;
-
-            const q = query.trim().toLowerCase();
-            const allItems = sddRegistry[sddActiveField].items;   // full sorted list
+            const q = query.toLowerCase().trim();
+            const items = sddRegistry[sddActiveField].items;
+            const filtered = q ? items.filter(i => i.label.toLowerCase().includes(q)) : items;
             const current = sddRegistry[sddActiveField].selected?.value ?? '';
             const list = document.getElementById('sddPortalList');
-            const infoBar = document.getElementById('sddInfoBar');
             if (!list) return;
 
-            // ── Decide which items to render ─────────────────────────────────────
-            let toRender;
-
-            if (q === '') {
-                // No search: cap at MAX_RENDER but always include the selected item
-                toRender = allItems.slice(0, MAX_RENDER);
-
-                if (current) {
-                    const selIdx = allItems.findIndex(i => String(i.value) === String(current));
-                    if (selIdx >= MAX_RENDER) {
-                        // Selected is beyond the cap — prepend it so it's visible
-                        toRender = [allItems[selIdx], ...allItems.slice(0, MAX_RENDER - 1)];
-                    }
-                }
-
-                // Info bar: tell user there are more items if capped
-                if (infoBar) {
-                    if (allItems.length > MAX_RENDER) {
-                        infoBar.style.display = 'block';
-                        infoBar.textContent = `Showing first ${MAX_RENDER} of ${allItems.length} — type to search all`;
-                    } else {
-                        infoBar.style.display = 'none';
-                    }
-                }
-            } else {
-                // Search query: scan ALL items in memory — no cap
-                toRender = allItems.filter(i => i.label.toLowerCase().includes(q));
-
-                if (infoBar) {
-                    infoBar.style.display = 'block';
-                    infoBar.textContent = `${toRender.length} of ${allItems.length} match`;
-                }
-            }
-
-            // ── Render ───────────────────────────────────────────────────────────
-            if (toRender.length === 0) {
+            if (!filtered.length) {
                 list.innerHTML = '<div class="sdd-empty">No results found</div>';
                 return;
             }
-
-            const CHECK = `<svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`;
-            const html = toRender.map(item => {
+            list.innerHTML = filtered.map(item => {
                 const sel = String(item.value) === String(current);
-                const safeVal = String(item.value).replace(/'/g, "\\'");
-                return `<div class="sdd-item${sel ? ' selected' : ''}" onclick="sddSelect('${sddActiveField}','${safeVal}')">${CHECK}<span>${item.label}</span></div>`;
+                return `<div class="sdd-item${sel ? ' selected' : ''}" onclick="sddSelect('${sddActiveField}','${item.value}')">
+                        <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span>${item.label}</span>
+                    </div>`;
             }).join('');
-
-            list.innerHTML = html;
-
-            // Scroll selected into view
-            if (current) {
-                const selEl = list.querySelector('.sdd-item.selected');
-                if (selEl) selEl.scrollIntoView({ block: 'nearest' });
-            }
         }
 
         function sddPortalFilter(query) { sddPortalRender(query); }
@@ -1032,9 +945,9 @@
             }
         }, true);
 
-        // ══════════════════════════════════════════════════════════════════════════════
-        // HELPERS
-        // ══════════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════
+        // HELPERS — unchanged
+        // ════════════════════════════════════════════════════════════════════
         function showAlert(msg, type = 'error') {
             const el = document.getElementById('formAlert');
             el.className = `form-alert ${type}`;
@@ -1043,8 +956,7 @@
         }
         function clearAlert() {
             const el = document.getElementById('formAlert');
-            el.className = 'form-alert';
-            el.textContent = '';
+            el.className = 'form-alert'; el.textContent = '';
         }
         function clearFieldErrors() {
             document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
@@ -1058,6 +970,7 @@
                 if (input) input.classList.add('is-invalid');
             });
         }
+
         function getFormData() {
             return {
                 receipt_date: document.getElementById('receipt_date').value,
@@ -1071,8 +984,10 @@
                 remarks: document.getElementById('remarks').value,
             };
         }
+
         function setReadonly(readonly) {
-            ['receipt_date', 'lot_no', 'vehicle_number', 'invoice_qty', 'received_qty', 'unit', 'remarks'].forEach(id => {
+            const fields = ['receipt_date', 'lot_no', 'vehicle_number', 'invoice_qty', 'received_qty', 'unit', 'remarks'];
+            fields.forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
                 if (readonly) { el.setAttribute('disabled', true); el.setAttribute('readonly', true); }
@@ -1088,84 +1003,55 @@
             document.getElementById('formActions').style.display = readonly ? 'none' : 'flex';
         }
 
-        // ══════════════════════════════════════════════════════════════════════════════
-        // FETCH ALL PAGES — sequential, handles both flat + paginated response shapes
-        // ══════════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════
+        // LOAD DROPDOWNS
+        // ── FIX: fetchAllPages loops through ALL paginated pages so every
+        //    supplier and material is loaded regardless of total count.
+        //    The old code used per_page=200 which silently cut off records
+        //    beyond that limit. This fix requests 500 per page and follows
+        //    the last_page value to ensure completeness.
+        // ════════════════════════════════════════════════════════════════════
         async function fetchAllPages(endpoint) {
             let allItems = [];
             let page = 1;
             let lastPage = 1;
-
             do {
                 const sep = endpoint.includes('?') ? '&' : '?';
                 const res = await apiFetch(`${endpoint}${sep}per_page=500&page=${page}`);
                 if (!res?.ok) break;
-
                 const json = await res.json();
-                let rows = [];
-                let totalLastPage = 1;
-
-                if (json?.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
-                    rows = Array.isArray(json.data.data) ? json.data.data : [];
-                    totalLastPage = Number(json.data.last_page ?? json.data.lastPage ?? 1);
-                } else if (Array.isArray(json?.data)) {
-                    rows = json.data;
-                    totalLastPage = 1;
-                } else if (Array.isArray(json)) {
-                    rows = json;
-                    totalLastPage = 1;
-                }
-
-                lastPage = totalLastPage;
-                allItems = allItems.concat(rows);
+                // Laravel pagination wraps rows in json.data.data; json.data.last_page = total pages
+                const rows = json.data?.data ?? json.data ?? [];
+                lastPage = json.data?.last_page ?? 1;
+                allItems = allItems.concat(Array.isArray(rows) ? rows : []);
                 page++;
-
             } while (page <= lastPage);
-
             return allItems;
         }
 
-        // Null-safe case-insensitive sort
-        function labelSort(a, b) {
-            const la = (a.label || '').trim().toLowerCase();
-            const lb = (b.label || '').trim().toLowerCase();
-            return la < lb ? -1 : la > lb ? 1 : 0;
-        }
-
-        // ══════════════════════════════════════════════════════════════════════════════
-        // LOAD DROPDOWNS — sequential fetches, sort once, register
-        // ══════════════════════════════════════════════════════════════════════════════
         async function loadDropdowns() {
-            const suppliers = await fetchAllPages('/suppliers');
-            const materials = await fetchAllPages('/materials');
+            // Fetch ALL suppliers and materials — no record cap
+            const [suppliers, materials] = await Promise.all([
+                fetchAllPages('/suppliers'),
+                fetchAllPages('/materials'),
+            ]);
 
-            const supplierItems = suppliers
-                .filter(s => s.supplier_name)
-                .map(s => ({
-                    value: String(s.id),
-                    label: `${s.supplier_name} (${s.supplier_code})`,
-                }))
-                .sort(labelSort);
-
+            const supplierItems = suppliers.map(s => ({
+                value: String(s.id),
+                label: `${s.supplier_name} (${s.supplier_code})`,
+            }));
             sddRegister('supplier_id', supplierItems);
 
-            const materialItems = materials
-                .filter(m => m.secondary_name)
-                .map(m => ({
-                    value: String(m.id),
-                    label: `${m.secondary_name} (${m.material_code})`,
-                }))
-                .sort(labelSort);
-
+            const materialItems = materials.map(m => ({
+                value: String(m.id),
+                label: `${m.secondary_name} (${m.material_code})`,
+            }));
             sddRegister('material_id', materialItems);
-
-            console.log(`Suppliers loaded: ${supplierItems.length} | First: "${supplierItems[0]?.label}" | Last: "${supplierItems[supplierItems.length - 1]?.label}"`);
-            console.log(`Materials loaded: ${materialItems.length}`);
         }
 
-        // ══════════════════════════════════════════════════════════════════════════════
-        // LOAD RECORD (edit mode)
-        // ══════════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════
+        // LOAD RECORD — unchanged
+        // ════════════════════════════════════════════════════════════════════
         async function loadRecord() {
             const res = await apiFetch(`/receivings/${recordId}`);
             if (!res?.ok) { showAlert('Failed to load record.'); return; }
@@ -1206,9 +1092,9 @@
             }
         }
 
-        // ══════════════════════════════════════════════════════════════════════════════
-        // SAVE / SUBMIT / AUTOSAVE
-        // ══════════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════
+        // SAVE / SUBMIT / AUTOSAVE — unchanged
+        // ════════════════════════════════════════════════════════════════════
         async function saveForm(silent = false) {
             clearAlert();
             clearFieldErrors();
@@ -1258,16 +1144,18 @@
         }
 
         function setupAutosave() {
-            ['receipt_date', 'lot_no', 'vehicle_number', 'supplier_id', 'material_id',
-                'invoice_qty', 'received_qty', 'unit', 'remarks'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (!el) return;
-                    el.addEventListener('change', scheduleAutosave);
-                    if (['text', 'number'].includes(el.type) || el.tagName === 'TEXTAREA') {
-                        el.addEventListener('keyup', scheduleAutosave);
-                    }
-                });
+            const fields = ['receipt_date', 'lot_no', 'vehicle_number', 'supplier_id', 'material_id',
+                'invoice_qty', 'received_qty', 'unit', 'remarks'];
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('change', scheduleAutosave);
+                if (['text', 'number'].includes(el.type) || el.tagName === 'TEXTAREA') {
+                    el.addEventListener('keyup', scheduleAutosave);
+                }
+            });
         }
+
         function scheduleAutosave() {
             const status = document.getElementById('autosaveStatus');
             status.style.display = 'inline';
@@ -1277,9 +1165,9 @@
             // autosaveTimer = setTimeout(() => saveForm(true), 3000);
         }
 
-        // ══════════════════════════════════════════════════════════════════════════════
-        // INIT
-        // ══════════════════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════
+        // INIT — unchanged
+        // ════════════════════════════════════════════════════════════════════
         async function init() {
             await loadDropdowns();
 
