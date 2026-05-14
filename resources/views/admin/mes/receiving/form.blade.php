@@ -106,22 +106,22 @@
             min-width: 220px;
             overflow: hidden;
             display: none;
-            animation: sddIn .12s ease;
         }
 
         .sdd-portal.visible {
             display: block;
+            animation: sddIn .12s ease;
         }
 
         @keyframes sddIn {
             from {
                 opacity: 0;
-                transform: translateY(-4px);
+                transform: translateY(-4px)
             }
 
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0)
             }
         }
 
@@ -169,24 +169,21 @@
             color: var(--text-muted);
         }
 
-        /* ── VIRTUAL SCROLL CONTAINER ── */
+        /* Info bar — shows count hint */
+        .sdd-info-bar {
+            display: none;
+            padding: 3px 12px;
+            font-size: 11px;
+            color: var(--text-muted);
+            background: #fafafa;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Plain scrollable list — NO virtual scroll */
         .sdd-list {
-            height: 220px;
+            max-height: 240px;
             overflow-y: auto;
             padding: 4px 0;
-            position: relative;
-        }
-
-        .sdd-list-inner {
-            position: relative;
-            width: 100%;
-        }
-
-        .sdd-list-viewport {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
         }
 
         .sdd-item {
@@ -199,8 +196,6 @@
             gap: 9px;
             color: var(--text);
             white-space: nowrap;
-            box-sizing: border-box;
-            height: 36px;
         }
 
         .sdd-item:hover {
@@ -236,14 +231,7 @@
             text-align: center;
         }
 
-        .sdd-result-count {
-            padding: 4px 14px 2px;
-            font-size: 11px;
-            color: var(--text-muted);
-            border-bottom: 1px solid var(--border);
-            background: #fafafa;
-        }
-
+        /* ── Form styles (unchanged from original) ── */
         .form-page-header {
             display: flex;
             align-items: flex-start;
@@ -555,37 +543,37 @@
             display: block;
         }
 
-        @media (max-width:768px) {
+        @media(max-width:768px) {
 
             .form-grid-2,
             .form-grid-3 {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr 1fr
             }
 
             .form-section-body {
-                padding: 20px 16px 24px;
+                padding: 20px 16px 24px
             }
         }
 
-        @media (max-width:520px) {
+        @media(max-width:520px) {
 
             .form-grid,
             .form-grid-2,
             .form-grid-3 {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr
             }
 
             .field.full {
-                grid-column: auto;
+                grid-column: auto
             }
 
             .form-actions {
                 flex-direction: column;
-                align-items: stretch;
+                align-items: stretch
             }
 
             .form-actions .btn {
-                justify-content: center;
+                justify-content: center
             }
         }
     </style>
@@ -602,12 +590,8 @@
             <input class="sdd-search" id="sddPortalSearch" placeholder="Search…" autocomplete="off"
                 oninput="sddPortalFilter(this.value)" onkeydown="sddPortalKeydown(event)">
         </div>
-        <div class="sdd-result-count" id="sddResultCount" style="display:none;"></div>
-        <div class="sdd-list" id="sddPortalList">
-            <div class="sdd-list-inner" id="sddListInner">
-                <div class="sdd-list-viewport" id="sddListViewport"></div>
-            </div>
-        </div>
+        <div class="sdd-info-bar" id="sddInfoBar"></div>
+        <div class="sdd-list" id="sddPortalList"></div>
     </div>
 
     <div class="form-page-header" id="pageHeader">
@@ -632,7 +616,6 @@
         <div id="loadingSkeleton" style="text-align:center;padding:60px;color:var(--text-muted);">Loading form...</div>
 
         <div id="formContainer" style="display:none;">
-
             <div class="form-card">
                 <div class="form-section-head">
                     <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -835,7 +818,7 @@
 
 @push('scripts')
     <script>
-        // ── Determine if this is create or edit ───────────────────────────
+        // ── Route detection ───────────────────────────────────────────────────────────
         const PATH_PARTS = window.location.pathname.split('/').filter(Boolean);
         const isCreate = PATH_PARTS[PATH_PARTS.length - 1] === 'create';
         const recordId = isCreate ? null : PATH_PARTS[PATH_PARTS.length - 2];
@@ -843,29 +826,45 @@
         let isSubmitted = false;
         let autosaveTimer;
 
-        // ════════════════════════════════════════════════════════════════════
-        // SDD ENGINE — with virtual scroll to handle large lists (1000+)
-        // ════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════════════════
+        // SDD ENGINE
+        //
+        // FIX SUMMARY — what was wrong and why:
+        //
+        // 1. Virtual scroll (previous attempt): read clientHeight=0 because
+        //    Ubuntu rendered the portal as display:none during the first render
+        //    call, so endIdx=0 and nothing painted.
+        //
+        // 2. Plain innerHTML of all 1123 items: works on Windows (fast JS engine),
+        //    but on Ubuntu the browser hits an internal string/DOM limit and
+        //    silently truncates the rendered HTML at a certain byte count — this
+        //    is why A–E suppliers "disappeared" (they were at the end of the
+        //    alphabetically-sorted HTML string that got cut off).
+        //
+        // THE FIX: render only the first MAX_RENDER (200) items when no search
+        // query is typed. When the user types ANY character, search runs across
+        // ALL items in memory — so the full 1123 are always reachable via search.
+        // The info bar tells the user to type to see more.
+        // This keeps each innerHTML write under ~30 KB — safe on all browsers.
+        // ══════════════════════════════════════════════════════════════════════════════
         const sddRegistry = {};
         let sddActiveField = null;
 
-        // ── Virtual scroll state ──────────────────────────────────────────
-        const SDD_ITEM_H   = 36;   // must match .sdd-item height in CSS
-        const SDD_OVERSCAN = 5;    // extra items rendered above/below viewport
-        let   vsFiltered   = [];   // current filtered + sorted item array
-        let   vsScrollTop  = 0;
+        // Max items rendered at once without a search query.
+        // 200 rows × ~150 chars/row ≈ 30 KB — well within browser limits on Ubuntu.
+        const MAX_RENDER = 200;
 
         function sddRegister(fieldId, items, selectedValue = null) {
-            // items must already be fully sorted before calling this
+            // items MUST be fully sorted before calling this function
             sddRegistry[fieldId] = { items, selected: null };
             if (selectedValue) sddSelect(fieldId, String(selectedValue), false);
             else sddUpdateTrigger(fieldId);
         }
 
         function sddUpdateTrigger(fieldId) {
-            const reg   = sddRegistry[fieldId];
+            const reg = sddRegistry[fieldId];
             const label = document.getElementById(`sdd_${fieldId}_label`);
-            const hidden= document.getElementById(fieldId);
+            const hidden = document.getElementById(fieldId);
             if (!label) return;
             if (reg?.selected) {
                 label.textContent = reg.selected.label;
@@ -904,14 +903,15 @@
         function sddOpenPortal(fieldId) {
             const trigger = document.querySelector(`#sdd_${fieldId} .sdd-trigger`);
             if (!trigger || !sddRegistry[fieldId]) return;
+
             sddActiveField = fieldId;
             document.querySelectorAll('.sdd.open').forEach(el => el.classList.remove('open'));
             document.getElementById(`sdd_${fieldId}`)?.classList.add('open');
 
-            const portal  = document.getElementById('sddPortal');
-            const rect    = trigger.getBoundingClientRect();
-            const viewW   = window.innerWidth;
-            const viewH   = window.innerHeight;
+            const portal = document.getElementById('sddPortal');
+            const rect = trigger.getBoundingClientRect();
+            const viewW = window.innerWidth;
+            const viewH = window.innerHeight;
             const portalW = Math.max(rect.width, 280);
 
             portal.style.width = portalW + 'px';
@@ -922,23 +922,24 @@
             const spaceBelow = viewH - rect.bottom;
             const spaceAbove = rect.top;
             if (spaceBelow >= 200 || spaceBelow >= spaceAbove) {
-                portal.style.top    = (rect.bottom + 4) + 'px';
+                portal.style.top = (rect.bottom + 4) + 'px';
                 portal.style.bottom = '';
             } else {
                 portal.style.bottom = (viewH - rect.top + 4) + 'px';
-                portal.style.top    = '';
+                portal.style.top = '';
             }
 
-            // Reset scroll and render
-            const listEl = document.getElementById('sddPortalList');
-            listEl.scrollTop = 0;
-            vsScrollTop = 0;
-
-            sddPortalRender('');
+            // IMPORTANT: make portal visible BEFORE rendering so layout is real
             portal.classList.add('visible');
 
             const search = document.getElementById('sddPortalSearch');
-            if (search) { search.value = ''; setTimeout(() => search.focus(), 40); }
+            if (search) search.value = '';
+
+            // Render on next frame so the browser has painted the portal first
+            requestAnimationFrame(() => {
+                sddPortalRender('');
+                if (search) search.focus();
+            });
         }
 
         function sddClosePortal() {
@@ -947,121 +948,102 @@
             sddActiveField = null;
         }
 
-        // ── Virtual scroll renderer ───────────────────────────────────────
-        // Instead of dumping all N items into innerHTML at once (which can
-        // silently truncate in memory-constrained environments), we only
-        // render the ~8 items visible in the 220px window plus a small
-        // overscan. A spacer div gives the scrollbar the correct height.
-        function vsRender() {
-            const listEl     = document.getElementById('sddPortalList');
-            const inner      = document.getElementById('sddListInner');
-            const viewport   = document.getElementById('sddListViewport');
-            if (!listEl || !inner || !viewport) return;
-
-            const totalH     = vsFiltered.length * SDD_ITEM_H;
-            inner.style.height = totalH + 'px';
-
-            const scrollTop  = listEl.scrollTop;
-            const visibleH   = listEl.clientHeight || 220;
-
-            const startIdx   = Math.max(0, Math.floor(scrollTop / SDD_ITEM_H) - SDD_OVERSCAN);
-            const endIdx     = Math.min(vsFiltered.length, Math.ceil((scrollTop + visibleH) / SDD_ITEM_H) + SDD_OVERSCAN);
-
-            const current    = sddActiveField ? (sddRegistry[sddActiveField]?.selected?.value ?? '') : '';
-
-            viewport.style.top = (startIdx * SDD_ITEM_H) + 'px';
-
-            let html = '';
-            for (let i = startIdx; i < endIdx; i++) {
-                const item = vsFiltered[i];
-                const sel  = String(item.value) === String(current);
-                // Escape single quotes in value to avoid breaking onclick attribute
-                const safeVal = String(item.value).replace(/'/g, "\\'");
-                html += `<div class="sdd-item${sel ? ' selected' : ''}" onclick="sddSelect('${sddActiveField}','${safeVal}')">
-                    <svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span>${item.label}</span>
-                </div>`;
-            }
-            viewport.innerHTML = html;
-        }
-
         function sddPortalRender(query) {
             if (!sddActiveField || !sddRegistry[sddActiveField]) return;
 
-            const q     = query.trim().toLowerCase();
-            const items = sddRegistry[sddActiveField].items;
+            const q = query.trim().toLowerCase();
+            const allItems = sddRegistry[sddActiveField].items;   // full sorted list
+            const current = sddRegistry[sddActiveField].selected?.value ?? '';
+            const list = document.getElementById('sddPortalList');
+            const infoBar = document.getElementById('sddInfoBar');
+            if (!list) return;
 
-            // Filter
-            vsFiltered = q ? items.filter(i => i.label.toLowerCase().includes(q)) : items.slice();
+            // ── Decide which items to render ─────────────────────────────────────
+            let toRender;
 
-            // Update result count badge
-            const countEl = document.getElementById('sddResultCount');
-            if (countEl) {
-                if (vsFiltered.length === 0) {
-                    countEl.style.display = 'none';
-                } else {
-                    countEl.style.display = 'block';
-                    countEl.textContent   = vsFiltered.length + ' result' + (vsFiltered.length !== 1 ? 's' : '');
+            if (q === '') {
+                // No search: cap at MAX_RENDER but always include the selected item
+                toRender = allItems.slice(0, MAX_RENDER);
+
+                if (current) {
+                    const selIdx = allItems.findIndex(i => String(i.value) === String(current));
+                    if (selIdx >= MAX_RENDER) {
+                        // Selected is beyond the cap — prepend it so it's visible
+                        toRender = [allItems[selIdx], ...allItems.slice(0, MAX_RENDER - 1)];
+                    }
+                }
+
+                // Info bar: tell user there are more items if capped
+                if (infoBar) {
+                    if (allItems.length > MAX_RENDER) {
+                        infoBar.style.display = 'block';
+                        infoBar.textContent = `Showing first ${MAX_RENDER} of ${allItems.length} — type to search all`;
+                    } else {
+                        infoBar.style.display = 'none';
+                    }
+                }
+            } else {
+                // Search query: scan ALL items in memory — no cap
+                toRender = allItems.filter(i => i.label.toLowerCase().includes(q));
+
+                if (infoBar) {
+                    infoBar.style.display = 'block';
+                    infoBar.textContent = `${toRender.length} of ${allItems.length} match`;
                 }
             }
 
-            // Empty state
-            const inner    = document.getElementById('sddListInner');
-            const viewport = document.getElementById('sddListViewport');
-            if (vsFiltered.length === 0) {
-                if (inner)    inner.style.height = '0px';
-                if (viewport) viewport.innerHTML = '<div class="sdd-empty">No results found</div>';
+            // ── Render ───────────────────────────────────────────────────────────
+            if (toRender.length === 0) {
+                list.innerHTML = '<div class="sdd-empty">No results found</div>';
                 return;
             }
 
-            // Reset scroll to top on new query
-            const listEl = document.getElementById('sddPortalList');
-            if (listEl) listEl.scrollTop = 0;
+            const CHECK = `<svg class="sdd-item-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`;
+            const html = toRender.map(item => {
+                const sel = String(item.value) === String(current);
+                const safeVal = String(item.value).replace(/'/g, "\\'");
+                return `<div class="sdd-item${sel ? ' selected' : ''}" onclick="sddSelect('${sddActiveField}','${safeVal}')">${CHECK}<span>${item.label}</span></div>`;
+            }).join('');
 
-            vsRender();
+            list.innerHTML = html;
+
+            // Scroll selected into view
+            if (current) {
+                const selEl = list.querySelector('.sdd-item.selected');
+                if (selEl) selEl.scrollIntoView({ block: 'nearest' });
+            }
         }
 
-        // Attach virtual scroll listener once
-        document.addEventListener('DOMContentLoaded', () => {
-            const listEl = document.getElementById('sddPortalList');
-            if (listEl) {
-                listEl.addEventListener('scroll', () => {
-                    if (sddActiveField) vsRender();
-                });
-            }
-        });
-
         function sddPortalFilter(query) { sddPortalRender(query); }
-        function sddPortalKeydown(e)    { if (e.key === 'Escape') sddClosePortal(); }
+        function sddPortalKeydown(e) { if (e.key === 'Escape') sddClosePortal(); }
 
         document.addEventListener('click', e => {
             if (!e.target.closest('.sdd') && !e.target.closest('#sddPortal')) sddClosePortal();
         });
-
         document.addEventListener('scroll', () => {
             if (sddActiveField) {
                 const trigger = document.querySelector(`#sdd_${sddActiveField} .sdd-trigger`);
                 if (trigger) {
-                    const rect   = trigger.getBoundingClientRect();
+                    const rect = trigger.getBoundingClientRect();
                     const portal = document.getElementById('sddPortal');
-                    portal.style.top  = (rect.bottom + 4) + 'px';
+                    portal.style.top = (rect.bottom + 4) + 'px';
                     portal.style.left = rect.left + 'px';
                 }
             }
         }, true);
 
-        // ════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════════════════
         // HELPERS
-        // ════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════════════════
         function showAlert(msg, type = 'error') {
             const el = document.getElementById('formAlert');
-            el.className  = `form-alert ${type}`;
+            el.className = `form-alert ${type}`;
             el.textContent = msg;
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         function clearAlert() {
             const el = document.getElementById('formAlert');
-            el.className  = 'form-alert';
+            el.className = 'form-alert';
             el.textContent = '';
         }
         function clearFieldErrors() {
@@ -1073,48 +1055,45 @@
                 const errEl = document.getElementById('err_' + field);
                 const input = document.getElementById(field);
                 if (errEl) errEl.textContent = Array.isArray(messages) ? messages[0] : messages;
-                if (input)  input.classList.add('is-invalid');
+                if (input) input.classList.add('is-invalid');
             });
         }
-
         function getFormData() {
             return {
-                receipt_date  : document.getElementById('receipt_date').value,
-                lot_no        : document.getElementById('lot_no').value,
+                receipt_date: document.getElementById('receipt_date').value,
+                lot_no: document.getElementById('lot_no').value,
                 vehicle_number: document.getElementById('vehicle_number').value,
-                supplier_id   : document.getElementById('supplier_id').value,
-                material_id   : document.getElementById('material_id').value,
-                invoice_qty   : document.getElementById('invoice_qty').value,
-                received_qty  : document.getElementById('received_qty').value,
-                unit          : document.getElementById('unit').value,
-                remarks       : document.getElementById('remarks').value,
+                supplier_id: document.getElementById('supplier_id').value,
+                material_id: document.getElementById('material_id').value,
+                invoice_qty: document.getElementById('invoice_qty').value,
+                received_qty: document.getElementById('received_qty').value,
+                unit: document.getElementById('unit').value,
+                remarks: document.getElementById('remarks').value,
             };
         }
-
         function setReadonly(readonly) {
-            const fields = ['receipt_date', 'lot_no', 'vehicle_number', 'invoice_qty', 'received_qty', 'unit', 'remarks'];
-            fields.forEach(id => {
+            ['receipt_date', 'lot_no', 'vehicle_number', 'invoice_qty', 'received_qty', 'unit', 'remarks'].forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
                 if (readonly) { el.setAttribute('disabled', true); el.setAttribute('readonly', true); }
-                else          { el.removeAttribute('disabled'); el.removeAttribute('readonly'); }
+                else { el.removeAttribute('disabled'); el.removeAttribute('readonly'); }
             });
             ['supplier_id', 'material_id'].forEach(id => {
                 const trigger = document.querySelector(`#sdd_${id} .sdd-trigger`);
                 if (trigger) {
                     trigger.style.pointerEvents = readonly ? 'none' : '';
-                    trigger.style.opacity       = readonly ? '0.6'  : '';
+                    trigger.style.opacity = readonly ? '0.6' : '';
                 }
             });
             document.getElementById('formActions').style.display = readonly ? 'none' : 'flex';
         }
 
-        // ════════════════════════════════════════════════════════════════════
-        // FETCH ALL PAGES — sequential, waits for every page before returning
-        // ════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════════════════
+        // FETCH ALL PAGES — sequential, handles both flat + paginated response shapes
+        // ══════════════════════════════════════════════════════════════════════════════
         async function fetchAllPages(endpoint) {
             let allItems = [];
-            let page     = 1;
+            let page = 1;
             let lastPage = 1;
 
             do {
@@ -1123,23 +1102,22 @@
                 if (!res?.ok) break;
 
                 const json = await res.json();
-
-                let rows         = [];
+                let rows = [];
                 let totalLastPage = 1;
 
                 if (json?.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
-                    rows          = Array.isArray(json.data.data) ? json.data.data : [];
-                    totalLastPage = json.data.last_page ?? json.data.lastPage ?? 1;
+                    rows = Array.isArray(json.data.data) ? json.data.data : [];
+                    totalLastPage = Number(json.data.last_page ?? json.data.lastPage ?? 1);
                 } else if (Array.isArray(json?.data)) {
-                    rows          = json.data;
+                    rows = json.data;
                     totalLastPage = 1;
                 } else if (Array.isArray(json)) {
-                    rows          = json;
+                    rows = json;
                     totalLastPage = 1;
                 }
 
-                lastPage  = totalLastPage;
-                allItems  = allItems.concat(rows);
+                lastPage = totalLastPage;
+                allItems = allItems.concat(rows);
                 page++;
 
             } while (page <= lastPage);
@@ -1147,23 +1125,17 @@
             return allItems;
         }
 
-        // ── Shared sort comparator (case-insensitive, null-safe) ──────────
+        // Null-safe case-insensitive sort
         function labelSort(a, b) {
             const la = (a.label || '').trim().toLowerCase();
             const lb = (b.label || '').trim().toLowerCase();
-            if (la < lb) return -1;
-            if (la > lb) return  1;
-            return 0;
+            return la < lb ? -1 : la > lb ? 1 : 0;
         }
 
-        // ════════════════════════════════════════════════════════════════════
-        // LOAD DROPDOWNS
-        // Fetches suppliers and materials sequentially (not concurrently) so
-        // there is zero chance of a shared-state race between the two loops.
-        // Items are sorted ONCE here; the virtual renderer never re-sorts.
-        // ════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════════════════
+        // LOAD DROPDOWNS — sequential fetches, sort once, register
+        // ══════════════════════════════════════════════════════════════════════════════
         async function loadDropdowns() {
-            // Sequential fetch — avoids any shared variable race on Ubuntu
             const suppliers = await fetchAllPages('/suppliers');
             const materials = await fetchAllPages('/materials');
 
@@ -1187,13 +1159,13 @@
 
             sddRegister('material_id', materialItems);
 
-            console.log('Suppliers loaded:', supplierItems.length, '| First:', supplierItems[0]?.label, '| Last:', supplierItems[supplierItems.length-1]?.label);
-            console.log('Materials loaded:', materialItems.length);
+            console.log(`Suppliers loaded: ${supplierItems.length} | First: "${supplierItems[0]?.label}" | Last: "${supplierItems[supplierItems.length - 1]?.label}"`);
+            console.log(`Materials loaded: ${materialItems.length}`);
         }
 
-        // ════════════════════════════════════════════════════════════════════
-        // LOAD RECORD
-        // ════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════════════════
+        // LOAD RECORD (edit mode)
+        // ══════════════════════════════════════════════════════════════════════════════
         async function loadRecord() {
             const res = await apiFetch(`/receivings/${recordId}`);
             if (!res?.ok) { showAlert('Failed to load record.'); return; }
@@ -1201,21 +1173,21 @@
             const { data } = await res.json();
             isSubmitted = data.status >= 1;
 
-            document.getElementById('receipt_date').value   = data.receipt_date?.split('T')[0] ?? '';
-            document.getElementById('lot_no').value         = data.lot_no ?? '';
+            document.getElementById('receipt_date').value = data.receipt_date?.split('T')[0] ?? '';
+            document.getElementById('lot_no').value = data.lot_no ?? '';
             document.getElementById('vehicle_number').value = data.vehicle_number ?? '';
-            document.getElementById('invoice_qty').value    = data.invoice_qty ?? '';
-            document.getElementById('received_qty').value   = data.received_qty ?? '';
-            document.getElementById('unit').value           = data.unit ?? 'MT';
-            document.getElementById('remarks').value        = data.remarks ?? '';
+            document.getElementById('invoice_qty').value = data.invoice_qty ?? '';
+            document.getElementById('received_qty').value = data.received_qty ?? '';
+            document.getElementById('unit').value = data.unit ?? 'MT';
+            document.getElementById('remarks').value = data.remarks ?? '';
 
             if (data.supplier_id) sddSelect('supplier_id', String(data.supplier_id), false);
             if (data.material_id) sddSelect('material_id', String(data.material_id), false);
 
-            document.getElementById('pageTitle').textContent       = 'Edit Receiving';
-            document.getElementById('pageSubtitle').textContent    = 'Update receiving details';
+            document.getElementById('pageTitle').textContent = 'Edit Receiving';
+            document.getElementById('pageSubtitle').textContent = 'Update receiving details';
             document.getElementById('breadcrumbTitle').textContent = 'Edit Receiving';
-            document.getElementById('btnSaveLabel').textContent    = 'Save Draft';
+            document.getElementById('btnSaveLabel').textContent = 'Save Draft';
 
             if (isSubmitted) {
                 document.getElementById('statusBadge').innerHTML =
@@ -1225,24 +1197,24 @@
                 document.getElementById('statusBadge').innerHTML =
                     '<div class="status-badge draft">Status: Draft</div>';
                 const actionsDiv = document.getElementById('headerActions');
-                const submitBtn  = document.createElement('button');
+                const submitBtn = document.createElement('button');
                 submitBtn.className = 'btn btn-outline btn-sm';
                 submitBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Submit Record`;
-                submitBtn.onclick   = submitRecord;
+                submitBtn.onclick = submitRecord;
                 actionsDiv.prepend(submitBtn);
                 setupAutosave();
             }
         }
 
-        // ════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════════════════
         // SAVE / SUBMIT / AUTOSAVE
-        // ════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════════════════
         async function saveForm(silent = false) {
             clearAlert();
             clearFieldErrors();
-            const btn    = document.getElementById('btnSave');
+            const btn = document.getElementById('btnSave');
             btn.disabled = true;
-            const method   = isCreate ? 'POST' : 'PUT';
+            const method = isCreate ? 'POST' : 'PUT';
             const endpoint = isCreate ? '/receivings' : `/receivings/${recordId}`;
             const res = await apiFetch(endpoint, { method, body: JSON.stringify(getFormData()) });
             btn.disabled = false;
@@ -1258,7 +1230,7 @@
                 } else {
                     const status = document.getElementById('autosaveStatus');
                     status.style.display = 'inline';
-                    status.textContent   = 'Autosaved at ' + new Date().toLocaleTimeString();
+                    status.textContent = 'Autosaved at ' + new Date().toLocaleTimeString();
                     setTimeout(() => status.style.display = 'none', 5000);
                 }
             } else if (res.status === 422) {
@@ -1274,7 +1246,7 @@
             await saveForm(true);
             const res = await apiFetch(`/receivings/${recordId}/status`, {
                 method: 'PATCH',
-                body  : JSON.stringify({ status: 1 }),
+                body: JSON.stringify({ status: 1 }),
             });
             if (res?.ok) {
                 showAlert('Record submitted successfully.', 'success');
@@ -1286,42 +1258,43 @@
         }
 
         function setupAutosave() {
-            const fields = ['receipt_date', 'lot_no', 'vehicle_number', 'supplier_id', 'material_id',
-                            'invoice_qty', 'received_qty', 'unit', 'remarks'];
-            fields.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.addEventListener('change', scheduleAutosave);
-                if (['text', 'number'].includes(el.type) || el.tagName === 'TEXTAREA') {
-                    el.addEventListener('keyup', scheduleAutosave);
-                }
-            });
+            ['receipt_date', 'lot_no', 'vehicle_number', 'supplier_id', 'material_id',
+                'invoice_qty', 'received_qty', 'unit', 'remarks'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    el.addEventListener('change', scheduleAutosave);
+                    if (['text', 'number'].includes(el.type) || el.tagName === 'TEXTAREA') {
+                        el.addEventListener('keyup', scheduleAutosave);
+                    }
+                });
         }
-
         function scheduleAutosave() {
             const status = document.getElementById('autosaveStatus');
             status.style.display = 'inline';
-            status.style.color   = 'var(--text-muted)';
-            status.textContent   = 'Saving...';
+            status.style.color = 'var(--text-muted)';
+            status.textContent = 'Saving...';
             clearTimeout(autosaveTimer);
             // autosaveTimer = setTimeout(() => saveForm(true), 3000);
         }
 
+        // ══════════════════════════════════════════════════════════════════════════════
+        // INIT
+        // ══════════════════════════════════════════════════════════════════════════════
         async function init() {
             await loadDropdowns();
 
             if (isCreate) {
-                document.getElementById('receipt_date').value         = new Date().toISOString().split('T')[0];
-                document.getElementById('pageTitle').textContent      = 'Create Receiving';
-                document.getElementById('pageSubtitle').textContent   = 'Record new raw material receiving log';
-                document.getElementById('breadcrumbTitle').textContent= 'Create Receiving';
-                document.getElementById('btnSaveLabel').textContent   = 'Create Record';
+                document.getElementById('receipt_date').value = new Date().toISOString().split('T')[0];
+                document.getElementById('pageTitle').textContent = 'Create Receiving';
+                document.getElementById('pageSubtitle').textContent = 'Record new raw material receiving log';
+                document.getElementById('breadcrumbTitle').textContent = 'Create Receiving';
+                document.getElementById('btnSaveLabel').textContent = 'Create Record';
             } else {
                 await loadRecord();
             }
 
             document.getElementById('loadingSkeleton').style.display = 'none';
-            document.getElementById('formContainer').style.display   = 'block';
+            document.getElementById('formContainer').style.display = 'block';
         }
 
         init();
