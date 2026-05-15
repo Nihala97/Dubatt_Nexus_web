@@ -482,16 +482,47 @@ class BbsuBatchController extends Controller
     {
         // 1. OUT stock for each input lot
         foreach ($batch->inputDetails as $detail) {
-            $receiving = \App\Models\Receiving::where('lot_no', $detail->lot_no)->first();
-            if ($receiving && $receiving->material_id) {
-                $this->inventoryService->stockOut(
-                    $receiving->material_id,
-                    $detail->quantity,
-                    'BBSU',
-                    $batch->id,
-                    $batch->batch_no,
-                    auth()->id()
-                );
+            $breakdown = is_array($detail->material_breakdown)
+                ? $detail->material_breakdown
+                : json_decode($detail->material_breakdown, true);
+
+            if (!empty($breakdown)) {
+                // breakdown = [ "stock_code" => qty, ... ]  e.g. { "1000002": 111 }
+                foreach ($breakdown as $stockCode => $qty) {
+                    $qty = (float) $qty;
+                    if ($qty <= 0)
+                        continue;
+
+                    // Look up material by stock_code
+                    $material = Material::where('stock_code', $stockCode)->first();
+
+                    if (!$material) {
+                        Log::warning('BBSU inventory: material not found for stock_code ' . $stockCode);
+                        continue;
+                    }
+
+                    $this->inventoryService->stockOut(
+                        $material->id,
+                        $qty,
+                        'BBSU',
+                        $batch->id,
+                        $batch->batch_no,
+                        auth()->id()
+                    );
+                }
+            } else {
+                // Fallback: no breakdown stored — use the receiving's material_id
+                $receiving = \App\Models\Receiving::where('lot_no', $detail->lot_no)->first();
+                if ($receiving && $receiving->material_id) {
+                    $this->inventoryService->stockOut(
+                        $receiving->material_id,
+                        (float) $detail->quantity,
+                        'BBSU',
+                        $batch->id,
+                        $batch->batch_no,
+                        auth()->id()
+                    );
+                }
             }
         }
 
