@@ -1009,8 +1009,8 @@
     <div id="formAlert" class="form-alert"></div>
 
     <!-- ═══════════════════════════════════════
-                         SECTION 1 — Primary Details
-                    ════════════════════════════════════════ -->
+                                         SECTION 1 — Primary Details
+                                    ════════════════════════════════════════ -->
     <div class="form-card">
         <div class="form-section-head">
             <svg viewBox="0 0 24 24">
@@ -1094,8 +1094,8 @@
     </div>
 
     <!-- ═══════════════════════════════════════
-                         MAIN TWO-COLUMN AREA
-                    ════════════════════════════════════════ -->
+                                         MAIN TWO-COLUMN AREA
+                                    ════════════════════════════════════════ -->
     <div class="main-cols">
 
         <!-- LEFT: Input Lots -->
@@ -1176,8 +1176,8 @@
     <div style="height:20px;"></div>
 
     <!-- ═══════════════════════════════════════
-                         SECTION: BBSU Power Consumption
-                    ════════════════════════════════════════ -->
+                                         SECTION: BBSU Power Consumption
+                                    ════════════════════════════════════════ -->
     <div class="form-card">
         <div class="form-section-head">
             <svg viewBox="0 0 24 24">
@@ -1226,8 +1226,8 @@
     </div>
 
     <!-- ═══════════════════════════════════════
-                         STICKY FOOTER ACTIONS
-                    ════════════════════════════════════════ -->
+                                         STICKY FOOTER ACTIONS
+                                    ════════════════════════════════════════ -->
     <div class="form-actions">
         <a href="{{ route('admin.mes.bbsu.index') }}" class="btn btn-outline btn-sm">Cancel</a>
         <div style="display:flex;gap:10px;align-items:center;">
@@ -1253,8 +1253,8 @@
     </div>
 
     <!-- ═══════════════════════════════════════
-                         QTY POPUP MODAL
-                    ════════════════════════════════════════ -->
+                                         QTY POPUP MODAL
+                                    ════════════════════════════════════════ -->
     <div class="modal-overlay" id="qtyModal">
         <div class="modal-box">
             <div class="modal-head">
@@ -1305,8 +1305,8 @@
     </div>
 
     <!-- ═══════════════════════════════════════
-                         LOT DETAIL MODAL
-                    ════════════════════════════════════════ -->
+                                         LOT DETAIL MODAL
+                                    ════════════════════════════════════════ -->
     <div class="detail-modal-overlay" id="lotDetailModal">
         <div class="detail-modal-box">
             <div class="modal-head">
@@ -1470,39 +1470,39 @@
                 tr.dataset.rowIndex = idx;
 
                 tr.innerHTML = `
-                            <td class="sr-cell">${tbody.rows.length + 1}</td>
-                            <td class="select-cell">
-                                <select class="row-select" id="lot_no_${idx}" onchange="onLotChange(${idx})">
-                                    ${buildLotDropdown()}
-                                </select>
-                            </td>
-                            <td>
-                                <button type="button" class="qty-btn ${qty ? 'filled' : ''}" id="qty_btn_${idx}" onclick="openQtyModal(${idx})">
-                                    <span id="qty_display_${idx}" style="color:${qty ? 'var(--text)' : 'var(--text-muted)'};font-size:13px;">
-                                        ${qty ? parseFloat(qty).toFixed(2) + ' KG' : 'Click to assign...'}
-                                    </span>
-                                    <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                                </button>
-                                <input type="hidden" id="qty_val_${idx}" value="${qty}">
-                                <input type="hidden" id="qty_breakdown_${idx}" value='${breakdown}'>
-                                <input type="hidden" id="qty_material_names_${idx}" value='{}'>
-                            </td>
-                            <td>
-                                <input type="text" class="row-input" id="acid_${idx}"
-                                       placeholder="0.000" value="${acid}"
-                                       oninput="recalcTotals(); ">
-                            </td>
-                            <td style="text-align:center;">
-                                <button type="button" class="view-btn" onclick="openLotDetailModal(${idx})" title="View assigned materials">
-                                    <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                </button>
-                            </td>
-                            <td>
-                                <button type="button" class="delete-btn" onclick="removeRow(${idx})" title="Remove">
-                                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                                </button>
-                            </td>
-                        `;
+                                            <td class="sr-cell">${tbody.rows.length + 1}</td>
+                                            <td class="select-cell">
+                                                <select class="row-select" id="lot_no_${idx}" onchange="onLotChange(${idx})">
+                                                    ${buildLotDropdown()}
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <button type="button" class="qty-btn ${qty ? 'filled' : ''}" id="qty_btn_${idx}" onclick="openQtyModal(${idx})">
+                                                    <span id="qty_display_${idx}" style="color:${qty ? 'var(--text)' : 'var(--text-muted)'};font-size:13px;">
+                                                        ${qty ? parseFloat(qty).toFixed(2) + ' KG' : 'Click to assign...'}
+                                                    </span>
+                                                    <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                                                </button>
+                                                <input type="hidden" id="qty_val_${idx}" value="${qty}">
+                                                <input type="hidden" id="qty_breakdown_${idx}" value='${breakdown}'>
+                                                <input type="hidden" id="qty_material_names_${idx}" value='{}'>
+                                            </td>
+                                            <td>
+                                                <input type="text" class="row-input" id="acid_${idx}"
+                                                       placeholder="0.000" value="${acid}"
+                                                       oninput="recalcTotals(); ">
+                                            </td>
+                                            <td style="text-align:center;">
+                                                <button type="button" class="view-btn" onclick="openLotDetailModal(${idx})" title="View assigned materials">
+                                                    <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                </button>
+                                            </td>
+                                            <td>
+                                                <button type="button" class="delete-btn" onclick="removeRow(${idx})" title="Remove">
+                                                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                                </button>
+                                            </td>
+                                        `;
                 tbody.appendChild(tr);
 
                 // Set selected lot if data provided
@@ -1530,7 +1530,7 @@
                 if (!tr) return;
                 tr.style.transition = 'opacity 0.2s';
                 tr.style.opacity = '0';
-                setTimeout(() => { tr.remove(); renumberRows(); recalcTotals();  }, 200);
+                setTimeout(() => { tr.remove(); renumberRows(); recalcTotals(); }, 200);
             }
 
             function renumberRows() {
@@ -1543,7 +1543,7 @@
             function onLotChange(idx) {
                 // acid % is filled after qty assignment from modal, not on lot select
                 recalcTotals();
-                
+
             }
 
             function recalcTotals() {
@@ -1578,7 +1578,7 @@
 
                 // Show loading
                 document.getElementById('qtyModalBody').innerHTML = `
-                            <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">Loading lot data...</td></tr>`;
+                                            <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">Loading lot data...</td></tr>`;
                 document.getElementById('qtyModal').classList.add('open');
 
                 try {
@@ -1587,9 +1587,9 @@
 
                     if (!res?.ok) {
                         document.getElementById('qtyModalBody').innerHTML = `
-                                    <tr><td colspan="6" style="text-align:center;padding:24px;color:#dc2626;">
-                                        Failed to load data for lot <strong>${lotNo}</strong>.
-                                    </td></tr>`;
+                                                    <tr><td colspan="6" style="text-align:center;padding:24px;color:#dc2626;">
+                                                        Failed to load data for lot <strong>${lotNo}</strong>.
+                                                    </td></tr>`;
                         return;
                     }
 
@@ -1598,9 +1598,9 @@
 
                     if (!rows.length) {
                         document.getElementById('qtyModalBody').innerHTML = `
-                                    <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">
-                                        No stock data found for lot <strong>${lotNo}</strong>.
-                                    </td></tr>`;
+                                                    <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">
+                                                        No stock data found for lot <strong>${lotNo}</strong>.
+                                                    </td></tr>`;
                         return;
                     }
 
@@ -1613,31 +1613,31 @@
                         const preVal = (rows.length === 1 && existingQty > 0) ? existingQty.toFixed(3) : '';
                         const description = (l.material_description ?? '—').replace(/'/g, '&#39;');
                         return `<tr>
-                                    <td><strong>${l.lot_no ?? lotNo}</strong></td>
-                                    <td>${l.material_description ?? '—'}</td>
-                                    <td>${parseFloat(l.avg_acid_pct || 0).toFixed(2)}%</td>
-                                    <td>${l.unit ?? 'KG'}</td>
-                                    <td><span class="avail-badge ${isZero ? 'zero' : ''}">${available.toFixed(3)} ${l.unit ?? 'KG'}</span></td>
-                                    <td>
-                                        <input type="number" class="assign-input" id="assign_${i}"
-                                            placeholder="0.00" step="0.001" min="0"
-                                            max="${available}"
-                                            data-acid="${parseFloat(l.avg_acid_pct || 0).toFixed(3)}"
-                                            data-available="${available}"
-                                            data-ulab="${l.ulab_type}"
-                                            data-description="${description}"
-                                            value="${preVal}"
-                                            ${isZero ? 'disabled' : ''}
-                                            oninput="capAssign(this)">
-                                    </td>
-                                </tr>`;
+                                                    <td><strong>${l.lot_no ?? lotNo}</strong></td>
+                                                    <td>${l.material_description ?? '—'}</td>
+                                                    <td>${parseFloat(l.avg_acid_pct || 0).toFixed(2)}%</td>
+                                                    <td>${l.unit ?? 'KG'}</td>
+                                                    <td><span class="avail-badge ${isZero ? 'zero' : ''}">${available.toFixed(3)} ${l.unit ?? 'KG'}</span></td>
+                                                    <td>
+                                                        <input type="number" class="assign-input" id="assign_${i}"
+                                                            placeholder="0.00" step="0.001" min="0"
+                                                            max="${available}"
+                                                            data-acid="${parseFloat(l.avg_acid_pct || 0).toFixed(3)}"
+                                                            data-available="${available}"
+                                                            data-ulab="${l.ulab_type}"
+                                                            data-description="${description}"
+                                                            value="${preVal}"
+                                                            ${isZero ? 'disabled' : ''}
+                                                            oninput="capAssign(this)">
+                                                    </td>
+                                                </tr>`;
                     }).join('');
 
                 } catch (e) {
                     document.getElementById('qtyModalBody').innerHTML = `
-                                <tr><td colspan="6" style="text-align:center;padding:24px;color:#dc2626;">
-                                    Network error loading lot data.
-                                </td></tr>`;
+                                                <tr><td colspan="6" style="text-align:center;padding:24px;color:#dc2626;">
+                                                    Network error loading lot data.
+                                                </td></tr>`;
                 }
             }
 
@@ -1706,7 +1706,7 @@
 
                 recalcTotals();
                 closeQtyModal();
-                
+
             }
 
             function closeQtyModal() {
@@ -1747,9 +1747,9 @@
 
                 if (qty <= 0) {
                     container.innerHTML = `
-                            <p style="color:var(--text-muted);font-size:13px;text-align:center;padding:16px 0;">
-                                No quantity has been assigned yet for lot <strong>${lotNo}</strong>.
-                            </p>`;
+                                            <p style="color:var(--text-muted);font-size:13px;text-align:center;padding:16px 0;">
+                                                No quantity has been assigned yet for lot <strong>${lotNo}</strong>.
+                                            </p>`;
                     document.getElementById('lotDetailModal').classList.add('open');
                     return;
                 }
@@ -1767,40 +1767,40 @@
                         const acidPct = parseFloat(info.acid_pct || 0);
                         const showAcid = acidPct > 0;
                         rows += `<tr>
-                                <td><strong>${lotNo}</strong></td>
-                                <td>${desc}</td>
-                                <td>${showAcid ? acidPct.toFixed(2) + '%' : '<span style="color:var(--text-muted);">—</span>'}</td>
-                                <td><strong style="color:var(--green);">${assignedQty.toFixed(3)} KG</strong></td>
-                            </tr>`;
+                                                <td><strong>${lotNo}</strong></td>
+                                                <td>${desc}</td>
+                                                <td>${showAcid ? acidPct.toFixed(2) + '%' : '<span style="color:var(--text-muted);">—</span>'}</td>
+                                                <td><strong style="color:var(--green);">${assignedQty.toFixed(3)} KG</strong></td>
+                                            </tr>`;
                     });
                 } else {
                     // Fallback: no breakdown stored yet — show aggregate row
                     rows = `<tr>
-                            <td><strong>${lotNo}</strong></td>
-                            <td><span style="color:var(--text-muted);">—</span></td>
-                            <td>${parseFloat(acid) > 0 ? parseFloat(acid).toFixed(3) + '%' : '<span style="color:var(--text-muted);">—</span>'}</td>
-                            <td><strong style="color:var(--green);">${qty.toFixed(3)} KG</strong></td>
-                        </tr>`;
+                                            <td><strong>${lotNo}</strong></td>
+                                            <td><span style="color:var(--text-muted);">—</span></td>
+                                            <td>${parseFloat(acid) > 0 ? parseFloat(acid).toFixed(3) + '%' : '<span style="color:var(--text-muted);">—</span>'}</td>
+                                            <td><strong style="color:var(--green);">${qty.toFixed(3)} KG</strong></td>
+                                        </tr>`;
                 }
 
                 container.innerHTML = `
-                        <table class="detail-table">
-                            <thead>
-                                <tr>
-                                    <th>Lot No</th>
-                                    <th>Material Name</th>
-                                    <th>Acid %</th>
-                                    <th>Assigned Qty</th>
-                                </tr>
-                            </thead>
-                            <tbody>${rows}</tbody>
-                            <tfoot>
-                                <tr style="background:var(--green-light);">
-                                    <td colspan="3" style="font-weight:700;color:var(--green);font-size:13px;padding:9px 14px;text-align:right;">TOTAL</td>
-                                    <td style="font-weight:700;color:var(--green);font-size:13px;padding:9px 14px;">${qty.toFixed(3)} KG</td>
-                                </tr>
-                            </tfoot>
-                        </table>`;
+                                        <table class="detail-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Lot No</th>
+                                                    <th>Material Name</th>
+                                                    <th>Acid %</th>
+                                                    <th>Assigned Qty</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>${rows}</tbody>
+                                            <tfoot>
+                                                <tr style="background:var(--green-light);">
+                                                    <td colspan="3" style="font-weight:700;color:var(--green);font-size:13px;padding:9px 14px;text-align:right;">TOTAL</td>
+                                                    <td style="font-weight:700;color:var(--green);font-size:13px;padding:9px 14px;">${qty.toFixed(3)} KG</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>`;
 
                 document.getElementById('lotDetailModal').classList.add('open');
             }
@@ -1855,23 +1855,23 @@
             function buildOutputTable() {
                 const tbody = document.getElementById('outputTableBody');
                 tbody.innerHTML = OUTPUT_KEYS.map(mat => `
-                            <tr>
-                                <td class="mat-name">${getOutputLabel(mat.code)}</td>
-                                <td><input type="number" class="out-input" id="out_qty_${mat.key}"
-                                           placeholder="0.00" step="0.0001" oninput="calcOutputTotal(); "></td>
-                                <td><input type="number" class="out-input" id="out_yield_${mat.key}"
-                                           placeholder="0.00" readonly
-                                           style="background:#eef6f1;color:var(--green);font-weight:600;cursor:default;"></td>
-                            </tr>
-                        `).join('') + `
-                            <tr class="total-row">
-                                <td><strong>TOTAL</strong></td>
-                                <td><input type="text" class="out-input" id="outputTotalQty" readonly placeholder="0.00"
-                                           style="font-weight:700;color:var(--green);background:var(--green-light);"></td>
-                                <td><input type="text" class="out-input" id="outputTotalYield" readonly placeholder="0.00%"
-                                           style="font-weight:700;color:var(--green);background:var(--green-light);"></td>
-                            </tr>
-                        `;
+                                            <tr>
+                                                <td class="mat-name">${getOutputLabel(mat.code)}</td>
+                                                <td><input type="number" class="out-input" id="out_qty_${mat.key}"
+                                                           placeholder="0.00" step="0.0001" oninput="calcOutputTotal(); "></td>
+                                                <td><input type="number" class="out-input" id="out_yield_${mat.key}"
+                                                           placeholder="0.00" readonly
+                                                           style="background:#eef6f1;color:var(--green);font-weight:600;cursor:default;"></td>
+                                            </tr>
+                                        `).join('') + `
+                                            <tr class="total-row">
+                                                <td><strong>TOTAL</strong></td>
+                                                <td><input type="text" class="out-input" id="outputTotalQty" readonly placeholder="0.00"
+                                                           style="font-weight:700;color:var(--green);background:var(--green-light);"></td>
+                                                <td><input type="text" class="out-input" id="outputTotalYield" readonly placeholder="0.00%"
+                                                           style="font-weight:700;color:var(--green);background:var(--green-light);"></td>
+                                            </tr>
+                                        `;
             }
 
             function calcOutputTotal() {
@@ -1915,7 +1915,7 @@
                 const final_ = parseFloat(document.getElementById('power_final').value) || 0;
                 document.getElementById('power_consumption').value =
                     final_ >= initial ? (final_ - initial).toFixed(2) : '';
-                
+
             }
 
             // ─── Collect Payload ─────────────────────────────────────────────
@@ -2105,7 +2105,8 @@
             }
 
             // ─── Autosave (edit/draft only) — silent background save ─────────
-            function triggerAutosave() { return;
+            function triggerAutosave() {
+                return;
                 if (isCreate || isLocked || !currentBatchId) return;
                 clearTimeout(autosaveTimer);
                 // autosaveTimer = setTimeout(() => saveForm(true), 2500);
@@ -2133,10 +2134,18 @@
                     document.getElementById('inputRowsBody').innerHTML = '';
                     rowCount = 0;
                     if (data.input_details?.length) {
+                        const existingLotNos = data.input_details.map(d => d.lot_no).filter(Boolean);
+                        if (existingLotNos.length) {
+                            const includeParam = `?include=${existingLotNos.join(',')}`;
+                            const res2 = await apiFetch(`/bbsu-batches/acid-test-lot-numbers${includeParam}`);
+                            if (res2?.ok) {
+                                const json2 = await res2.json();
+                                lotOptions = Array.isArray(json2) ? json2 : (json2.data?.data ?? json2.data ?? []);
+                            }
+                        }
                         data.input_details.forEach(detail => addInputRow(detail));
-                        // Populate material names for view modal from API (for edit mode)
                         data.input_details.forEach((detail, i) => {
-                            const rowIdx = i + 1; // rowCount increments from 1 in addInputRow
+                            const rowIdx = i + 1;
                             if (detail.lot_no && detail.material_breakdown) {
                                 loadMaterialNamesForRow(rowIdx, detail.lot_no);
                             }
@@ -2247,9 +2256,7 @@
 
             function formatForDatetimeLocal(isoString) {
                 if (!isoString) return '';
-                const d = new Date(isoString);
-                const pad = n => String(n).padStart(2, '0');
-                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                return isoString.replace(' ', 'T').slice(0, 16);
             }
 
             // ── Spin keyframe ──
