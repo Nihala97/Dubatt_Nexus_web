@@ -147,12 +147,15 @@ Route::middleware('auth:sanctum')->group(function () {
           Route::patch('/{bbsu_batch}/status', [BbsuBatchController::class, 'updateStatus'])->middleware('module:bbsu,can_edit');
      });
 
+    Route::prefix('smelting-batches')->group(function () {
+        Route::get('/bbsu-lots/all', [SmeltingBatchController::class, 'getAllBbsuLots']);
+    });
 
      // ── Smelting ──────────────────────────────────────────────────
      Route::prefix('smelting-batches')->middleware('module:smelting')->group(function () {
           Route::get('/', [SmeltingBatchController::class, 'index']);
           Route::get('/generate-batch-no', [SmeltingBatchController::class, 'generateBatchNo']);
-          Route::get('/bbsu-lots/all', [SmeltingBatchController::class, 'getAllBbsuLots']);
+          // Route::get('/bbsu-lots/all', [SmeltingBatchController::class, 'getAllBbsuLots']);
           Route::get('/bbsu-lots/{materialId}', [SmeltingBatchController::class, 'getBbsuLots']);
           Route::post('/', [SmeltingBatchController::class, 'store']);
           Route::get('/{id}', [SmeltingBatchController::class, 'show']);
