@@ -10,6 +10,169 @@
 
 @push('styles')
     <style>
+        /* ── Searchable Dropdown (SDD) for filters ── */
+        .sdd {
+            display: block;
+            width: 100%;
+            position: relative;
+        }
+
+        .sdd-trigger {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 11px 8px 11px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--text);
+            cursor: pointer;
+            user-select: none;
+            gap: 6px;
+            transition: border-color .2s, box-shadow .2s;
+            min-height: 36px;
+            box-sizing: border-box;
+        }
+
+        .sdd-trigger:hover,
+        .sdd.open>.sdd-trigger {
+            border-color: var(--green);
+            background: var(--white);
+        }
+
+        .sdd-trigger-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: left;
+        }
+
+        .sdd-trigger-text.placeholder {
+            color: var(--text-muted);
+        }
+
+        .sdd-trigger-chevron {
+            width: 13px;
+            height: 13px;
+            stroke: var(--text-muted);
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+            transition: transform .18s;
+        }
+
+        .sdd.open>.sdd-trigger .sdd-trigger-chevron {
+            transform: rotate(180deg);
+            stroke: var(--green);
+        }
+
+        .sdd-portal {
+            position: fixed;
+            z-index: 9999;
+            background: #fff;
+            border: 1.5px solid var(--green);
+            border-radius: 10px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, .16);
+            min-width: 220px;
+            overflow: hidden;
+            display: none;
+            animation: sddIn .12s ease;
+        }
+
+        .sdd-portal.visible {
+            display: block;
+        }
+
+        @keyframes sddIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .sdd-search-wrap {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+
+        .sdd-search-ico {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 13px;
+            height: 13px;
+            stroke: var(--text-muted);
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            pointer-events: none;
+        }
+
+        .sdd-search {
+            width: 100%;
+            padding: 7px 10px 7px 32px;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            background: var(--bg);
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--text);
+            outline: none;
+            transition: border-color .18s;
+            box-sizing: border-box;
+        }
+
+        .sdd-search:focus {
+            border-color: var(--green);
+            background: #fff;
+        }
+
+        .sdd-list {
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+
+        .sdd-item {
+            padding: 8px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background .1s;
+            color: var(--text);
+        }
+
+        .sdd-item:hover {
+            background: #f0f9f4;
+            color: var(--green);
+        }
+
+        .sdd-item.selected {
+            background: #e8f5ed;
+            color: var(--green);
+            font-weight: 600;
+        }
+
+        .sdd-empty {
+            padding: 18px 14px;
+            font-size: 12.5px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
         /* ── Page header ── */
         .page-header {
             display: flex;
@@ -659,6 +822,17 @@
 @endpush
 
 @section('content')
+    <div class="sdd-portal" id="sddPortal">
+        <div class="sdd-search-wrap">
+            <svg class="sdd-search-ico" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input class="sdd-search" id="sddPortalSearch" placeholder="Search…" autocomplete="off"
+                oninput="sddPortalFilter(this.value)" onkeydown="if(event.key==='Escape') sddClosePortal()">
+        </div>
+        <div class="sdd-list" id="sddPortalList"></div>
+    </div>
 
     @php
         $q = \App\Models\Receiving::with(['createdBy'])->where('is_active', true);
@@ -713,7 +887,8 @@
                 </svg>
                 Back to Dashboard
             </a>
-            <a href="{{ route('admin.mes.receiving.create') }}" class="btn btn-primary" data-permission="receiving,can_create">
+            <a href="{{ route('admin.mes.receiving.create') }}" class="btn btn-primary"
+                data-permission="receiving,can_create">
                 <svg viewBox="0 0 24 24">
                     <line x1="12" y1="5" x2="12" y2="19" />
                     <line x1="5" y1="12" x2="19" y2="12" />
@@ -806,15 +981,17 @@
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label>Supplier</label>
-                        <select name="supplier_id">
-                            <option value="">All Suppliers</option>
-                            @foreach($suppliers as $s)
-                                <option value="{{ $s->id }}" {{ request('supplier_id') == $s->id ? 'selected' : '' }}>
-                                    {{ $s->supplier_name }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <label>Suppliers</label>
+                        <div class="sdd" id="sdd_supplier_id">
+                            <div class="sdd-trigger" onclick="toggleSdd('supplier_id')">
+                                <span class="sdd-trigger-text placeholder" id="sdd_supplier_id_label"
+                                    data-placeholder="All Suppliers">All Suppliers</span>
+                                <svg class="sdd-trigger-chevron" viewBox="0 0 24 24">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </div>
+                            <input type="hidden" id="supplier_id" name="supplier_id" value="{{ request('supplier_id') }}">
+                        </div>
                     </div>
                     <div class="filter-group">
                         <label>Date From</label>
@@ -952,7 +1129,8 @@
 
                                 {{-- DELETE (draft only) --}}
                                 @if($test->status == '0')
-                                    <button id="del-{{ $test->id }}" class="action-btn danger" data-permission="receiving,can_delete"
+                                    <button id="del-{{ $test->id }}" class="action-btn danger"
+                                        data-permission="receiving,can_delete"
                                         onclick="deleteBatch({{ $test->id }}, '{{ $test->lot_no }}')" title="Delete">
                                         {{ $test->status }}
                                         <svg viewBox="0 0 24 24">
@@ -978,7 +1156,8 @@
                                 <p>{{ request('search') || $activeFilters ? 'Try adjusting your filters.' : 'Create your first acid test record to get started.' }}
                                 </p>
                                 @if(!request('search') && !$activeFilters)
-                                    <a href="{{ route('admin.mes.receiving.create') }}" class="btn btn-primary" data-permission="receiving,can_create">
+                                    <a href="{{ route('admin.mes.receiving.create') }}" class="btn btn-primary"
+                                        data-permission="receiving,can_create">
                                         <svg viewBox="0 0 24 24">
                                             <line x1="12" y1="5" x2="12" y2="19" />
                                             <line x1="5" y1="12" x2="19" y2="12" />
@@ -1056,192 +1235,258 @@
 @endsection
 
 @push('scripts')
-<script>
-    function toggleFilter() {
-        document.getElementById('filterBody').classList.toggle('open');
-        document.getElementById('filterChevron').classList.toggle('open');
-    }
-    let searchTimer;
-    function debounceSearch(input) {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => document.getElementById('filterForm').submit(), 500);
-    }
-
-    async function deleteBatch(id, batchNo) {
-
-        if (!await showConfirm(`Delete batch ${batchNo}? This cannot be undone.`)) return;
-
-        const btn = document.getElementById(`del-${id}`);
-        btn.disabled = true;
-
-        const res = await apiFetch(`/receivings/${id}`, { method: 'DELETE' });
-        const data = await res.json();
-
-        if (res.ok && data.status === 'ok') {
-
-            showToast('Batch deleted successfully.', 'success');
-
-            const row = document.getElementById(`row-${id}`);
-
-            if (row) {
-                row.style.transition = 'opacity .25s, transform .25s';
-                row.style.opacity = '0';
-                row.style.transform = 'translateX(-20px)';
-
-                setTimeout(() => row.remove(), 250);
-            }
-
-        } else {
-            showToast(data.message ?? 'Failed to delete.', 'error');
-            btn.disabled = false;
+@push('scripts')
+    <script>
+        function toggleFilter() {
+            document.getElementById('filterBody').classList.toggle('open');
+            document.getElementById('filterChevron').classList.toggle('open');
         }
-    }
-    function showToast(message, type = 'success') {
-        const existing = document.getElementById('_toast');
-        if (existing) existing.remove();
+        let searchTimer;
+        function debounceSearch(input) {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => document.getElementById('filterForm').submit(), 500);
+        }
 
-        const bg = type === 'success' ? '#166534' : '#991b1b';
-        const icon = type === 'success'
-            ? `<polyline points="20 6 9 17 4 12"/>`
-            : `<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>`;
-
-        const toast = document.createElement('div');
-        toast.id = '_toast';
-        toast.style.cssText = `
-                position:fixed; bottom:24px; right:24px;
-                background:${bg}; color:#fff;
-                padding:12px 20px; border-radius:10px;
-                font-size:13px; font-weight:600;
-                box-shadow:0 4px 20px rgba(0,0,0,.15);
-                z-index:10000;
-                display:flex; align-items:center; gap:8px;
-                animation:_toastIn .2s ease;
-            `;
-        toast.innerHTML = `
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    style="width:16px;height:16px;flex-shrink:0">${icon}</svg>
-                <span>${message}</span>
-            `;
-        document.body.appendChild(toast);
-        setTimeout(() => {
-            toast.style.animation = '_toastOut .2s ease forwards';
-            setTimeout(() => toast.remove(), 200);
-        }, 3500);
-    }
-
-    /* ─────────────────────────────────────────────
-    showConfirm(message) → Promise<boolean>
-    ───────────────────────────────────────────── */
-    function showConfirm(message) {
-        return new Promise(resolve => {
-            const overlay = document.createElement('div');
-            overlay.id = '_confirmOverlay';
-            overlay.style.cssText = `
-                    position:fixed; inset:0;
-                    background:rgba(0,0,0,.45);
-                    z-index:10001;
-                    display:flex; align-items:center; justify-content:center;
-                    animation:_fadeIn .15s ease;
-                `;
-
-            overlay.innerHTML = `
-                    <div style="
-                        background:var(--white, #fff);
-                        border:1px solid var(--border, #e5e7eb);
-                        border-radius:16px;
-                        padding:28px 28px 24px;
-                        width:100%; max-width:380px;
-                        box-shadow:0 20px 60px rgba(0,0,0,.18);
-                        animation:_slideUp .18s ease;
-                        font-family:inherit;
-                    ">
-                        <!-- Icon -->
-                        <div style="
-                            width:48px; height:48px;
-                            background:#fee2e2; border-radius:12px;
-                            display:flex; align-items:center; justify-content:center;
-                            margin-bottom:16px;
-                        ">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                style="width:22px;height:22px">
-                                <polyline points="3 6 5 6 21 6"/>
-                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                                <path d="M10 11v6M14 11v6"/>
-                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                            </svg>
-                        </div>
-
-                        <!-- Title & message -->
-                        <p style="font-size:15px;font-weight:700;color:var(--text,#111);margin:0 0 6px">
-                            Confirm Delete
-                        </p>
-                        <p style="font-size:13px;color:var(--text-muted,#6b7280);margin:0 0 24px;line-height:1.5">
-                            ${message}
-                        </p>
-
-                        <!-- Buttons -->
-                        <div style="display:flex;gap:10px;justify-content:flex-end">
-                            <button id="_confirmCancel" style="
-                                padding:9px 18px; border-radius:9px;
-                                font-size:13px; font-weight:600;
-                                cursor:pointer; font-family:inherit;
-                                background:var(--white,#fff);
-                                color:var(--text,#111);
-                                border:1.5px solid var(--border,#e5e7eb);
-                                transition:all .15s;
-                            ">Cancel</button>
-                            <button id="_confirmOk" style="
-                                padding:9px 18px; border-radius:9px;
-                                font-size:13px; font-weight:600;
-                                cursor:pointer; font-family:inherit;
-                                background:#ef4444; color:#fff;
-                                border:1.5px solid #ef4444;
-                                transition:all .15s;
-                            ">Delete</button>
-                        </div>
-                    </div>
-                `;
-
-            document.body.appendChild(overlay);
-
-            // Hover effects
-            const cancelBtn = overlay.querySelector('#_confirmCancel');
-            const okBtn = overlay.querySelector('#_confirmOk');
-
-            cancelBtn.onmouseenter = () => { cancelBtn.style.borderColor = 'var(--green)'; cancelBtn.style.color = 'var(--green)'; };
-            cancelBtn.onmouseleave = () => { cancelBtn.style.borderColor = 'var(--border,#e5e7eb)'; cancelBtn.style.color = 'var(--text,#111)'; };
-            okBtn.onmouseenter = () => { okBtn.style.background = '#dc2626'; };
-            okBtn.onmouseleave = () => { okBtn.style.background = '#ef4444'; };
-
-            function close(result) {
-                overlay.style.animation = '_fadeOut .15s ease forwards';
-                setTimeout(() => { overlay.remove(); resolve(result); }, 150);
+        async function deleteBatch(id, batchNo) {
+            if (!await showConfirm(`Delete batch ${batchNo}? This cannot be undone.`)) return;
+            const btn = document.getElementById(`del-${id}`);
+            btn.disabled = true;
+            const res = await apiFetch(`/receivings/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (res.ok && data.status === 'ok') {
+                showToast('Batch deleted successfully.', 'success');
+                const row = document.getElementById(`row-${id}`);
+                if (row) {
+                    row.style.transition = 'opacity .25s, transform .25s';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(-20px)';
+                    setTimeout(() => row.remove(), 250);
+                }
+            } else {
+                showToast(data.message ?? 'Failed to delete.', 'error');
+                btn.disabled = false;
             }
+        }
 
-            okBtn.onclick = () => close(true);
-            cancelBtn.onclick = () => close(false);
-            overlay.onclick = e => { if (e.target === overlay) close(false); };
+        function showToast(message, type = 'success') {
+            const existing = document.getElementById('_toast');
+            if (existing) existing.remove();
+            const bg = type === 'success' ? '#166534' : '#991b1b';
+            const icon = type === 'success'
+                ? `<polyline points="20 6 9 17 4 12"/>`
+                : `<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>`;
+            const toast = document.createElement('div');
+            toast.id = '_toast';
+            toast.style.cssText = `
+                        position:fixed; bottom:24px; right:24px;
+                        background:${bg}; color:#fff;
+                        padding:12px 20px; border-radius:10px;
+                        font-size:13px; font-weight:600;
+                        box-shadow:0 4px 20px rgba(0,0,0,.15);
+                        z-index:10000;
+                        display:flex; align-items:center; gap:8px;
+                        animation:_toastIn .2s ease;
+                    `;
+            toast.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="width:16px;height:16px;flex-shrink:0">${icon}</svg>
+                        <span>${message}</span>
+                    `;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = '_toastOut .2s ease forwards';
+                setTimeout(() => toast.remove(), 200);
+            }, 3500);
+        }
 
-            document.addEventListener('keydown', function esc(e) {
-                if (e.key === 'Escape') { close(false); document.removeEventListener('keydown', esc); }
+        function showConfirm(message) {
+            return new Promise(resolve => {
+                const overlay = document.createElement('div');
+                overlay.id = '_confirmOverlay';
+                overlay.style.cssText = `
+                            position:fixed; inset:0;
+                            background:rgba(0,0,0,.45);
+                            z-index:10001;
+                            display:flex; align-items:center; justify-content:center;
+                            animation:_fadeIn .15s ease;
+                        `;
+                overlay.innerHTML = `
+                            <div style="
+                                background:var(--white, #fff);
+                                border:1px solid var(--border, #e5e7eb);
+                                border-radius:16px;
+                                padding:28px 28px 24px;
+                                width:100%; max-width:380px;
+                                box-shadow:0 20px 60px rgba(0,0,0,.18);
+                                animation:_slideUp .18px ease;
+                                font-family:inherit;
+                            ">
+                                <div style="width:48px;height:48px;background:#fee2e2;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px">
+                                        <polyline points="3 6 5 6 21 6"/>
+                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                        <path d="M10 11v6M14 11v6"/>
+                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                                    </svg>
+                                </div>
+                                <p style="font-size:15px;font-weight:700;color:var(--text,#111);margin:0 0 6px">Confirm Delete</p>
+                                <p style="font-size:13px;color:var(--text-muted,#6b7280);margin:0 0 24px;line-height:1.5">${message}</p>
+                                <div style="display:flex;gap:10px;justify-content:flex-end">
+                                    <button id="_confirmCancel" style="padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--white,#fff);color:var(--text,#111);border:1.5px solid var(--border,#e5e7eb);transition:all .15s;">Cancel</button>
+                                    <button id="_confirmOk" style="padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:#ef4444;color:#fff;border:1.5px solid #ef4444;transition:all .15s;">Delete</button>
+                                </div>
+                            </div>
+                        `;
+                document.body.appendChild(overlay);
+                const cancelBtn = overlay.querySelector('#_confirmCancel');
+                const okBtn = overlay.querySelector('#_confirmOk');
+                cancelBtn.onmouseenter = () => { cancelBtn.style.borderColor = 'var(--green)'; cancelBtn.style.color = 'var(--green)'; };
+                cancelBtn.onmouseleave = () => { cancelBtn.style.borderColor = 'var(--border,#e5e7eb)'; cancelBtn.style.color = 'var(--text,#111)'; };
+                okBtn.onmouseenter = () => { okBtn.style.background = '#dc2626'; };
+                okBtn.onmouseleave = () => { okBtn.style.background = '#ef4444'; };
+                function close(result) {
+                    overlay.style.animation = '_fadeOut .15s ease forwards';
+                    setTimeout(() => { overlay.remove(); resolve(result); }, 150);
+                }
+                okBtn.onclick = () => close(true);
+                cancelBtn.onclick = () => close(false);
+                overlay.onclick = e => { if (e.target === overlay) close(false); };
+                document.addEventListener('keydown', function esc(e) {
+                    if (e.key === 'Escape') { close(false); document.removeEventListener('keydown', esc); }
+                });
             });
-        });
-    }
+        }
 
-    /* ── Keyframe animations (injected once) ── */
-    if (!document.getElementById('_utilStyles')) {
-        const s = document.createElement('style');
-        s.id = '_utilStyles';
-        s.textContent = `
-                @keyframes _toastIn  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-                @keyframes _toastOut { from { opacity:1; transform:translateY(0); }   to { opacity:0; transform:translateY(10px); } }
-                @keyframes _fadeIn   { from { opacity:0; }  to { opacity:1; } }
-                @keyframes _fadeOut  { from { opacity:1; }  to { opacity:0; } }
-                @keyframes _slideUp  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-            `;
-        document.head.appendChild(s);
-    }
-</script>
-@endpushS
+        /* ── Inject keyframe styles once ── */
+        if (!document.getElementById('_utilStyles')) {
+            const s = document.createElement('style');
+            s.id = '_utilStyles';
+            s.textContent = `
+                        @keyframes _toastIn  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+                        @keyframes _toastOut { from { opacity:1; transform:translateY(0); }   to { opacity:0; transform:translateY(10px); } }
+                        @keyframes _fadeIn   { from { opacity:0; }  to { opacity:1; } }
+                        @keyframes _fadeOut  { from { opacity:1; }  to { opacity:0; } }
+                        @keyframes _slideUp  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+                    `;
+            document.head.appendChild(s);
+        }
+
+        /* ── SDD Engine (always runs, not inside the if block) ── */
+        const sddRegistry = {};
+        let sddActiveField = null;
+
+        function sddRegister(fieldId, items, selectedValue = null) {
+            sddRegistry[fieldId] = { items, selected: null };
+            if (selectedValue) sddSelect(fieldId, String(selectedValue), false);
+            sddUpdateTrigger(fieldId);
+        }
+
+        function sddUpdateTrigger(fieldId) {
+            const reg = sddRegistry[fieldId];
+            const label = document.getElementById(`sdd_${fieldId}_label`);
+            const hidden = document.getElementById(fieldId);
+            if (!label) return;
+            if (reg?.selected) {
+                label.textContent = reg.selected.label;
+                label.classList.remove('placeholder');
+                label.style.fontWeight = '600';          // ← bold when selected
+                label.style.color = 'var(--text)';
+            } else {
+                label.textContent = label.dataset.placeholder || 'Select…';
+                label.classList.add('placeholder');
+                label.style.fontWeight = '';
+                label.style.color = '';
+            }
+            if (hidden) hidden.value = reg?.selected?.value ?? '';
+        }
+
+        function sddSelect(fieldId, value, submit = false) {
+            if (!sddRegistry[fieldId]) return;
+            const item = value
+                ? sddRegistry[fieldId].items.find(i => String(i.value) === String(value))
+                : null;
+            sddRegistry[fieldId].selected = item || null;
+            sddUpdateTrigger(fieldId);
+            sddClosePortal();
+            if (submit) document.getElementById('filterForm').submit();
+        }
+
+        function toggleSdd(fieldId) {
+            if (sddActiveField === fieldId) { sddClosePortal(); return; }
+            sddOpenPortal(fieldId);
+        }
+
+        function sddOpenPortal(fieldId) {
+            const trigger = document.querySelector(`#sdd_${fieldId} .sdd-trigger`);
+            if (!trigger || !sddRegistry[fieldId]) return;
+            sddActiveField = fieldId;
+            document.querySelectorAll('.sdd.open').forEach(el => el.classList.remove('open'));
+            document.getElementById(`sdd_${fieldId}`)?.classList.add('open');
+            const portal = document.getElementById('sddPortal');
+            const rect = trigger.getBoundingClientRect();
+            const portalW = Math.max(rect.width, 260);
+            portal.style.width = portalW + 'px';
+            let left = rect.left;
+            if (left + portalW > window.innerWidth - 8) left = Math.max(8, window.innerWidth - portalW - 8);
+            portal.style.left = left + 'px';
+            portal.style.top = (rect.bottom + 4) + 'px';
+            portal.style.bottom = '';
+            sddPortalRender('');
+            portal.classList.add('visible');
+            const search = document.getElementById('sddPortalSearch');
+            if (search) { search.value = ''; setTimeout(() => search.focus(), 40); }
+        }
+
+        function sddClosePortal() {
+            document.getElementById('sddPortal')?.classList.remove('visible');
+            document.querySelectorAll('.sdd.open').forEach(el => el.classList.remove('open'));
+            sddActiveField = null;
+        }
+
+        function sddPortalRender(query) {
+            if (!sddActiveField || !sddRegistry[sddActiveField]) return;
+            const q = query.toLowerCase().trim();
+            const items = sddRegistry[sddActiveField].items;
+            const filtered = q ? items.filter(i => i.label.toLowerCase().includes(q)) : items;
+            const current = sddRegistry[sddActiveField].selected?.value ?? '';
+            const list = document.getElementById('sddPortalList');
+            if (!list) return;
+            if (!filtered.length) {
+                list.innerHTML = '<div class="sdd-empty">No results found</div>';
+                return;
+            }
+            const allSel = !current ? ' selected' : '';
+            list.innerHTML = `<div class="sdd-item${allSel}" onclick="sddSelect('${sddActiveField}','',false)">All Suppliers</div>`
+                + filtered.map(item => {
+                    const sel = String(item.value) === String(current) ? ' selected' : '';
+                    return `<div class="sdd-item${sel}" onclick="sddSelect('${sddActiveField}','${item.value}',false)">${item.label}</div>`;
+                }).join('');
+        }
+
+        function sddPortalFilter(query) { sddPortalRender(query); }
+
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.sdd') && !e.target.closest('#sddPortal')) sddClosePortal();
+        });
+        document.addEventListener('scroll', () => {
+            if (sddActiveField) {
+                const trigger = document.querySelector(`#sdd_${sddActiveField} .sdd-trigger`);
+                if (trigger) {
+                    const rect = trigger.getBoundingClientRect();
+                    const portal = document.getElementById('sddPortal');
+                    portal.style.top = (rect.bottom + 4) + 'px';
+                    portal.style.left = rect.left + 'px';
+                }
+            }
+        }, true);
+
+        /* ── Init supplier SDD ── */
+        (function () {
+            const suppliers = @json($suppliers);
+            const items = suppliers.map(s => ({ value: String(s.id), label: s.supplier_name }));
+            const currentVal = "{{ request('supplier_id') }}";
+            sddRegister('supplier_id', items, currentVal || null);
+        })();
+    </script>
+@endpush
