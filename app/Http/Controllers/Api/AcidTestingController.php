@@ -555,9 +555,10 @@ class AcidTestingController extends Controller
             $frontUlabType = (string) ($row['ulab_type'] ?? '');
             $gross = (float) ($row['gross_weight'] ?? 0);
             $isAcid = ($frontUlabType === '5');
+            $isTraction = ($frontUlabType === '1000025');
 
-            $initial = $isAcid ? (float) ($row['initial_weight'] ?? 0) : 0.0;
-            $drained = $isAcid ? (float) ($row['drained_weight'] ?? 0) : 0.0;
+            $initial = ($isAcid || $isTraction) ? (float) ($row['initial_weight'] ?? 0) : 0.0;
+            $drained = ($isAcid || $isTraction) ? (float) ($row['drained_weight'] ?? 0) : 0.0;
             $weightDiff = $initial > 0 ? max(0.0, $initial - $drained) : 0.0;
 
             // Per-pallet acid% — display/reference only, NOT used for stock_code resolution
