@@ -1427,24 +1427,24 @@
                 { label: 'Avg Acid %', val: (document.getElementById('totalAcid')?.value ?? d.avg_acid_pct) + '%', sub: 'Σ(Input KG × Acid%) ÷ Σ(Input KG)', cls: 'c-red', icon: `<path d="M10 2v7.31l-3.72 6.17A4 4 0 0 0 10 22h4a4 4 0 0 0 3.72-6.52L14 9.31V2"/>`, cats: [] },
             ];
             grid.innerHTML = chips.map(c => `
-                                                                                        <div class="sc-chip ${c.cls}">
-                                                                                            <svg class="sc-chip-ico" viewBox="0 0 24 24">${c.icon}</svg>
-                                                                                            <span class="sc-chip-label">${escHtml(c.label)}</span>
-                                                                                            <span class="sc-chip-val">${c.val}</span>
-                                                                                            <span class="sc-chip-sub">${escHtml(c.sub)}</span>
-                                                                                            ${c.cats.length ? `<div class="cat-pills-row">${c.cats.map(x => `<span class="cat-pill">${escHtml(x.category || '—')}: ${fmtNum(x.total_qty)} KG</span>`).join('')}</div>` : ''}
-                                                                                        </div>`).join('');
+                                                                                                    <div class="sc-chip ${c.cls}">
+                                                                                                        <svg class="sc-chip-ico" viewBox="0 0 24 24">${c.icon}</svg>
+                                                                                                        <span class="sc-chip-label">${escHtml(c.label)}</span>
+                                                                                                        <span class="sc-chip-val">${c.val}</span>
+                                                                                                        <span class="sc-chip-sub">${escHtml(c.sub)}</span>
+                                                                                                        ${c.cats.length ? `<div class="cat-pills-row">${c.cats.map(x => `<span class="cat-pill">${escHtml(x.category || '—')}: ${fmtNum(x.total_qty)} KG</span>`).join('')}</div>` : ''}
+                                                                                                    </div>`).join('');
         }
 
         function renderMatStrip(materials) {
             const wrap = document.getElementById('matStrip');
             if (!materials.length) { wrap.innerHTML = `<div class="dash-empty" style="width:100%">No output material data for selected month</div>`; return; }
             wrap.innerHTML = materials.map(m => `
-                                                                                        <div class="mat-card">
-                                                                                            <div class="mat-card-name" title="${escHtml(m.material_name || m.material_code)}">${escHtml(m.material_name || m.material_code)}</div>
-                                                                                            <div class="mat-card-val">${fmtNum(m.total_qty)}</div>
-                                                                                            <div class="mat-card-unit">KG</div>
-                                                                                        </div>`).join('');
+                                                                                                    <div class="mat-card">
+                                                                                                        <div class="mat-card-name" title="${escHtml(m.material_name || m.material_code)}">${escHtml(m.material_name || m.material_code)}</div>
+                                                                                                        <div class="mat-card-val">${fmtNum(m.total_qty)}</div>
+                                                                                                        <div class="mat-card-unit">KG</div>
+                                                                                                    </div>`).join('');
         }
 
         function renderLastDay(batches, dateStr) {
@@ -1468,15 +1468,15 @@
                 const acidCls = acidVal > 10 ? 'acid-high' : acidVal > 7 ? 'acid-mid' : 'acid-ok';
 
                 return `<tr>
-                                                                                            <td style="font-weight:700">${escHtml(b.batch_no)}</td>
-                                                                                            <td>${escHtml(b.category || '—')}</td>
-                                                                                            <td>${escHtml(b.start_time || '—')}</td>
-                                                                                            <td>${escHtml(b.end_time || '—')}</td>
-                                                                                            <td class="num" style="font-weight:700">${fmtNum(b.total_input)}</td>
-                                                                                            <td class="num ${acidCls}">${fmtNum(b.avg_acid)}%</td>
-                                                                                            <td class="num">${fmtNum(b.total_hrs)}</td>
-                                                                                            <td style="text-align:center"><span class="badge-status ${statusClass}">● ${statusLabel}</span></td>
-                                                                                        </tr>`;
+                                                                                                        <td style="font-weight:700">${escHtml(b.batch_no)}</td>
+                                                                                                        <td>${escHtml(b.category || '—')}</td>
+                                                                                                        <td>${escHtml(b.start_time || '—')}</td>
+                                                                                                        <td>${escHtml(b.end_time || '—')}</td>
+                                                                                                        <td class="num" style="font-weight:700">${fmtNum(b.total_input)}</td>
+                                                                                                        <td class="num ${acidCls}">${fmtNum(b.avg_acid)}%</td>
+                                                                                                        <td class="num">${fmtNum(b.total_hrs)}</td>
+                                                                                                        <td style="text-align:center"><span class="badge-status ${statusClass}">● ${statusLabel}</span></td>
+                                                                                                    </tr>`;
             }).join('');
         }
 
@@ -1541,36 +1541,59 @@
             ctx.canvas.style.display = '';
             if (emptyEl) emptyEl.style.display = 'none';
 
+            // Use null for zero days so the line doesn't draw through them
+            // and spanGaps: false keeps gaps honest
+            const chartData = data.map(d => {
+                const v = parseFloat(d.avg_hrs);
+                return (v > 0) ? v : null;
+            });
+
             hoursChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: data.map(d => 'D' + d.day),
                     datasets: [{
                         label: 'Avg Hrs / MT',
-                        data: data.map(d => parseFloat(d.avg_hrs) || 0),
+                        data: chartData,
                         borderColor: '#1560bd',
                         backgroundColor: 'rgba(21,96,189,.10)',
                         borderWidth: 2,
-                        pointRadius: data.length > 20 ? 2 : 3,
-                        pointHoverRadius: 5,
+                        pointRadius: 3,
+                        pointHoverRadius: 7,
                         pointBackgroundColor: '#1560bd',
-                        tension: 0.35, fill: true, spanGaps: true,
+                        tension: 0.35,
+                        fill: true,
+                        spanGaps: true,
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
+                            mode: 'index',
+                            intersect: false,
                             callbacks: {
                                 title: items => 'Day ' + items[0].label.replace('D', ''),
-                                label: ctx => `${ctx.parsed.y.toFixed(4)} Hrs/MT`,
+                                label: item => item.parsed.y !== null
+                                    ? `${item.parsed.y.toFixed(4)} Hrs/MT`
+                                    : 'No data',
                             }
                         }
                     },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: '#e5edf4' }, ticks: { font: { size: 10 }, callback: v => v.toFixed(1), maxTicksLimit: 6 }, title: { display: true, text: 'Hrs / MT', font: { size: 10 }, color: 'var(--txtmu)' } },
-                        x: { grid: { display: false }, ticks: { font: { size: 9 }, maxTicksLimit: 16, maxRotation: 0 } },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#e5edf4' },
+                            ticks: { font: { size: 10 }, callback: v => v.toFixed(1), maxTicksLimit: 6 },
+                            title: { display: true, text: 'Hrs / MT', font: { size: 10 }, color: 'var(--txtmu)' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 9 }, maxTicksLimit: 16, maxRotation: 0 }
+                        },
                     }
                 }
             });
@@ -1592,36 +1615,58 @@
             canvas.style.display = '';
             if (emptyEl) emptyEl.style.display = 'none';
 
+            // Use null for zero days so tooltip doesn't snap to the flat baseline
+            const chartData = data.map(d => {
+                const v = parseFloat(d.pwr_per_mt);
+                return (v > 0) ? v : null;
+            });
+
             pwrChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: data.map(d => 'D' + d.day),
                     datasets: [{
                         label: 'PWR / MT',
-                        data: data.map(d => parseFloat(d.pwr_per_mt) || 0),
+                        data: chartData,
                         borderColor: '#e8a020',
                         backgroundColor: 'rgba(232,160,32,.10)',
                         borderWidth: 2,
-                        pointRadius: data.length > 20 ? 2 : 3,
-                        pointHoverRadius: 5,
+                        pointRadius: 3,
+                        pointHoverRadius: 7,
                         pointBackgroundColor: '#e8a020',
-                        tension: 0.35, fill: true, spanGaps: true,
+                        tension: 0.35,
+                        fill: true,
+                        spanGaps: true,
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
+                            mode: 'index',
+                            intersect: false,
                             callbacks: {
                                 title: items => 'Day ' + items[0].label.replace('D', ''),
-                                label: ctx => `${ctx.parsed.y.toFixed(4)} PWR/MT`,
+                                label: item => item.parsed.y !== null
+                                    ? `${item.parsed.y.toFixed(4)} PWR/MT`
+                                    : 'No data',
                             }
                         }
                     },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: '#e5edf4' }, ticks: { font: { size: 10 }, callback: v => v.toFixed(0), maxTicksLimit: 6 }, title: { display: true, text: 'PWR / MT', font: { size: 10 }, color: 'var(--txtmu)' } },
-                        x: { grid: { display: false }, ticks: { font: { size: 9 }, maxTicksLimit: 16, maxRotation: 0 } },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#e5edf4' },
+                            ticks: { font: { size: 10 }, callback: v => v.toFixed(0), maxTicksLimit: 6 },
+                            title: { display: true, text: 'PWR / MT', font: { size: 10 }, color: 'var(--txtmu)' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 9 }, maxTicksLimit: 16, maxRotation: 0 }
+                        },
                     }
                 }
             });
@@ -1672,19 +1717,19 @@
                 const badge = `<span class="badge-status ${STATUS_CLS[r.status] || 'st-pending'}">● ${escHtml(r.status_label)}</span>`;
                 const mats = (r.output_materials || []).map(m => `<span class="mat-pill">${escHtml(m.material_name || m.material_code)}: ${fmtNum(m.qty)}</span>`).join('') || '—';
                 return `<tr>
-                                                                                            <td>${offset + i + 1} &nbsp;<small style="color:var(--txtmu)">${escHtml(r.doc_date)}</small></td>
-                                                                                            <td style="font-weight:600">${escHtml(r.batch_no)}</td>
-                                                                                            <td>${escHtml(r.category)}</td>
-                                                                                            <td>${escHtml(r.start_time)}</td>
-                                                                                            <td>${escHtml(r.end_time)}</td>
-                                                                                            <td style="text-align:center">${badge}</td>
-                                                                                            <td class="num">${fmtNum(r.total_input_qty)}</td>
-                                                                                            <td class="num">${fmtNum(r.avg_acid_pct)}%</td>
-                                                                                            <td class="num">${fmtNum(r.initial_power)}</td>
-                                                                                            <td class="num">${fmtNum(r.final_power)}</td>
-                                                                                            <td class="num">${fmtNum(r.total_power_hrs)}</td>
-                                                                                            <td>${mats}</td>
-                                                                                        </tr>`;
+                                                                                                        <td>${offset + i + 1} &nbsp;<small style="color:var(--txtmu)">${escHtml(r.doc_date)}</small></td>
+                                                                                                        <td style="font-weight:600">${escHtml(r.batch_no)}</td>
+                                                                                                        <td>${escHtml(r.category)}</td>
+                                                                                                        <td>${escHtml(r.start_time)}</td>
+                                                                                                        <td>${escHtml(r.end_time)}</td>
+                                                                                                        <td style="text-align:center">${badge}</td>
+                                                                                                        <td class="num">${fmtNum(r.total_input_qty)}</td>
+                                                                                                        <td class="num">${fmtNum(r.avg_acid_pct)}%</td>
+                                                                                                        <td class="num">${fmtNum(r.initial_power)}</td>
+                                                                                                        <td class="num">${fmtNum(r.final_power)}</td>
+                                                                                                        <td class="num">${fmtNum(r.total_power_hrs)}</td>
+                                                                                                        <td>${mats}</td>
+                                                                                                    </tr>`;
             }).join('');
             document.getElementById('footInput').textContent = fmtNum(totalInput);
             tfoot.style.display = '';
@@ -1743,15 +1788,15 @@
                 document.getElementById('drillTitle').textContent = `Batches — ${json.date || date}`;
                 if (!json.batches?.length) { body.innerHTML = `<div class="dash-empty">No batches for this date.</div>`; return; }
                 body.innerHTML = `<p style="font-size:11px;color:var(--txtmu);margin-bottom:12px">${json.batches.length} batch(es) on ${json.date || date}</p>
-                                                                                            <div style="overflow-x:auto"><table class="dt">
-                                                                                            <thead><tr><th>Batch No</th><th>Category</th><th>Start</th><th>End</th><th class="num">Input (KG)</th><th class="num">Acid %</th><th class="num">Pwr Hrs</th><th>Output Materials</th></tr></thead>
-                                                                                            <tbody>${json.batches.map(b => `<tr>
-                                                                                                <td style="font-weight:600">${escHtml(b.batch_no)}</td><td>${escHtml(b.category)}</td>
-                                                                                                <td>${escHtml(b.start_time)}</td><td>${escHtml(b.end_time)}</td>
-                                                                                                <td class="num">${fmtNum(b.total_input)}</td><td class="num">${fmtNum(b.avg_acid)}%</td>
-                                                                                                <td class="num">${fmtNum(b.total_hrs)}</td>
-                                                                                                <td>${(b.output_materials || []).map(m => `<span class="mat-pill">${escHtml(m.material_name || m.material_code)}: ${fmtNum(m.qty)} (${fmtNum(m.yield_pct)}%)</span>`).join('') || '—'}</td>
-                                                                                            </tr>`).join('')}</tbody></table></div>`;
+                                                                                                        <div style="overflow-x:auto"><table class="dt">
+                                                                                                        <thead><tr><th>Batch No</th><th>Category</th><th>Start</th><th>End</th><th class="num">Input (KG)</th><th class="num">Acid %</th><th class="num">Pwr Hrs</th><th>Output Materials</th></tr></thead>
+                                                                                                        <tbody>${json.batches.map(b => `<tr>
+                                                                                                            <td style="font-weight:600">${escHtml(b.batch_no)}</td><td>${escHtml(b.category)}</td>
+                                                                                                            <td>${escHtml(b.start_time)}</td><td>${escHtml(b.end_time)}</td>
+                                                                                                            <td class="num">${fmtNum(b.total_input)}</td><td class="num">${fmtNum(b.avg_acid)}%</td>
+                                                                                                            <td class="num">${fmtNum(b.total_hrs)}</td>
+                                                                                                            <td>${(b.output_materials || []).map(m => `<span class="mat-pill">${escHtml(m.material_name || m.material_code)}: ${fmtNum(m.qty)} (${fmtNum(m.yield_pct)}%)</span>`).join('') || '—'}</td>
+                                                                                                        </tr>`).join('')}</tbody></table></div>`;
             } catch (e) { body.innerHTML = `<div style="color:var(--err);padding:20px">Error: ${escHtml(e.message)}</div>`; }
         }
         function closeDrill() { document.getElementById('drillModal').classList.remove('open'); }
