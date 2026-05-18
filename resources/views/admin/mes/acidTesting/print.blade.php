@@ -1,6 +1,6 @@
 {{--
 resources/views/admin/mes/acidTesting/print.blade.php
-Variables: $test (AcidTesting with details + supplier), $company (Company)
+Variables: $test (AcidTesting with details + supplier + createdBy + updatedBy), $company (Company)
 --}}
 <!DOCTYPE html>
 <html lang="en">
@@ -41,45 +41,44 @@ Variables: $test (AcidTesting with details + supplier), $company (Company)
             }
         }
 
-        /* ── Outer wrapper ── */
+        /* ── Master Clean Layout ── */
         .wrap {
             width: 100%;
             border-collapse: collapse;
-            border: 2px solid #000
+            border-top: 0.5px solid #000;
+            border-left: 0.5px solid #000;
+            margin-bottom: 0px;
         }
 
+        /* Every single cell gets a uniform, crisp single line on bottom and right sides */
         .wrap td,
         .wrap th {
-            border: 1px solid #000;
-            padding: 0;
-            vertical-align: middle
+            border-bottom: 0.5px solid #000;
+            border-right: 0.5px solid #000;
+            padding: 6px 8px;
+            vertical-align: middle;
+            font-size: 10.5px;
+            text-align: center;
         }
 
-        /* ── Inner tables ── */
+        /* ── Sub Table Cleanups ── */
         .inn {
             width: 100%;
-            border-collapse: collapse
+            border-collapse: collapse;
         }
 
         .inn td,
         .inn th {
-            border: 1px solid #000;
-            padding: 5px 8px;
-            vertical-align: middle
+            border: none;
+            padding: 0px;
         }
 
         th {
-            background: #f0f0f0;
+            background-color: #f0f0f0;
             font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
-            text-align: center;
-            line-height: 1.35
-        }
-
-        td {
-            font-size: 10.5px;
-            text-align: center
+            line-height: 1.35;
         }
 
         td.lft {
@@ -90,7 +89,16 @@ Variables: $test (AcidTesting with details + supplier), $company (Company)
             font-size: 9.5px;
             font-weight: 700;
             text-transform: uppercase;
-            text-align: left
+            text-align: left;
+        }
+
+        /* ── Fixed Remarks Column: Removed ellipsis truncation and allowed clean multi-line wrapping ── */
+        td.rmk {
+            text-align: left;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+            padding: 6px 8px;
         }
 
         /* ── Print / Back buttons ── */
@@ -154,7 +162,7 @@ Variables: $test (AcidTesting with details + supplier), $company (Company)
 
     {{-- Print/Back buttons --}}
     <div class="no-print">
-        <a href="{{ url()->previous() }}" class="btn-b">← Back</a>
+        <a href="{{ url()->previous() }}" class="btn-b">&#8592; Back</a>
         <button class="btn-p" onclick="window.print()">
             <svg viewBox="0 0 24 24">
                 <polyline points="6 9 6 2 18 2 18 9" />
@@ -171,290 +179,317 @@ Variables: $test (AcidTesting with details + supplier), $company (Company)
         $avgPF = (float) ($test->avg_pallet_and_foreign_weight ?? 0);
         $palletCount = $details->count();
 
-        // Totals — weight section
         $totalGross = $details->sum('gross_weight');
         $totalNet = $details->sum('net_weight');
         $totalAvgPF = $avgPF * max($palletCount, 1);
 
-        // Acid section — rows with initial_weight > 0
         $acidRows = $details->filter(fn($d) => ($d->initial_weight ?? 0) > 0)->values();
         $totalInitial = $acidRows->sum('initial_weight');
         $totalDrained = $acidRows->sum('drained_weight');
         $totalWtDiff = $acidRows->sum('weight_difference');
 
-        // Net avg acid % = (total drained / total initial) * 100
         $netAvgAcid = $totalInitial > 0
             ? round(($totalWtDiff / $totalInitial) * 100, 2)
             : 0;
 
         $docPrefix = ($company->document_prefix ?? 'DBR') . '/PWM-';
-        $minRows = 1;   // minimum blank rows to always show
+        $minRows = 1;
+
+        $recordedBy = optional($test->createdBy)->name ?? '&mdash;';
+        $verifiedBy = optional($test->updatedBy)->name ?? '&mdash;';
     @endphp
 
+    {{-- Single Main structural table wrapper --}}
     <table class="wrap">
 
-        {{-- ── ROW 1 : Company Header ─────────────────────────────── --}}
+        {{-- ── ROW 1 : Company Header ── --}}
         <tr>
-            {{-- Logo --}}
-            <td style="width:110px;padding:10px;text-align:center;border-right:1px solid #000">
+            <td style="width: 16%; padding: 10px;">
                 @if(!empty($company->logo_path) && file_exists(public_path($company->logo_path)))
                     <img src="{{ asset($company->logo_path) }}" alt="logo"
-                        style="max-width:80px;max-height:55px;object-fit:contain">
+                        style="max-width:80px; max-height:55px; object-fit:contain">
                 @else
-                    <span
-                        style="font-size:22px;font-weight:900;letter-spacing:2px;font-family:'Arial Black',Arial,sans-serif">
+                    <span style="font-size:22px; font-weight:900; letter-spacing:2px; font-family:'Arial Black',sans-serif">
                         {{ strtoupper(substr($company->company_name ?? 'DUBATT', 0, 7)) }}
                     </span>
                 @endif
             </td>
-
-            {{-- Company name + address --}}
-            <td style="border-right:1px solid #000;padding:8px 14px;text-align:center">
-                <div
-                    style="font-size:13px;font-weight:700;text-decoration:underline;text-transform:uppercase;margin-bottom:4px">
+            <td style="width: 52%; text-align: center; padding: 8px 14px;">
+                <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px">
                     {{ strtoupper($company->legal_name ?? $company->company_name ?? '') }}
                 </div>
-                <div style="font-size:10px;line-height:1.65">
-                    @if($company->plot_number)
-                        Plot # {{ $company->plot_number }}{{ $company->zone ? ', ' . $company->zone : '' }}<br>
-                    @endif
-                    @if($company->city)
-                        {{ $company->city }}{{ $company->country ? ' - ' . $company->country : '' }}<br>
-                    @endif
-                    @if($company->contact_phone)
-                        Phone: {{ $company->contact_phone }}<br>
-                    @endif
-                    @if($company->contact_email)
-                        Email: {{ $company->contact_email }}
-                    @endif
+                <div style="font-size: 10px; line-height: 1.5">
+                    @if($company->plot_number) Plot #
+                    {{ $company->plot_number }}{{ $company->zone ? ', ' . $company->zone : '' }} | @endif
+                    @if($company->city) {{ $company->city }}{{ $company->country ? ' - ' . $company->country : '' }}
+                    @endif <br>
+                    @if($company->contact_phone) Phone: {{ $company->contact_phone }} @endif
+                    @if($company->contact_email) | Email: {{ $company->contact_email }} @endif
                 </div>
             </td>
-
-            {{-- Document No + LOT No --}}
-            <td style="width:155px;padding:8px 10px;vertical-align:middle">
-                <table class="inn" style="margin-bottom:6px">
-                    <tr>
-                        <td class="lbl" style="padding:4px 7px;font-size:9px">Document No.</td>
-                        <td style="font-size:10px;padding:4px 8px">{{ $docPrefix }}</td>
-                    </tr>
-                </table>
-                <table class="inn">
-                    <tr>
-                        <td class="lbl" style="padding:4px 7px;font-size:9px">LOT No.</td>
-                        <td style="font-size:20px;font-weight:900;padding:3px 8px;letter-spacing:1px">
-                            {{ $test->lot_number }}
-                        </td>
-                    </tr>
-                </table>
+            <td style="width: 32%; padding: 4px;">
+                <div style="display: flex; flex-direction: column; width: 100%; height: 100%;">
+                    <div style="display: flex; border-bottom: 0.5px solid #000; padding: 4px;">
+                        <span class="lbl" style="width: 50%; font-size: 9px;">DOCUMENT NO.</span>
+                        <span style="width: 50%; text-align: center; font-size: 10px;">{{ $docPrefix }}</span>
+                    </div>
+                    <div style="display: flex; padding: 4px; align-items: center;">
+                        <span class="lbl" style="width: 40%; font-size: 9px;">LOT NO.</span>
+                        <span
+                            style="width: 60%; text-align: center; font-size: 20px; font-weight: 900;">{{ $test->lot_number }}</span>
+                    </div>
+                </div>
             </td>
         </tr>
 
-        {{-- ── ROW 2 : Report Title ────────────────────────────────── --}}
+        {{-- ── ROW 2 : Report Title ── --}}
         <tr>
-            <td colspan="3" style="border-top:2px solid #000;border-bottom:2px solid #000;text-align:center;
-        font-size:14px;font-weight:900;text-transform:uppercase;text-decoration:underline;
-        padding:9px 0;letter-spacing:.5px">
+            <td colspan="3"
+                style="font-size: 13px; font-weight: 900; text-transform: uppercase; padding: 8px 0; background: #fff;">
                 INCOMING SCRAP BATTERY PALLET WEIGHT REPORT
             </td>
         </tr>
 
-        {{-- ── ROW 3 : Meta info (Date / Supplier / Vehicle / Invoice / Received) ── --}}
+        {{-- ── ROW 3 : Meta Info Blocks ── --}}
         <tr>
-            <td colspan="3" style="padding:0;border-bottom:1px solid #000">
-                <table class="inn" style="border:none">
+            <td colspan="3" style="padding: 0;">
+                <table class="inn" style="width: 100%;">
                     <tr>
-                        <td class="lbl" style="width:16%;border-top:none;border-left:none">DATE &amp; TIME</td>
-                        <td style="width:20%;border-top:none">
-                            {{ \Carbon\Carbon::parse($test->test_date)->format('d/m/Y') }}
-                        </td>
-                        <td class="lbl" style="width:18%;border-top:none">SUPPLIER NAME</td>
-                        <td style="border-top:none;border-right:none;font-weight:600;text-transform:uppercase">
-                            {{ $supplier->supplier_name ?? '—' }}
-                        </td>
+                        <td class="lbl"
+                            style="width: 16%; padding: 6px 8px; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">
+                            DATE &amp; TIME</td>
+                        <td
+                            style="width: 20%; padding: 6px 8px; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">
+                            {{ \Carbon\Carbon::parse($test->test_date)->format('d/m/Y') }}</td>
+                        <td class="lbl"
+                            style="width: 16%; padding: 6px 8px; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">
+                            SUPPLIER NAME</td>
+                        <td
+                            style="padding: 6px 8px; text-align: center; font-weight: 600; text-transform: uppercase; border-bottom: 0.5px solid #000;">
+                            {{ $supplier->supplier_name ?? '&mdash;' }}</td>
                     </tr>
                     <tr>
-                        <td class="lbl" style="border-left:none">TYPES OF BATTERIES</td>
-                        <td>ULAB</td>
-                        <td class="lbl">VEHICLE NO.</td>
-                        <td style="border-right:none;font-weight:600;text-transform:uppercase">
-                            {{ $test->vehicle_number ?? '—' }}
-                        </td>
+                        <td class="lbl"
+                            style="padding: 6px 8px; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">
+                            TYPES OF BATTERIES</td>
+                        <td style="padding: 6px 8px; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">
+                            ULAB</td>
+                        <td class="lbl"
+                            style="padding: 6px 8px; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">
+                            VEHICLE NO.</td>
+                        <td
+                            style="padding: 6px 8px; text-align: center; font-weight: 600; text-transform: uppercase; border-bottom: 0.5px solid #000;">
+                            {{ $test->vehicle_number ?? 'NA' }}</td>
                     </tr>
                     <tr>
-                        <td class="lbl" style="border-left:none;border-bottom:none">INVOICE QTY</td>
-                        <td style="border-bottom:none">{{ number_format((float) ($test->invoice_qty ?? 0)) }}</td>
-                        <td class="lbl" style="border-bottom:none;line-height:1.4">IN HOUSE<br>WEIGHBRIDGE<br>WEIGHT
+                        <td class="lbl"
+                            style="padding: 6px 8px; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">
+                            INVOICE QTY</td>
+                        <td style="padding: 6px 8px; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">
+                            {{ number_format((float) ($test->invoice_qty ?? 0)) }}</td>
+                        <td class="lbl"
+                            style="padding: 6px 8px; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">
+                            IN HOUSE WEIGHBRIDGE WT</td>
+                        <td
+                            style="padding: 6px 8px; text-align: center; font-weight: 600; border-bottom: 0.5px solid #000;">
+                            {{ number_format((float) ($test->received_qty ?? 0)) }} KG</td>
+                    </tr>
+                    <tr>
+                        <td class="lbl" style="padding: 6px 8px; border-right: 0.5px solid #000;">FOREIGN MATERIAL
+                            WEIGHT</td>
+                        <td style="padding: 6px 8px; border-right: 0.5px solid #000;">
+                            {{ number_format((float) ($test->foreign_material_weight ?? 0)) }} KG</td>
+                        <td class="lbl" style="padding: 6px 8px; border-right: 0.5px solid #000;">AVERAGE PALLET WEIGHT
                         </td>
-                        <td style="border-right:none;border-bottom:none">
-                            {{ number_format((float) ($test->received_qty ?? 0)) }} KG
-                        </td>
+                        <td style="padding: 6px 8px; text-align: center; font-weight: 600;">
+                            {{ number_format((float) ($test->avg_pallet_weight ?? 0)) }} KG</td>
                     </tr>
                 </table>
             </td>
         </tr>
 
-        {{-- ── ROW 4 : Foreign material / Avg Pallet weight ──────── --}}
+        {{-- ── ROW 4 : Pallet Weight Table Content ── --}}
         <tr>
-            <td colspan="3" style="padding:0;border-bottom:2px solid #000">
-                <table class="inn" style="border:none">
-                    <tr>
-                        <td class="lbl" style="width:30%;border-top:none;border-left:none;border-bottom:none">
-                            Foreign material Weight
-                        </td>
-                        <td style="width:20%;border-top:none;border-bottom:none">
-                            {{ number_format((float) ($test->foreign_material_weight ?? 0)) }} KG
-                        </td>
-                        <td class="lbl" style="border-top:none;border-bottom:none">AVERAGE PALLET WEIGHT</td>
-                        <td style="border-top:none;border-right:none;border-bottom:none">
-                            {{ number_format((float) ($test->avg_pallet_weight ?? 0)) }} KG
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-
-        {{-- ── ROW 5 : Pallet Weight Table ────────────────────────── --}}
-        <tr>
-            <td colspan="3" style="padding:0">
-                <table class="inn">
+            <td colspan="3" style="padding: 0;">
+                <table class="inn" style="width: 100%;">
                     <thead>
                         <tr>
-                            <th style="width:7%">SR. NO.</th>
-                            <th style="width:15%">PALLET<br>NUMBER</th>
-                            <th style="width:20%">GROSS WEIGHT (KG)</th>
-                            <th style="width:22%">AVERAGE PALLET<br>&amp; FOREIGN WEIGHT</th>
-                            <th style="width:18%">NET WEIGHT<br>(KG)</th>
-                            <th>REMARKS</th>
+                            <th
+                                style="width: 5%; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 6px 4px;">
+                                SR.</th>
+                            <th
+                                style="width: 11%; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 6px 4px;">
+                                PALLET NO.</th>
+                            <th
+                                style="width: 18%; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 6px 4px;">
+                                GROSS WEIGHT (KG)</th>
+                            <th
+                                style="width: 18%; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 6px 4px;">
+                                AVG PALLET &amp; FOREIGN WT.</th>
+                            <th
+                                style="width: 18%; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 6px 4px;">
+                                NET WEIGHT (KG)</th>
+                            <th style="border-bottom: 0.5px solid #000; padding: 6px 4px; width: 30%;">REMARKS</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($details as $i => $row)
                             <tr>
-                                <td>{{ $i + 1 }}</td>
-                                <td style="font-weight:600">{{ $row->pallet_no }}</td>
-                                <td>{{ number_format((float) ($row->gross_weight ?? 0), 2) }}</td>
-                                <td>{{ number_format($avgPF, 2) }}</td>
-                                <td>{{ number_format((float) ($row->net_weight ?? 0), 2) }}</td>
-                                <!-- <td>{{ $row->ulab_type ?? ($row->remarks ?? '') }}{{ $row->stock_code ? ' [' . $row->stock_code . ']' : '' }} -->
-                                <td>{{ $row->remarks }}</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 5px;">
+                                    {{ $i + 1 }}</td>
+                                <td
+                                    style="font-weight: 600; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 5px;">
+                                    {{ $row->pallet_no }}</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 5px;">
+                                    {{ number_format((float) ($row->gross_weight ?? 0), 2) }}</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 5px;">
+                                    {{ number_format($avgPF, 2) }}</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 5px;">
+                                    {{ number_format((float) ($row->net_weight ?? 0), 2) }}</td>
+                                <td class="rmk" style="border-bottom: 0.5px solid #000;">{{ $row->remarks }}</td>
                             </tr>
                         @endforeach
 
                         @for($b = $details->count(); $b < $minRows; $b++)
                             <tr>
-                                <td>{{ $b + 1 }}</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">{{ $b + 1 }}
+                                </td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">&nbsp;</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">&nbsp;</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">&nbsp;</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">&nbsp;</td>
+                                <td style="border-bottom: 0.5px solid #000;">&nbsp;</td>
                             </tr>
                         @endfor
 
-                        <tr style="background:#efefef">
+                        <tr style="background: #efefef;">
                             <td colspan="2"
-                                style="font-weight:700;font-size:11px;text-transform:uppercase;text-align:center">TOTAL
-                                (KG)</td>
-                            <td style="font-weight:700;font-size:11px">{{ number_format($totalGross, 2) }}</td>
-                            <td style="font-weight:700;font-size:11px">{{ number_format($totalAvgPF, 2) }}</td>
-                            <td style="font-weight:700;font-size:11px">{{ number_format($totalNet, 2) }}</td>
-                            <td>&nbsp;</td>
+                                style="font-weight: 700; text-transform: uppercase; border-right: 0.5px solid #000; padding: 6px;">
+                                TOTAL (KG)</td>
+                            <td style="font-weight: 700; border-right: 0.5px solid #000; padding: 6px;">
+                                {{ number_format($totalGross, 2) }}</td>
+                            <td style="font-weight: 700; border-right: 0.5px solid #000; padding: 6px;">
+                                {{ number_format($totalAvgPF, 2) }}</td>
+                            <td style="font-weight: 700; border-right: 0.5px solid #000; padding: 6px;">
+                                {{ number_format($totalNet, 2) }}</td>
+                            <td style="padding: 6px;">&nbsp;</td>
                         </tr>
                     </tbody>
                 </table>
             </td>
         </tr>
 
-        {{-- ── ROW 6 : Acid Content Title ──────────────────────────── --}}
+        {{-- ── ROW 5 : Acid Content Title ── --}}
         <tr>
-            <td colspan="3" style="border-top:2px solid #000;text-align:center;
-        font-size:13px;font-weight:900;text-transform:uppercase;text-decoration:underline;
-        padding:8px 0;letter-spacing:.5px">
+            <td colspan="3"
+                style="font-size: 13px; font-weight: 900; text-transform: uppercase; padding: 8px 0; background: #fff;">
                 ACID CONTENT ANALYSIS IN SCRAP BATTERY
             </td>
         </tr>
 
-        {{-- ── ROW 7 : Acid Content Table ─────────────────────────── --}}
+        {{-- ── ROW 6 : Acid Content Table Data ── --}}
         <tr>
-            <td colspan="3" style="padding:0">
-                <table class="inn">
+            <td colspan="3" style="padding: 0;">
+                <table class="inn" style="width: 100%;">
                     <thead>
                         <tr>
-                            <th style="width:7%">SR. NO.</th>
-                            <th style="width:12%">PELLET NO.</th>
-                            <th style="width:13%">INITIAL<br>WEIGHT<br>(KG.)</th>
-                            <th style="width:13%">DRAINED<br>WEIGHT<br>(KG.)</th>
-                            <th style="width:13%">WEIGHT<br>DIFFERENCE<br>(KG.)</th>
-                            <th style="width:12%">ACID CONTENT<br>(%)</th>
-                            <th style="width:14%">STOCK CODE</th>
-                            <th>REMARKS</th>
+                            <th
+                                style="width: 5%; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 6px 4px;">
+                                SR.</th>
+                            <th
+                                style="width: 11%; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 6px 4px;">
+                                PALLET NO.</th>
+                            <th
+                                style="width: 14%; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 6px 4px;">
+                                INITIAL WEIGHT (KG)</th>
+                            <th
+                                style="width: 14%; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 6px 4px;">
+                                DRAINED WEIGHT (KG)</th>
+                            <th
+                                style="width: 14%; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 6px 4px;">
+                                WEIGHT DIFF. (KG)</th>
+                            <th
+                                style="width: 12%; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 6px 4px;">
+                                ACID CONTENT (%)</th>
+                            <th style="border-bottom: 0.5px solid #000; padding: 6px 4px; width: 30%;">REMARKS</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($acidRows as $j => $row)
                             <tr>
-                                <td>{{ $j + 1 }}</td>
-                                <td style="font-weight:600">{{ $row->pallet_no }}</td>
-                                <td>{{ number_format((float) ($row->initial_weight ?? 0), 2) }}</td>
-                                <td>{{ number_format((float) ($row->drained_weight ?? 0), 2) }}</td>
-                                <td>{{ number_format((float) ($row->weight_difference ?? max(0, ($row->initial_weight ?? 0) - ($row->drained_weight ?? 0))), 2) }}
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 5px;">
+                                    {{ $j + 1 }}</td>
+                                <td
+                                    style="font-weight: 600; border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 5px;">
+                                    {{ $row->pallet_no }}</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 5px;">
+                                    {{ number_format((float) ($row->initial_weight ?? 0), 2) }}</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 5px;">
+                                    {{ number_format((float) ($row->drained_weight ?? 0), 2) }}</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 5px;">
+                                    {{ number_format((float) ($row->weight_difference ?? max(0, ($row->initial_weight ?? 0) - ($row->drained_weight ?? 0))), 2) }}
                                 </td>
-                                <td>{{ number_format((float) ($row->avg_acid_pct ?? 0), 2) }}</td>
-                                <!-- <td style="font-weight:700;font-size:10.5px">{{ $row->stock_code ?? '—' }}</td> -->
-                                <td style="font-weight:700;font-size:10.5px">{{ $row->ulab_type }}</td>
-                                <td>{{ $row->remarks ?? '' }}</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 5px;">
+                                    {{ number_format((float) ($row->avg_acid_pct ?? 0), 2) }}</td>
+                                <td class="rmk" style="border-bottom: 0.5px solid #000;">{{ $row->remarks ?? '' }}</td>
                             </tr>
                         @endforeach
 
                         @for($b = $acidRows->count(); $b < $minRows; $b++)
                             <tr>
-                                <td>{{ $b + 1 }}</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">{{ $b + 1 }}
+                                </td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">&nbsp;</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">&nbsp;</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">&nbsp;</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">&nbsp;</td>
+                                <td style="border-right: 0.5px solid #000; border-bottom: 0.5px solid #000;">&nbsp;</td>
+                                <td style="border-bottom: 0.5px solid #000;">&nbsp;</td>
                             </tr>
                         @endfor
 
-                        <tr style="background:#efefef">
+                        <tr style="background: #efefef;">
                             <td colspan="2"
-                                style="font-weight:700;font-size:11px;text-transform:uppercase;text-align:center">TOTAL
-                                (KG.)</td>
-                            <td style="font-weight:700;font-size:11px">
-                                <span style="text-decoration:underline">{{ number_format($totalInitial, 2) }}</span>
-                            </td>
-                            <td style="font-weight:700;font-size:11px">
-                                <span style="text-decoration:underline">{{ number_format($totalDrained, 2) }}</span>
-                            </td>
-                            <td style="font-weight:700;font-size:11px">
-                                <span style="text-decoration:underline">{{ number_format($totalWtDiff, 2) }}</span>
-                            </td>
-                            <td style="font-weight:700;font-size:15px">
-                                <span style="text-decoration:underline">{{ number_format($netAvgAcid, 2) }}</span>
-                            </td>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
+                                style="font-weight: 700; text-transform: uppercase; border-right: 0.5px solid #000; padding: 6px;">
+                                TOTAL (KG.)</td>
+                            <td style="font-weight: 700; border-right: 0.5px solid #000; padding: 6px;">
+                                {{ number_format($totalInitial, 2) }}</td>
+                            <td style="font-weight: 700; border-right: 0.5px solid #000; padding: 6px;">
+                                {{ number_format($totalDrained, 2) }}</td>
+                            <td style="font-weight: 700; border-right: 0.5px solid #000; padding: 6px;">
+                                {{ number_format($totalWtDiff, 2) }}</td>
+                            <td
+                                style="font-weight: 700; font-size: 12px; border-right: 0.5px solid #000; padding: 6px;">
+                                {{ number_format($netAvgAcid, 2) }}</td>
+                            <td style="padding: 6px;">&nbsp;</td>
                         </tr>
                     </tbody>
                 </table>
             </td>
         </tr>
 
-        {{-- ── ROW 8 : Signature Row ───────────────────────────────── --}}
+        {{-- ── ROW 7 : Signatures ── --}}
         <tr>
-            <td colspan="3" style="padding:0;border-top:2px solid #000">
-                <table class="inn">
+            <td colspan="3" style="padding: 0;">
+                <table class="inn" style="width: 100%;">
                     <tr>
-                        <td class="lbl" style="width:33%;height:72px;vertical-align:top;padding:8px 14px">
-                            RECORDED BY:
+                        <td class="lbl"
+                            style="width: 33%; height: 75px; vertical-align: top; padding: 8px; border-right: 0.5px solid #000;">
+                            RECORDED BY:<br>
+                            <span
+                                style="font-size: 10px; font-weight: 400; text-transform: none; margin-top: 15px; display: block;">
+                                {!! $recordedBy !!}
+                            </span>
                         </td>
-                        <td class="lbl" style="width:34%;height:72px;vertical-align:top;padding:8px 14px">
-                            VERIFIED BY
+                        <td class="lbl"
+                            style="width: 34%; height: 75px; vertical-align: top; padding: 8px; border-right: 0.5px solid #000;">
+                            VERIFIED BY:<br>
+                            <span
+                                style="font-size: 10px; font-weight: 400; text-transform: none; margin-top: 15px; display: block;">
+                                {!! $verifiedBy !!}
+                            </span>
                         </td>
-                        <td class="lbl" style="width:33%;height:72px;vertical-align:top;padding:8px 14px">
+                        <td class="lbl" style="width: 33%; height: 75px; vertical-align: top; padding: 8px;">
                             SUPPLIER
                         </td>
                     </tr>

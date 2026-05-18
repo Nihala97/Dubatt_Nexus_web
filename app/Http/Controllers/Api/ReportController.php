@@ -640,9 +640,6 @@ class ReportController extends Controller
         try {
             $now = Carbon::now();
 
-            // ── NEW: read selected month/year from request ────────────
-            // Frontend sends ?month=4&year=2026
-            // Defaults to current month/year
             $selectedYear = (int) ($request->input('year', $now->year));
             $selectedMonth = (int) ($request->input('month', $now->month));
 
@@ -651,14 +648,11 @@ class ReportController extends Controller
             $prevMonth = $prevMonthDate->month;
             $prevMonthYear = $prevMonthDate->year;
 
-            // ── Base input query helper ───────────────────────────────
             $inputBase = fn() => DB::table('bbsu_input_details as bi')
                 ->join('bbsu_batches as bb', 'bb.id', '=', 'bi.bbsu_batch_id')
                 ->where('bb.is_active', 1)
                 ->where('bi.is_active', 1);
 
-            // ── 1. PRODUCTION SCORECARDS ──────────────────────────────
-            // "Last Month" = month before selected month
             $lastMonthTotal = $inputBase()
                 ->whereMonth('bb.doc_date', $prevMonth)
                 ->whereYear('bb.doc_date', $prevMonthYear)
@@ -685,21 +679,28 @@ class ReportController extends Controller
                 ->whereYear('bb.doc_date', $selectedYear)
                 ->sum('bi.quantity');
 
-            // ── 2. AVG HR / MT — start_time → end_time diff ──────────
-            $batchTimeRow = DB::table('bbsu_batches as bb')
-                ->join('bbsu_input_details as bi', fn($j) =>
-                    $j->on('bi.bbsu_batch_id', '=', 'bb.id')->where('bi.is_active', 1))
+            // ── 2. AVG HR / MT (BBSU category only, no bi join to avoid row-multiplication) ──
+            $batchHours = DB::table('bbsu_batches')
+                ->where('is_active', 1)
+                ->where('category', 'BBSU')
+                ->whereMonth('doc_date', $selectedMonth)
+                ->whereYear('doc_date', $selectedYear)
+                ->whereNotNull('start_time')
+                ->whereNotNull('end_time')
+                ->selectRaw('SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) as total_seconds')
+                ->value('total_seconds');
+
+            $batchInputKg = DB::table('bbsu_input_details as bi')
+                ->join('bbsu_batches as bb', 'bb.id', '=', 'bi.bbsu_batch_id')
+                ->where('bb.is_active', 1)
+                ->where('bb.category', 'BBSU')
+                ->where('bi.is_active', 1)
                 ->whereMonth('bb.doc_date', $selectedMonth)
                 ->whereYear('bb.doc_date', $selectedYear)
-                ->where('bb.is_active', 1)
-                ->whereNotNull('bb.start_time')
-                ->whereNotNull('bb.end_time')
-                ->selectRaw('SUM(TIMESTAMPDIFF(SECOND, bb.start_time, bb.end_time)) as total_seconds,
-                              SUM(bi.quantity) as total_input_kg')
-                ->first();
+                ->sum('bi.quantity');
 
-            $totalHours = ($batchTimeRow->total_seconds ?? 0) / 3600;
-            $totalInputMT = ($batchTimeRow->total_input_kg ?? 0) / 1000;
+            $totalHours = ($batchHours ?? 0) / 3600;
+            $totalInputMT = $batchInputKg / 1000;
             $avgHrPerMT = ($totalInputMT > 0 && $totalHours > 0)
                 ? round($totalHours / $totalInputMT, 4) : 0;
 
@@ -763,11 +764,12 @@ class ReportController extends Controller
                         'bb.category',
                         'bb.start_time',
                         'bb.end_time',
+                        'bb.status',
                         DB::raw('SUM(bi.quantity) as total_input'),
                         DB::raw('SUM(bi.quantity * bi.acid_percentage) / NULLIF(SUM(bi.quantity),0) as avg_acid'),
                         DB::raw('ROUND(TIMESTAMPDIFF(SECOND, bb.start_time, bb.end_time) / 3600, 3) as total_hrs')
                     )
-                    ->groupBy('bb.id', 'bb.batch_no', 'bb.category', 'bb.start_time', 'bb.end_time')
+                    ->groupBy('bb.id', 'bb.batch_no', 'bb.category', 'bb.start_time', 'bb.end_time', 'bb.status')
                     ->orderBy('bb.start_time')->get();
             }
 
@@ -822,14 +824,12 @@ class ReportController extends Controller
         $months = min((int) $request->input('months', 1), 3);
         $now = Carbon::now();
 
-        // ── NEW: read selected month/year ─────────────────────────────
         $selectedYear = (int) ($request->input('year', $now->year));
         $selectedMonth = (int) ($request->input('month', $now->month));
         $selectedDate = Carbon::createFromDate($selectedYear, $selectedMonth, 1);
 
         $datasets = [];
 
-        // Production comparison: uses selected month as base, goes back N months
         for ($i = $months - 1; $i >= 0; $i--) {
             $target = $selectedDate->copy()->subMonths($i);
             $monthStart = $target->copy()->startOfMonth();
@@ -868,36 +868,72 @@ class ReportController extends Controller
 
         $daysInMonth = $selectedDate->copy()->daysInMonth;
 
-        $rawHours = DB::table('bbsu_batches as bb')
-            ->join('bbsu_input_details as bi', fn($j) =>
-                $j->on('bi.bbsu_batch_id', '=', 'bb.id')->where('bi.is_active', 1))
-            ->whereMonth('bb.doc_date', $selectedMonth)->whereYear('bb.doc_date', $selectedYear)
+        // ── Hrs/MT: Step 1 — batch duration per day (bbsu_batches only, BBSU category) ──
+        $hoursPerDay = DB::table('bbsu_batches')
+            ->where('is_active', 1)
+            ->where('category', 'BBSU')
+            ->whereMonth('doc_date', $selectedMonth)
+            ->whereYear('doc_date', $selectedYear)
+            ->whereNotNull('start_time')
+            ->whereNotNull('end_time')
+            ->selectRaw('DAY(doc_date) as day, SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) as total_seconds')
+            ->groupBy(DB::raw('DAY(doc_date)'))
+            ->get()->keyBy('day');
+
+        // ── Hrs/MT: Step 2 — input qty per day (BBSU category only) ──
+        $inputPerDay = DB::table('bbsu_input_details as bi')
+            ->join('bbsu_batches as bb', 'bb.id', '=', 'bi.bbsu_batch_id')
             ->where('bb.is_active', 1)
             ->where('bb.category', 'BBSU')
-            ->whereNotNull('bb.start_time')->whereNotNull('bb.end_time')
-            ->selectRaw('DAY(bb.doc_date) as day,
-                    ROUND(SUM(TIMESTAMPDIFF(SECOND,bb.start_time,bb.end_time))/3600
-                    / NULLIF(SUM(bi.quantity)/1000,0),4) as avg_hrs')
-            ->groupBy(DB::raw('DAY(bb.doc_date)'))->orderBy('day')->get()->keyBy('day');
+            ->where('bi.is_active', 1)
+            ->whereMonth('bb.doc_date', $selectedMonth)
+            ->whereYear('bb.doc_date', $selectedYear)
+            ->selectRaw('DAY(bb.doc_date) as day, SUM(bi.quantity) as total_qty')
+            ->groupBy(DB::raw('DAY(bb.doc_date)'))
+            ->get()->keyBy('day');
 
+        // ── Hrs/MT: Step 3 — compute Hrs/MT = total_hrs / (input_kg / 1000) ──
+        $rawHours = collect();
+        foreach ($hoursPerDay as $day => $row) {
+            $hrs = ($row->total_seconds ?? 0) / 3600;
+            $inputMT = ($inputPerDay->get($day)?->total_qty ?? 0) / 1000;
+            $rawHours->put($day, (object) [
+                'avg_hrs' => ($inputMT > 0 && $hrs > 0) ? round($hrs / $inputMT, 4) : 0,
+            ]);
+        }
+
+        // Build full-month array (zero-fill days with no data)
         $avgHoursPerDay = collect(range(1, $daysInMonth))->map(fn($d) => [
             'day' => $d,
             'avg_hrs' => $rawHours->get($d)?->avg_hrs ?? 0,
         ]);
 
-        // PWR/MT for selected month
-        $rawPwr = DB::table('bbsu_batches as bb')
+        // ── PWR/MT: Step 1 — sum total_power_consumption per day ──
+        // Join only bbsu_power_consumption — NO bbsu_input_details join here
+        // (joining both tables in one query inflates both sums via row multiplication)
+        $pwrPerDayRaw = DB::table('bbsu_batches as bb')
             ->join('bbsu_power_consumption as bp', fn($j) =>
                 $j->on('bp.bbsu_batch_id', '=', 'bb.id')->where('bp.is_active', 1))
-            ->join('bbsu_input_details as bi', fn($j) =>
-                $j->on('bi.bbsu_batch_id', '=', 'bb.id')->where('bi.is_active', 1))
-            ->whereMonth('bb.doc_date', $selectedMonth)->whereYear('bb.doc_date', $selectedYear)
             ->where('bb.is_active', 1)
             ->where('bb.category', 'BBSU')
-            ->selectRaw('DAY(bb.doc_date) as day,
-        ROUND(SUM(bp.total_power_consumption)/NULLIF(SUM(bi.quantity)/1000,0),4) as pwr_per_mt')
-            ->groupBy(DB::raw('DAY(bb.doc_date)'))->orderBy('day')->get()->keyBy('day');
+            ->whereMonth('bb.doc_date', $selectedMonth)
+            ->whereYear('bb.doc_date', $selectedYear)
+            ->selectRaw('DAY(bb.doc_date) as day, SUM(bp.total_power_consumption) as total_pwr')
+            ->groupBy(DB::raw('DAY(bb.doc_date)'))
+            ->get()->keyBy('day');
 
+        // ── PWR/MT: Step 2 — compute PWR/MT = total_power_consumption / (input_kg / 1000) ──
+        // Reuses $inputPerDay (BBSU category, same month) already built above
+        $rawPwr = collect();
+        foreach ($pwrPerDayRaw as $day => $row) {
+            $pwr = (float) ($row->total_pwr ?? 0);
+            $inputMT = ($inputPerDay->get($day)?->total_qty ?? 0) / 1000;
+            $rawPwr->put($day, (object) [
+                'pwr_per_mt' => ($inputMT > 0 && $pwr > 0) ? round($pwr / $inputMT, 4) : 0,
+            ]);
+        }
+
+        // ── PWR/MT: Step 3 — build full-month array (zero-fill days with no data) ──
         $pwrPerDay = collect(range(1, $daysInMonth))->map(fn($d) => [
             'day' => $d,
             'pwr_per_mt' => $rawPwr->get($d)?->pwr_per_mt ?? 0,
@@ -911,6 +947,7 @@ class ReportController extends Controller
             'pwr_per_day' => $pwrPerDay,
         ]);
     }
+
     public function bbsuReport(Request $request)
     {
         $allowedSorts = ['doc_date', 'batch_no', 'category', 'start_time', 'end_time', 'total_input_qty', 'avg_acid_pct', 'total_power_hrs'];
@@ -942,7 +979,6 @@ class ReportController extends Controller
             )
             ->groupBy('bb.id', 'bb.batch_no', 'bb.doc_date', 'bb.category', 'bb.start_time', 'bb.end_time', 'bb.status');
 
-        // Filters — unchanged
         if ($request->filled('date_from'))
             $query->whereDate('bb.doc_date', '>=', $request->date_from);
         if ($request->filled('date_to'))
@@ -954,7 +990,6 @@ class ReportController extends Controller
         if ($request->filled('status'))
             $query->where('bb.status', $request->status);
 
-        // Sorting — unchanged
         $nativeSorts = ['doc_date', 'batch_no', 'category', 'start_time', 'end_time'];
         if (in_array($sortBy, $nativeSorts)) {
             $query->orderBy('bb.' . $sortBy, $sortDir);
@@ -965,7 +1000,6 @@ class ReportController extends Controller
         $paginated = $query->paginate($perPage);
         $batchIds = collect($paginated->items())->pluck('id')->toArray();
 
-        // ── Output materials — NOW with secondary_name from materials table ──
         $outputMatsRaw = DB::table('bbsu_output_materials as bo')
             ->leftJoin('materials as m', 'm.material_code', '=', 'bo.material_code')
             ->whereIn('bo.bbsu_batch_id', $batchIds)
@@ -973,7 +1007,6 @@ class ReportController extends Controller
             ->select(
                 'bo.bbsu_batch_id',
                 'bo.material_code',
-                // Priority: secondary_name → material_name → material_code
                 DB::raw("COALESCE(
                     NULLIF(TRIM(m.secondary_name), ''),
                     NULLIF(TRIM(m.material_name), ''),
@@ -1006,10 +1039,9 @@ class ReportController extends Controller
                 'initial_power' => round((float) ($r->initial_power ?? 0), 3),
                 'final_power' => round((float) ($r->final_power ?? 0), 3),
                 'total_power_hrs' => round((float) ($r->total_power_hrs ?? 0), 3),
-                // ↓ Now includes material_name (secondary_name from materials table)
                 'output_materials' => ($outputMatsRaw[$r->id] ?? collect())->map(fn($m) => [
                     'material_code' => $m->material_code,
-                    'material_name' => $m->material_name,   // ← secondary_name or fallback
+                    'material_name' => $m->material_name,
                     'qty' => round((float) $m->qty, 3),
                     'yield_pct' => round((float) $m->yield_pct, 2),
                 ])->values(),
@@ -1027,6 +1059,7 @@ class ReportController extends Controller
             ],
         ]);
     }
+
     public function bbsuDrilldown(Request $request)
     {
         $date = $request->input('date');
@@ -1490,7 +1523,11 @@ class ReportController extends Controller
                 'firing_mode' => $p->firing_mode ?? '—',
             ])->values(),
             'flux_chemicals' => $fluxChems->map(fn($f) => [
-                'chemical' => optional($f->chemical)->chemical_name ?? optional($f->chemical)->name ?? '—',
+                'chemical' => $f->chemical_name                              // direct column
+                    ?? optional($f->chemical)->chemical_name                 // relation -> chemical_name
+                    ?? optional($f->chemical)->name                          // relation -> name
+                    ?? optional($f->chemical)->material_name                 // relation -> material_name
+                    ?? ($f->name ?? ($f->material_name ?? '—')),             // own name/material_name
                 'qty' => $f->qty,
             ])->values(),
         ];
@@ -1777,7 +1814,7 @@ class ReportController extends Controller
 
         $query = \App\Models\RefiningBatch::with([
             'material',
-            'rawMaterials',
+            'rawMaterials.material',
             'chemicals',
             'processDetails',
             'finishedGoodsSummary.material',
@@ -1863,6 +1900,15 @@ class ReportController extends Controller
         $fgSumm = $b->finishedGoodsSummary;
         $drossSumm = $b->drossSummary;
 
+        // LPG ltr: use stored value, fallback to m³ × 4.2
+        $lpgLtr = (float) ($b->lpg_consumption_ltr ?? 0);
+        if ($lpgLtr <= 0)
+            $lpgLtr = round((float) ($b->lpg_consumption ?? 0) * 4.2, 3);
+
+        $lpg2Ltr = (float) ($b->lpg2_consumption_ltr ?? 0);
+        if ($lpg2Ltr <= 0)
+            $lpg2Ltr = round((float) ($b->lpg2_consumption ?? 0) * 4.2, 3);
+
         return [
             'id' => $b->id,
             'date' => $b->date?->format('d/m/Y') ?? '—',
@@ -1876,26 +1922,26 @@ class ReportController extends Controller
             // FG Output
             'total_fg_qty' => round($fgSumm->sum('total_qty'), 3),
             'fg_details' => $fgSumm->map(fn($fg) => [
-                'material' => $fg->material->material_name ?? $fg->material->name ?? '—',
+                'material' => $fg->material->material_name ?? $fg->material->secondary_name ?? $fg->material->name ?? '—',
                 'category' => $fg->material->category ?? '—',
                 'qty' => round($fg->total_qty, 3),
             ])->values(),
             // Dross
             'total_dross_qty' => round($drossSumm->sum('total_qty'), 3),
             'dross_details' => $drossSumm->map(fn($dr) => [
-                'material' => $dr->material->material_name ?? $dr->material->name ?? '—',
+                'material' => $dr->material->material_name ?? $dr->material->secondary_name ?? $dr->material->name ?? '—',
                 'qty' => round($dr->total_qty, 3),
             ])->values(),
             // LPG 1
             'lpg_initial' => (float) ($b->lpg_initial ?? 0),
             'lpg_final' => (float) ($b->lpg_final ?? 0),
             'lpg_consumption' => (float) ($b->lpg_consumption ?? 0),
-            'lpg_consumption_ltr' => (float) ($b->lpg_consumption_ltr ?? 0),
+            'lpg_consumption_ltr' => $lpgLtr,
             // LPG 2
             'lpg2_initial' => (float) ($b->lpg2_initial ?? 0),
             'lpg2_final' => (float) ($b->lpg2_final ?? 0),
             'lpg2_consumption' => (float) ($b->lpg2_consumption ?? 0),
-            'lpg2_consumption_ltr' => (float) ($b->lpg2_consumption_ltr ?? 0),
+            'lpg2_consumption_ltr' => $lpg2Ltr,
             // Electricity
             'electricity_initial' => (float) ($b->electricity_initial ?? 0),
             'electricity_final' => (float) ($b->electricity_final ?? 0),
@@ -1913,17 +1959,37 @@ class ReportController extends Controller
                 'end' => $p->end_time ? \Carbon\Carbon::parse($p->end_time)->format('H:i') : '—',
                 'total_time' => $p->total_time,
             ])->values(),
+            // Raw materials — try all common relationship accessor names
             'raw_materials' => $rawMats->map(fn($r) => [
-                'material' => optional($r->rawMaterial)->material_name
-                    ?? optional($r->rawMaterial)->name ?? '—',
-                'smelting_batch' => $r->smelting_batch_no ?? '—',
+                'material' => optional($r->material)->material_name
+                    ?? optional($r->material)->secondary_name
+                    ?? optional($r->material)->name
+                    ?? optional($r->rawMaterial)->material_name
+                    ?? optional($r->rawMaterial)->secondary_name
+                    ?? optional($r->rawMaterial)->name
+                    ?? '—',
                 'qty' => round($r->qty, 3),
             ])->values(),
-
             'chemicals' => $chems->map(fn($c) => [
-                'chemical' => optional($c->chemical)->chemical_name
-                    ?? optional($c->chemical)->name ?? '—',
-                'smelting_batch' => $c->smelting_batch_no ?? '—',
+                'chemical' => (function () use ($c) {
+                    foreach (['chemical', 'material', 'chemicalMaterial'] as $rel) {
+                        try {
+                            $related = $c->$rel ?? null;
+                            if ($related) {
+                                return $related->chemical_name
+                                    ?? $related->material_name
+                                    ?? $related->secondary_name
+                                    ?? $related->name
+                                    ?? null;
+                            }
+                        } catch (\Throwable $e) {
+                            continue; }
+                    }
+                    return $c->chemical_name
+                        ?? $c->material_name
+                        ?? $c->name
+                        ?? '—';
+                })(),
                 'qty' => round($c->qty, 3),
             ])->values(),
             'remarks' => $b->remarks ?? '—',

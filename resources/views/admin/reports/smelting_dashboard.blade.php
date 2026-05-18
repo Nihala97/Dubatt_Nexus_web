@@ -1341,30 +1341,30 @@
             const d = dashData;
             const batches = d.rotary_breakdown?.reduce((s, r) => s + Number(r.batch_count), 0) ?? 0;
             document.getElementById('scRow').innerHTML = `
-                                                            <div class="sc green">
-                                                                <svg class="sc-ico" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-                                                                <div class="sc-label">Total Production — ${d.month_label}</div>
-                                                                <div class="sc-val">${fmt(d.current_month_total, 0)}<span class="sc-unit">KG</span></div>
-                                                                <div class="sc-sub">${batches} batches · ${fmt(d.current_month_total / 1000, 2)} MT</div>
-                                                            </div>
-                                                            <div class="sc amber">
-                                                                <svg class="sc-ico" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                                                                <div class="sc-label">Total Production — ${d.prev_label}</div>
-                                                                <div class="sc-val">${fmt(d.previous_month_total, 0)}<span class="sc-unit">KG</span></div>
-                                                                <div class="sc-sub">${deltaStr(d.current_month_total, d.previous_month_total)} vs prev month</div>
-                                                            </div>
-                                                            <div class="sc blue">
-                                                                <svg class="sc-ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                                                <div class="sc-label">Total Production — ${d.year_label}</div>
-                                                                <div class="sc-val">${fmt(d.year_total, 0)}<span class="sc-unit">KG</span></div>
-                                                                <div class="sc-sub">${fmt(d.year_total / 1000, 2)} MT year to date</div>
-                                                            </div>
-                                                            <div class="sc teal">
-                                                                <svg class="sc-ico" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-                                                                <div class="sc-label">Expected Yield</div>
-                                                                <div class="sc-val">${fmt(dashData.yield_data?.total_expected ?? 0, 0)}<span class="sc-unit">KG</span></div>
-                                                                <div class="sc-sub">Actual: ${fmt(dashData.yield_data?.total_actual ?? 0, 0)} KG</div>
-                                                            </div>`;
+                                                                    <div class="sc green">
+                                                                        <svg class="sc-ico" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                                                                        <div class="sc-label">Total Production — ${d.month_label}</div>
+                                                                        <div class="sc-val">${fmt(d.current_month_total, 0)}<span class="sc-unit">KG</span></div>
+                                                                        <div class="sc-sub">${batches} batches · ${fmt(d.current_month_total / 1000, 2)} MT</div>
+                                                                    </div>
+                                                                    <div class="sc amber">
+                                                                        <svg class="sc-ico" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                                                        <div class="sc-label">Total Production — ${d.prev_label}</div>
+                                                                        <div class="sc-val">${fmt(d.previous_month_total, 0)}<span class="sc-unit">KG</span></div>
+                                                                        <div class="sc-sub">${deltaStr(d.current_month_total, d.previous_month_total)} vs prev month</div>
+                                                                    </div>
+                                                                    <div class="sc blue">
+                                                                        <svg class="sc-ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                                                        <div class="sc-label">Total Production — ${d.year_label}</div>
+                                                                        <div class="sc-val">${fmt(d.year_total, 0)}<span class="sc-unit">KG</span></div>
+                                                                        <div class="sc-sub">${fmt(d.year_total / 1000, 2)} MT year to date</div>
+                                                                    </div>
+                                                                    <div class="sc teal">
+                                                                        <svg class="sc-ico" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                                                                        <div class="sc-label">Expected Yield</div>
+                                                                        <div class="sc-val">${fmt(dashData.yield_data?.total_expected ?? 0, 0)}<span class="sc-unit">KG</span></div>
+                                                                        <div class="sc-sub">Actual: ${fmt(dashData.yield_data?.total_actual ?? 0, 0)} KG</div>
+                                                                    </div>`;
         }
 
         function renderMetrics() {
@@ -1491,11 +1491,11 @@
             const tbody = document.getElementById('rotaryTbody');
             if (!rows.length) { tbody.innerHTML = `<tr class="state-row"><td colspan="4">No data for selected month.</td></tr>`; return; }
             tbody.innerHTML = rows.map(r => `<tr>
-                                                            <td style="font-weight:700">Rotary ${r.rotary_no}</td>
-                                                            <td class="num" style="font-weight:700;color:var(--g)">${fmt(r.total_qty, 0)} KG</td>
-                                                            <td class="num">${r.batch_count}</td>
-                                                            <td class="num">${r.batch_count > 0 ? fmt(r.total_qty / r.batch_count, 0) + ' KG' : '—'}</td>
-                                                        </tr>`).join('');
+                                                                    <td style="font-weight:700">Rotary ${r.rotary_no}</td>
+                                                                    <td class="num" style="font-weight:700;color:var(--g)">${fmt(r.total_qty, 0)} KG</td>
+                                                                    <td class="num">${r.batch_count}</td>
+                                                                    <td class="num">${r.batch_count > 0 ? fmt(r.total_qty / r.batch_count, 0) + ' KG' : '—'}</td>
+                                                                </tr>`).join('');
         }
 
         async function loadYield() {
@@ -1572,29 +1572,29 @@
                 flpg += r.lpg_consumption; fo2 += r.o2_consumption; fif += r.id_fan_consumption; frp += r.rotary_power_consumption;
                 const st = r.status >= 1 ? '<span class="badge-st st-1">Submitted</span>' : '<span class="badge-st st-0">Draft</span>';
                 return `<tr>
-                                                                <td style="white-space:nowrap">${r.date}</td>
-                                                                <td style="font-weight:600">${esc(r.batch_no)}</td>
-                                                                <td>${esc(r.charge_no)}</td>
-                                                                <td style="text-align:center">R${r.rotary_no}</td>
-                                                                <td>${r.start_time}</td><td>${r.end_time}</td>
-                                                                <td class="num" style="font-weight:700;color:var(--g)">${fmt(r.output_qty, 0)}</td>
-                                                                <td class="num">${fmt(r.expected_output_qty, 0)}</td>
-                                                                <td class="num">${fmt(r.avg_yield_pct, 2)}%</td>
-                                                                <td class="num">${fmt(r.total_raw_qty, 0)}</td>
-                                                                <td class="num">${fmt(r.total_flux_qty, 0)}</td>
-                                                                <td class="num">${fmt(r.lpg_consumption, 3)}</td>
-                                                                <td class="num">${fmt(r.o2_consumption, 3)}</td>
-                                                                <td class="num">${fmt(r.id_fan_consumption, 3)}</td>
-                                                                <td class="num">${fmt(r.rotary_power_consumption, 3)}</td>
-                                                                <td class="num">${fmt(r.total_process_mins, 0)}</td>
-                                                                <td class="num">${fmt(r.avg_inside_temp, 1)}</td>
-                                                                <td class="num">${fmt(r.avg_pgc_temp, 1)}</td>
-                                                                <td style="max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.remarks)}</td>
-                                                                <td>${st}</td>
-                                                                <td style="text-align:center">
-                                                                    <button class="btn-view" onclick="openDetail(${idx})">View</button>
-                                                                </td>
-                                                            </tr>`;
+                                                                        <td style="white-space:nowrap">${r.date}</td>
+                                                                        <td style="font-weight:600">${esc(r.batch_no)}</td>
+                                                                        <td>${esc(r.charge_no)}</td>
+                                                                        <td style="text-align:center">R${r.rotary_no}</td>
+                                                                        <td>${r.start_time}</td><td>${r.end_time}</td>
+                                                                        <td class="num" style="font-weight:700;color:var(--g)">${fmt(r.output_qty, 0)}</td>
+                                                                        <td class="num">${fmt(r.expected_output_qty, 0)}</td>
+                                                                        <td class="num">${fmt(r.avg_yield_pct, 2)}%</td>
+                                                                        <td class="num">${fmt(r.total_raw_qty, 0)}</td>
+                                                                        <td class="num">${fmt(r.total_flux_qty, 0)}</td>
+                                                                        <td class="num">${fmt(r.lpg_consumption, 3)}</td>
+                                                                        <td class="num">${fmt(r.o2_consumption, 3)}</td>
+                                                                        <td class="num">${fmt(r.id_fan_consumption, 3)}</td>
+                                                                        <td class="num">${fmt(r.rotary_power_consumption, 3)}</td>
+                                                                        <td class="num">${fmt(r.total_process_mins, 0)}</td>
+                                                                        <td class="num">${fmt(r.avg_inside_temp, 1)}</td>
+                                                                        <td class="num">${fmt(r.avg_pgc_temp, 1)}</td>
+                                                                        <td style="max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.remarks)}</td>
+                                                                        <td>${st}</td>
+                                                                        <td style="text-align:center">
+                                                                            <button class="btn-view" onclick="openDetail(${idx})">View</button>
+                                                                        </td>
+                                                                    </tr>`;
             }).join('');
 
             ['ftOutput', 'ftExpected', 'ftRaw', 'ftFlux', 'ftLpg', 'ftO2', 'ftIdFan', 'ftRotPwr'].forEach((id, i) => {
@@ -1659,82 +1659,82 @@
 
             const rawRows = r.raw_materials ?? [];
             const rawHtml = rawRows.length ? `
-                                                            <div class="detail-section">
-                                                                <h4>Raw Materials</h4>
-                                                                <div class="tbl-wrap">
-                                                                    <table class="dt">
-                                                                        <thead><tr><th>Material</th><th>BBSU Batch</th><th class="num">Qty (KG)</th><th class="num">Yield %</th><th class="num">Expected (KG)</th></tr></thead>
-                                                                        <tbody>${rawRows.map(rm => `<tr>
-                                                                            <td>${esc(rm.material)}</td>
-                                                                            <td>${esc(rm.bbsu_no)}</td>
-                                                                            <td class="num">${fmt(rm.qty, 0)}</td>
-                                                                            <td class="num">${fmt(rm.yield_pct, 2)}%</td>
-                                                                            <td class="num">${fmt(rm.expected, 0)}</td>
-                                                                        </tr>`).join('')}</tbody>
-                                                                        <tfoot><tr>
-                                                                            <td colspan="2" style="text-align:right;color:var(--txtmu);font-size:10px">TOTAL</td>
-                                                                            <td class="num">${fmt(rawRows.reduce((s, rm) => s + parseFloat(rm.qty || 0), 0), 0)}</td>
-                                                                            <td></td>
-                                                                            <td class="num">${fmt(rawRows.reduce((s, rm) => s + parseFloat(rm.expected || 0), 0), 0)}</td>
-                                                                        </tr></tfoot>
-                                                                    </table>
-                                                                </div>
-                                                            </div>` : '';
+                                                                    <div class="detail-section">
+                                                                        <h4>Raw Materials</h4>
+                                                                        <div class="tbl-wrap">
+                                                                            <table class="dt">
+                                                                                <thead><tr><th>Material</th><th>BBSU Batch</th><th class="num">Qty (KG)</th><th class="num">Yield %</th><th class="num">Expected (KG)</th></tr></thead>
+                                                                                <tbody>${rawRows.map(rm => `<tr>
+                                                                                    <td>${esc(rm.material)}</td>
+                                                                                    <td>${esc(rm.bbsu_no)}</td>
+                                                                                    <td class="num">${fmt(rm.qty, 0)}</td>
+                                                                                    <td class="num">${fmt(rm.yield_pct, 2)}%</td>
+                                                                                    <td class="num">${fmt(rm.expected, 0)}</td>
+                                                                                </tr>`).join('')}</tbody>
+                                                                                <tfoot><tr>
+                                                                                    <td colspan="2" style="text-align:right;color:var(--txtmu);font-size:10px">TOTAL</td>
+                                                                                    <td class="num">${fmt(rawRows.reduce((s, rm) => s + parseFloat(rm.qty || 0), 0), 0)}</td>
+                                                                                    <td></td>
+                                                                                    <td class="num">${fmt(rawRows.reduce((s, rm) => s + parseFloat(rm.expected || 0), 0), 0)}</td>
+                                                                                </tr></tfoot>
+                                                                            </table>
+                                                                        </div>
+                                                                    </div>` : '';
 
             const procRows = r.process_details ?? [];
             const procHtml = procRows.length ? `
-                                                            <div class="detail-section">
-                                                                <h4>Process Details</h4>
-                                                                <div class="tbl-wrap">
-                                                                    <table class="dt">
-                                                                        <thead><tr><th>Process</th><th>Start</th><th>End</th><th class="num">Time (min)</th><th>Firing Mode</th></tr></thead>
-                                                                        <tbody>${procRows.map(p => `<tr>
-                                                                            <td>${esc(p.process)}</td>
-                                                                            <td>${esc(p.start)}</td>
-                                                                            <td>${esc(p.end)}</td>
-                                                                            <td class="num">${fmt(p.total_time, 0)}</td>
-                                                                            <td>${esc(p.firing_mode)}</td>
-                                                                        </tr>`).join('')}</tbody>
-                                                                        <tfoot><tr>
-                                                                            <td colspan="3" style="text-align:right;color:var(--txtmu);font-size:10px">TOTAL</td>
-                                                                            <td class="num">${fmt(procRows.reduce((s, p) => s + parseFloat(p.total_time || 0), 0), 0)}</td>
-                                                                            <td></td>
-                                                                        </tr></tfoot>
-                                                                    </table>
-                                                                </div>
-                                                            </div>` : '';
+                                                                    <div class="detail-section">
+                                                                        <h4>Process Details</h4>
+                                                                        <div class="tbl-wrap">
+                                                                            <table class="dt">
+                                                                                <thead><tr><th>Process</th><th>Start</th><th>End</th><th class="num">Time (min)</th><th>Firing Mode</th></tr></thead>
+                                                                                <tbody>${procRows.map(p => `<tr>
+                                                                                    <td>${esc(p.process)}</td>
+                                                                                    <td>${esc(p.start)}</td>
+                                                                                    <td>${esc(p.end)}</td>
+                                                                                    <td class="num">${fmt(p.total_time, 0)}</td>
+                                                                                    <td>${esc(p.firing_mode)}</td>
+                                                                                </tr>`).join('')}</tbody>
+                                                                                <tfoot><tr>
+                                                                                    <td colspan="3" style="text-align:right;color:var(--txtmu);font-size:10px">TOTAL</td>
+                                                                                    <td class="num">${fmt(procRows.reduce((s, p) => s + parseFloat(p.total_time || 0), 0), 0)}</td>
+                                                                                    <td></td>
+                                                                                </tr></tfoot>
+                                                                            </table>
+                                                                        </div>
+                                                                    </div>` : '';
             const fluxRows = r.flux_chemicals ?? [];
             const fluxHtml = fluxRows.length ? `
-                                                            <div class="detail-section">
-                                                                <h4>Flux Chemicals</h4>
-                                                                <div class="tbl-wrap">
-                                                                    <table class="dt">
-                                                                        <thead><tr><th>Chemical</th><th class="num">Qty (KG)</th></tr></thead>
-                                                                        <tbody>${fluxRows.map(f => `<tr>
-                                                                            <td>${esc(f.chemical)}</td>
-                                                                            <td class="num">${fmt(f.qty, 3)}</td>
-                                                                        </tr>`).join('')}</tbody>
-                                                                        <tfoot><tr>
-                                                                            <td style="text-align:right;color:var(--txtmu);font-size:10px">TOTAL</td>
-                                                                            <td class="num">${fmt(fluxRows.reduce((s, f) => s + parseFloat(f.qty || 0), 0), 3)}</td>
-                                                                        </tr></tfoot>
-                                                                    </table>
-                                                                </div>
-                                                            </div>` : '';
+                                                                    <div class="detail-section">
+                                                                        <h4>Flux Chemicals</h4>
+                                                                        <div class="tbl-wrap">
+                                                                            <table class="dt">
+                                                                                <thead><tr><th>Chemical</th><th class="num">Qty (KG)</th></tr></thead>
+                                                                                <tbody>${fluxRows.map(f => `<tr>
+                                                                                    <td>${esc(f.chemical)}</td>
+                                                                                    <td class="num">${fmt(f.qty, 3)}</td>
+                                                                                </tr>`).join('')}</tbody>
+                                                                                <tfoot><tr>
+                                                                                    <td style="text-align:right;color:var(--txtmu);font-size:10px">TOTAL</td>
+                                                                                    <td class="num">${fmt(fluxRows.reduce((s, f) => s + parseFloat(f.qty || 0), 0), 3)}</td>
+                                                                                </tr></tfoot>
+                                                                            </table>
+                                                                        </div>
+                                                                    </div>` : '';
 
             body.innerHTML = `
-                                                            <div class="detail-section">
-                                                                <h4>Batch Summary</h4>
-                                                                <div class="detail-grid">${kvs.map(([l, v]) => `
-                                                                    <div class="detail-kv">
-                                                                        <div class="detail-kv-label">${l}</div>
-                                                                        <div class="detail-kv-val">${v}</div>
-                                                                    </div>`).join('')}
-                                                                </div>
-                                                            </div>
-                                                            ${rawHtml}
-                                                            ${fluxHtml}
-                                                            ${procHtml}`;
+                                                                    <div class="detail-section">
+                                                                        <h4>Batch Summary</h4>
+                                                                        <div class="detail-grid">${kvs.map(([l, v]) => `
+                                                                            <div class="detail-kv">
+                                                                                <div class="detail-kv-label">${l}</div>
+                                                                                <div class="detail-kv-val">${v}</div>
+                                                                            </div>`).join('')}
+                                                                        </div>
+                                                                    </div>
+                                                                    ${rawHtml}
+                                                                    ${fluxHtml}
+                                                                    ${procHtml}`;
         }
 
         function closeDetail() {
@@ -1749,38 +1749,80 @@
             const r = currentDetailRow;
             if (!r) return;
             const wb = XLSX.utils.book_new();
+
+            // ── Sheet 1: Summary ──
             const sumData = [
                 ['Field', 'Value'],
-                ['Batch No', r.batch_no], ['Charge No', r.charge_no], ['Date', r.date],
-                ['Rotary', 'R' + r.rotary_no], ['Start Time', r.start_time], ['End Time', r.end_time],
+                ['Batch No', r.batch_no],
+                ['Charge No', r.charge_no],
+                ['Date', r.date],
+                ['Rotary', 'R' + r.rotary_no],
+                ['Start Time', r.start_time],
+                ['End Time', r.end_time],
                 ['Duration (Hrs)', r.duration_hours],
-                ['Output Qty (KG)', r.output_qty], ['Expected Output (KG)', r.expected_output_qty],
+                ['Output Qty (KG)', r.output_qty],
+                ['Expected Output (KG)', r.expected_output_qty],
                 ['Avg Yield %', r.avg_yield_pct],
-                ['LPG Consumption (m³)', r.lpg_consumption], ['O2 Consumption (m³)', r.o2_consumption],
-                ['ID Fan Consumption', r.id_fan_consumption], ['Rotary Power Consumption', r.rotary_power_consumption],
+                ['LPG Consumption (m³)', r.lpg_consumption],
+                ['O₂ Consumption (m³)', r.o2_consumption],
+                ['ID Fan Consumption', r.id_fan_consumption],
+                ['Rotary Power Consumption', r.rotary_power_consumption],
                 ['Total Process Time (min)', r.total_process_mins],
-                ['Avg Inside Temp (°C)', r.avg_inside_temp], ['Avg PGC Temp (°C)', r.avg_pgc_temp],
-                ['Remarks', r.remarks], ['Status', r.status >= 1 ? 'Submitted' : 'Draft'],
+                ['Avg Inside Temp (°C)', r.avg_inside_temp],
+                ['Avg PGC Temp (°C)', r.avg_pgc_temp],
+                ['Remarks', r.remarks],
+                ['Status', r.status >= 1 ? 'Submitted' : 'Draft'],
             ];
             const ws1 = XLSX.utils.aoa_to_sheet(sumData);
-            ws1['!cols'] = [{ wch: 28 }, { wch: 20 }];
+            ws1['!cols'] = [{ wch: 30 }, { wch: 22 }];
             XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
-            if (r.raw_materials?.length) {
-                const rmData = [['Material', 'BBSU Batch No', 'Qty (KG)', 'Yield %', 'Expected Output (KG)'], ...r.raw_materials.map(rm => [rm.material, rm.bbsu_no, rm.qty, rm.yield_pct, rm.expected])];
-                const ws2 = XLSX.utils.aoa_to_sheet(rmData); ws2['!cols'] = [{ wch: 24 }, { wch: 18 }, { wch: 12 }, { wch: 10 }, { wch: 18 }];
+
+            // ── Sheet 2: Raw Materials ──
+            const rawRows = r.raw_materials ?? [];
+            if (rawRows.length) {
+                const rmData = [
+                    ['Material', 'BBSU Batch No', 'Qty (KG)', 'Yield %', 'Expected Output (KG)'],
+                    ...rawRows.map(rm => [rm.material, rm.bbsu_no, rm.qty, rm.yield_pct, rm.expected]),
+                    ['', 'TOTAL',
+                        rawRows.reduce((s, rm) => s + parseFloat(rm.qty || 0), 0),
+                        '',
+                        rawRows.reduce((s, rm) => s + parseFloat(rm.expected || 0), 0),
+                    ],
+                ];
+                const ws2 = XLSX.utils.aoa_to_sheet(rmData);
+                ws2['!cols'] = [{ wch: 28 }, { wch: 18 }, { wch: 12 }, { wch: 10 }, { wch: 20 }];
                 XLSX.utils.book_append_sheet(wb, ws2, 'Raw Materials');
             }
-            if (r.process_details?.length) {
-                const pdData = [['Process', 'Start', 'End', 'Time (min)', 'Firing Mode'], ...r.process_details.map(p => [p.process, p.start, p.end, p.total_time, p.firing_mode])];
-                const ws3 = XLSX.utils.aoa_to_sheet(pdData); ws3['!cols'] = [{ wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 14 }];
-                XLSX.utils.book_append_sheet(wb, ws3, 'Process Details');
+
+            // ── Sheet 3: Flux Chemicals ──
+            const fluxRows = r.flux_chemicals ?? [];
+            if (fluxRows.length) {
+                const fcData = [
+                    ['Chemical', 'Qty (KG)'],
+                    ...fluxRows.map(f => [f.chemical, f.qty]),
+                    ['TOTAL', fluxRows.reduce((s, f) => s + parseFloat(f.qty || 0), 0)],
+                ];
+                const ws3 = XLSX.utils.aoa_to_sheet(fcData);
+                ws3['!cols'] = [{ wch: 32 }, { wch: 14 }];
+                XLSX.utils.book_append_sheet(wb, ws3, 'Flux Chemicals');
             }
-            if (r.flux_chemicals?.length) {
-                const fcData = [['Chemical', 'Qty (KG)'], ...r.flux_chemicals.map(f => [f.chemical, f.qty])];
-                const ws4 = XLSX.utils.aoa_to_sheet(fcData);
-                ws4['!cols'] = [{ wch: 28 }, { wch: 12 }];
-                XLSX.utils.book_append_sheet(wb, ws4, 'Flux Chemicals');
+
+            // ── Sheet 4: Process Details ──
+            const procRows = r.process_details ?? [];
+            if (procRows.length) {
+                const pdData = [
+                    ['Process', 'Start', 'End', 'Time (min)', 'Firing Mode'],
+                    ...procRows.map(p => [p.process, p.start, p.end, p.total_time, p.firing_mode]),
+                    ['TOTAL', '', '',
+                        procRows.reduce((s, p) => s + parseFloat(p.total_time || 0), 0),
+                        '',
+                    ],
+                ];
+                const ws4 = XLSX.utils.aoa_to_sheet(pdData);
+                ws4['!cols'] = [{ wch: 22 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 16 }];
+                XLSX.utils.book_append_sheet(wb, ws4, 'Process Details');
             }
+
             XLSX.writeFile(wb, `Smelting_${r.batch_no}_${r.date_raw || r.date}.xlsx`);
         }
 

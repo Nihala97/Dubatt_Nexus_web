@@ -549,8 +549,8 @@
         }
 
         /* ═══════════════════════════════════════════════════════════════════════════
-                       DETAIL MODAL
-                    ═══════════════════════════════════════════════════════════════════════════ */
+                           DETAIL MODAL
+                        ═══════════════════════════════════════════════════════════════════════════ */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -1152,21 +1152,21 @@
                 // View button: only for Testing Done (status_key === 2)
                 const viewBtn = r.test_status_key === 2 && r.acid_test_id
                     ? `<button class="act-btn" onclick="openDetail(${r.acid_test_id})" title="View Detail">
-                                        <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                   </button>`
+                                            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                       </button>`
                     : `<span style="color:var(--txtmu);font-size:12px">—</span>`;
 
                 return `<tr>
-                                <td style="font-weight:700">${escHtml(r.lot_number)}</td>
-                                <td>${escHtml(r.vehicle_number)}</td>
-                                <td>${escHtml(r.supplier_name)}</td>
-                                <td style="font-weight:600">${escHtml(r.test_date)}</td>
-                                <td class="num">${r.received_qty ? fmtNum(r.received_qty) + '<span style="font-size:11px;color:var(--txtmu);margin-left:3px">KG</span>' : '—'}</td>
-                                <td class="num">${r.avg_pf_weight ? fmtNum(r.avg_pf_weight, 3) + '<span style="font-size:11px;color:var(--txtmu);margin-left:3px">KG</span>' : '—'}</td>
-                                <td style="text-align:center">${pallets}</td>
-                                <td style="text-align:center">${BADGE[r.test_status_key] ?? escHtml(r.test_status)}</td>
-                                <td style="text-align:center">${viewBtn}</td>
-                            </tr>`;
+                                    <td style="font-weight:700">${escHtml(r.lot_number)}</td>
+                                    <td>${escHtml(r.vehicle_number)}</td>
+                                    <td>${escHtml(r.supplier_name)}</td>
+                                    <td style="font-weight:600">${escHtml(r.test_date)}</td>
+                                    <td class="num">${r.received_qty ? fmtNum(r.received_qty) + '<span style="font-size:11px;color:var(--txtmu);margin-left:3px">KG</span>' : '—'}</td>
+                                    <td class="num">${r.avg_pf_weight ? fmtNum(r.avg_pf_weight, 3) + '<span style="font-size:11px;color:var(--txtmu);margin-left:3px">KG</span>' : '—'}</td>
+                                    <td style="text-align:center">${pallets}</td>
+                                    <td style="text-align:center">${BADGE[r.test_status_key] ?? escHtml(r.test_status)}</td>
+                                    <td style="text-align:center">${viewBtn}</td>
+                                </tr>`;
             }).join('');
 
             document.getElementById('footQty').innerHTML =
@@ -1287,86 +1287,86 @@
 
             // Info grid
             html += `<div class="mig">
-                            <div class="mig-item"><span class="mig-lbl">Test Date</span><span class="mig-val">${esc(t.test_date)}</span></div>
-                            <div class="mig-item"><span class="mig-lbl">Lot No</span><span class="mig-val" style="font-size:16px;font-weight:900">${esc(t.lot_number)}</span></div>
-                            <div class="mig-item"><span class="mig-lbl">Supplier</span><span class="mig-val">${esc(t.supplier_name)}</span></div>
-                            <div class="mig-item"><span class="mig-lbl">Vehicle No</span><span class="mig-val">${esc(t.vehicle_number)}</span></div>
-                            <div class="mig-item"><span class="mig-lbl">Invoice Qty</span><span class="mig-val">${fmt(t.invoice_qty, 0)}</span></div>
-                            <div class="mig-item"><span class="mig-lbl">In-House Wt</span><span class="mig-val">${fmt(t.received_qty, 0)} KG</span></div>
-                            <div class="mig-item"><span class="mig-lbl">Foreign Material Wt</span><span class="mig-val">${fmt(t.foreign_material_weight, 0)} KG</span></div>
-                            <div class="mig-item"><span class="mig-lbl">Avg Pallet Wt</span><span class="mig-val">${fmt(t.avg_pallet_weight, 0)} KG</span></div>
-                            <div class="mig-item"><span class="mig-lbl">Recorded By</span><span class="mig-val">${esc(t.created_by_name)}</span></div>
-                        </div>`;
+                                <div class="mig-item"><span class="mig-lbl">Test Date</span><span class="mig-val">${esc(t.test_date)}</span></div>
+                                <div class="mig-item"><span class="mig-lbl">Lot No</span><span class="mig-val" style="font-size:16px;font-weight:900">${esc(t.lot_number)}</span></div>
+                                <div class="mig-item"><span class="mig-lbl">Supplier</span><span class="mig-val">${esc(t.supplier_name)}</span></div>
+                                <div class="mig-item"><span class="mig-lbl">Vehicle No</span><span class="mig-val">${esc(t.vehicle_number)}</span></div>
+                                <div class="mig-item"><span class="mig-lbl">Invoice Qty</span><span class="mig-val">${fmt(t.invoice_qty, 0)}</span></div>
+                                <div class="mig-item"><span class="mig-lbl">In-House Wt</span><span class="mig-val">${fmt(t.received_qty, 0)} KG</span></div>
+                                <div class="mig-item"><span class="mig-lbl">Foreign Material Wt</span><span class="mig-val">${fmt(t.foreign_material_weight, 0)} KG</span></div>
+                                <div class="mig-item"><span class="mig-lbl">Avg Pallet Wt</span><span class="mig-val">${fmt(t.avg_pallet_weight, 0)} KG</span></div>
+                                <div class="mig-item"><span class="mig-lbl">Recorded By</span><span class="mig-val">${esc(t.created_by_name)}</span></div>
+                            </div>`;
 
             // ── Pallet Weight Table ────────────────────────────────────────────────
             html += `<div class="msec-title">Incoming Scrap Battery — Pallet Weight</div>`;
             html += `<table class="mt">
-                            <thead><tr>
-                                <th style="width:6%">SR.</th>
-                                <th>Pallet No</th>
-                                <th class="num">Gross Wt (KG)</th>
-                                <th class="num">Avg P&amp;F Wt (KG)</th>
-                                <th class="num">Net Wt (KG)</th>
-                                <th>Remarks</th>
-                            </tr></thead>
-                            <tbody>`;
+                                <thead><tr>
+                                    <th style="width:6%">SR.</th>
+                                    <th>Pallet No</th>
+                                    <th class="num">Gross Wt (KG)</th>
+                                    <th class="num">Avg P&amp;F Wt (KG)</th>
+                                    <th class="num">Net Wt (KG)</th>
+                                    <th>Remarks</th>
+                                </tr></thead>
+                                <tbody>`;
             data.pallets.forEach(p => {
                 html += `<tr>
-                                <td>${p.sr}</td>
-                                <td class="lft" style="font-weight:600">${esc(p.pallet_no)}</td>
-                                <td class="num">${fmt(p.gross_weight)}</td>
-                                <td class="num">${fmt(p.avg_pf)}</td>
-                                <td class="num">${fmt(p.net_weight)}</td>
-                                <td class="lft">${esc(p.remarks)}</td>
-                            </tr>`;
+                                    <td>${p.sr}</td>
+                                    <td class="lft" style="font-weight:600">${esc(p.pallet_no)}</td>
+                                    <td class="num">${fmt(p.gross_weight)}</td>
+                                    <td class="num">${fmt(p.avg_pf)}</td>
+                                    <td class="num">${fmt(p.net_weight)}</td>
+                                    <td class="lft">${esc(p.remarks)}</td>
+                                </tr>`;
             });
             html += `</tbody>
-                            <tfoot><tr>
-                                <td colspan="2" style="text-align:right;font-size:9.5px;letter-spacing:.5px;color:var(--txtmu)">TOTAL (KG)</td>
-                                <td class="num">${fmt(totals.gross)}</td>
-                                <td class="num">${fmt(totals.avg_pf_total)}</td>
-                                <td class="num">${fmt(totals.net)}</td>
-                                <td></td>
-                            </tr></tfoot>
-                        </table>`;
+                                <tfoot><tr>
+                                    <td colspan="2" style="text-align:right;font-size:9.5px;letter-spacing:.5px;color:var(--txtmu)">TOTAL (KG)</td>
+                                    <td class="num">${fmt(totals.gross)}</td>
+                                    <td class="num">${fmt(totals.avg_pf_total)}</td>
+                                    <td class="num">${fmt(totals.net)}</td>
+                                    <td></td>
+                                </tr></tfoot>
+                            </table>`;
 
             // ── Acid Content Table ─────────────────────────────────────────────────
             if (data.acid_rows.length) {
                 html += `<div class="msec-title" style="margin-top:24px">Acid Content Analysis in Scrap Battery</div>`;
                 html += `<table class="mt">
-                                <thead><tr>
-                                    <th style="width:6%">SR.</th>
-                                    <th>Pallet No</th>
-                                    <th class="num">Initial Wt (KG)</th>
-                                    <th class="num">Drained Wt (KG)</th>
-                                    <th class="num">Wt Diff (KG)</th>
-                                    <th class="num">Acid %</th>
-                                    <th>Stock Code</th>
-                                    <th>Remarks</th>
-                                </tr></thead>
-                                <tbody>`;
+                                    <thead><tr>
+                                        <th style="width:6%">SR.</th>
+                                        <th>Pallet No</th>
+                                        <th class="num">Initial Wt (KG)</th>
+                                        <th class="num">Drained Wt (KG)</th>
+                                        <th class="num">Wt Diff (KG)</th>
+                                        <th class="num">Acid %</th>
+                                        <th>Stock Code</th>
+                                        <th>Remarks</th>
+                                    </tr></thead>
+                                    <tbody>`;
                 data.acid_rows.forEach(a => {
                     html += `<tr>
-                                    <td>${a.sr}</td>
-                                    <td class="lft" style="font-weight:600">${esc(a.pallet_no)}</td>
-                                    <td class="num">${fmt(a.initial_weight)}</td>
-                                    <td class="num">${fmt(a.drained_weight)}</td>
-                                    <td class="num">${fmt(a.weight_difference)}</td>
-                                    <td class="num">${fmt(a.avg_acid_pct)}</td>
-                                    <td class="lft" style="font-weight:700">${esc(a.ulab_type)}</td>
-                                    <td class="lft">${esc(a.remarks)}</td>
-                                </tr>`;
+                                        <td>${a.sr}</td>
+                                        <td class="lft" style="font-weight:600">${esc(a.pallet_no)}</td>
+                                        <td class="num">${fmt(a.initial_weight)}</td>
+                                        <td class="num">${fmt(a.drained_weight)}</td>
+                                        <td class="num">${fmt(a.weight_difference)}</td>
+                                        <td class="num">${fmt(a.avg_acid_pct)}</td>
+                                        <td class="lft" style="font-weight:700">${esc(a.ulab_type)}</td>
+                                        <td class="lft">${esc(a.remarks)}</td>
+                                    </tr>`;
                 });
                 html += `</tbody>
-                                <tfoot><tr>
-                                    <td colspan="2" style="text-align:right;font-size:9.5px;letter-spacing:.5px;color:var(--txtmu)">TOTAL (KG)</td>
-                                    <td class="num">${fmt(totals.initial)}</td>
-                                    <td class="num">${fmt(totals.drained)}</td>
-                                    <td class="num">${fmt(totals.wt_diff)}</td>
-                                    <td class="num"><span class="big-acid">${fmt(totals.net_avg_acid)}</span></td>
-                                    <td></td><td></td>
-                                </tr></tfoot>
-                            </table>`;
+                                    <tfoot><tr>
+                                        <td colspan="2" style="text-align:right;font-size:9.5px;letter-spacing:.5px;color:var(--txtmu)">TOTAL (KG)</td>
+                                        <td class="num">${fmt(totals.initial)}</td>
+                                        <td class="num">${fmt(totals.drained)}</td>
+                                        <td class="num">${fmt(totals.wt_diff)}</td>
+                                        <td class="num"><span class="big-acid">${fmt(totals.net_avg_acid)}</span></td>
+                                        <td></td><td></td>
+                                    </tr></tfoot>
+                                </table>`;
             }
 
             document.getElementById('modalBody').innerHTML = html;

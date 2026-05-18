@@ -483,6 +483,7 @@ class AcidTestingController extends Controller
             ->with([
                 'details' => fn($q) => $q->where('is_active', 1),
                 'createdBy',
+                'updatedBy',
                 'supplier',
             ])
             ->findOrFail($id);
