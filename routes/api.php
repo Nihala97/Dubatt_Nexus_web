@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\AcidStockConditionController;
 use App\Http\Controllers\Api\BbsuBatchController;
 use App\Http\Controllers\Api\SmeltingBatchController;
 use App\Http\Controllers\Api\RefiningBatchController;
+use App\Http\Controllers\Api\DashboardController;
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -35,6 +36,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
      // ── Modules list (used for building permissions UI) ─────────
      Route::get('/modules', [ModuleController::class, 'index']);
+
+     // ── Dashboard summary (Flutter home — all plant modules, any logged-in user) ──
+     Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
 
      // ── User Management (Admin only) ────────────────────────────
      Route::middleware('role:admin')->prefix('users')->group(function () {
