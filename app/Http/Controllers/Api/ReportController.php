@@ -90,120 +90,147 @@ class ReportController extends Controller
     {
         try {
             $now = Carbon::now();
-            $thisMonth = $now->month;
-            $thisYear = $now->year;
-
-            // ── Helper: resolve effective date for a Receiving row ────
-            // receipt_date may be null — fall back to created_at date
-            // We use DB raw to handle this at SQL level for month queries
-
-            // ── Current month base ─────────────────────────────────────
-            // Use COALESCE so rows with null receipt_date fall back to created_at
-            $currentMonthRows = Receiving::with(['supplier', 'material'])
-                ->whereRaw(
-                    'MONTH(COALESCE(receipt_date, created_at)) = ? AND YEAR(COALESCE(receipt_date, created_at)) = ?',
-                    [$thisMonth, $thisYear]
-                )
-                ->get();
-
-            // ── Filtered base for Last Day (uses filter params) ────────
-            $filteredRows = Receiving::with(['supplier', 'material'])
-                ->when($request->date_from, fn($q) => $q->whereDate(DB::raw('COALESCE(receipt_date, DATE(created_at))'), '>=', $request->date_from))
-                ->when($request->date_to, fn($q) => $q->whereDate(DB::raw('COALESCE(receipt_date, DATE(created_at))'), '<=', $request->date_to))
-                ->when($request->supplier_id, fn($q) => $q->where('supplier_id', $request->supplier_id))
-                ->when($request->material_id, fn($q) => $q->where('material_id', $request->material_id))
-                ->orderByRaw('COALESCE(receipt_date, DATE(created_at)) DESC')
-                ->get();
-
-            // ── Known categories ───────────────────────────────────────
+    
+            // ── Resolve period label & month badge ──────────────────────
+            $from = $request->date_from
+                ? Carbon::parse($request->date_from)->format('d M Y') : null;
+            $to   = $request->date_to
+                ? Carbon::parse($request->date_to)->format('d M Y') : null;
+    
+            $periodLabel = match (true) {
+                (bool) $from && (bool) $to => "{$from} → {$to}",
+                (bool) $from               => "From {$from}",
+                (bool) $to                 => "Up to {$to}",
+                default                    => 'Current Month',
+            };
+    
+            // Month badge shown inside score-card headers
+            $monthLabel = ($from || $to)
+                ? ($from && $to ? "{$from} → {$to}" : ($from ?? $to))
+                : $now->format('F Y');
+    
+            // ── Shared filter closure (date + supplier + material) ───────
+            // Used for EVERY score-card query — so all cards respect filters
+            $applyFilters = function ($query) use ($request, $now) {
+                // If NO date filter supplied → default to current month
+                if (!$request->date_from && !$request->date_to) {
+                    $query->whereRaw(
+                        'MONTH(COALESCE(receipt_date, created_at)) = ? AND YEAR(COALESCE(receipt_date, created_at)) = ?',
+                        [$now->month, $now->year]
+                    );
+                } else {
+                    if ($request->date_from) {
+                        $query->whereDate(
+                            DB::raw('COALESCE(receipt_date, DATE(created_at))'),
+                            '>=',
+                            $request->date_from
+                        );
+                    }
+                    if ($request->date_to) {
+                        $query->whereDate(
+                            DB::raw('COALESCE(receipt_date, DATE(created_at))'),
+                            '<=',
+                            $request->date_to
+                        );
+                    }
+                }
+                if ($request->supplier_id) {
+                    $query->where('supplier_id', $request->supplier_id);
+                }
+                if ($request->material_id) {
+                    $query->where('material_id', $request->material_id);
+                }
+                return $query;
+            };
+    
+            // ── Main dataset (all score-cards use this) ──────────────────
+            $mainRows = $applyFilters(
+                Receiving::with(['supplier', 'material'])
+                    ->orderByRaw('COALESCE(receipt_date, DATE(created_at)) DESC')
+            )->get();
+    
+            // ── Known categories ─────────────────────────────────────────
             $knownCategories = ['ULAB', 'ULAB PLATES / TERMINALS', 'DROSS', 'CHEMICAL / METALS', 'RML'];
-
-            // Helper to resolve category from a receiving row
+    
             $resolveCategory = function ($r) use ($knownCategories) {
                 $cat = $r->material->category
                     ?? $r->material->material_category
                     ?? null;
-                if (!$cat || !in_array($cat, $knownCategories)) {
-                    $cat = 'Others';
-                }
-                return $cat;
+                return ($cat && in_array($cat, $knownCategories)) ? $cat : 'Others';
             };
-
-            // ══════════════════════════════════════════════════════════
-            // 1. CATEGORY SCORECARD (current month)
-            // ══════════════════════════════════════════════════════════
-            $byCategory = $currentMonthRows
+    
+            // ══════════════════════════════════════════════════════════════
+            // 1. CATEGORY SCORECARD — rounded, filter-aware
+            // ══════════════════════════════════════════════════════════════
+            $byCategory = $mainRows
                 ->groupBy(fn($r) => $resolveCategory($r))
                 ->map(fn($group, $cat) => [
-                    'category' => $cat,
-                    'unit' => $group->first()->material->unit
-                        ?? $group->first()->material->uom
-                        ?? 'KG',
-                    'total_qty' => round($group->sum('received_qty'), 3),
+                    'category'     => $cat,
+                    'unit'         => $group->first()->material->unit
+                                    ?? $group->first()->material->uom
+                                    ?? 'KG',
+                    'total_qty'    => (int) round($group->sum('received_qty')), // ← whole number
                     'record_count' => $group->count(),
                 ])
                 ->sortByDesc('total_qty')
                 ->values();
-
-            // ══════════════════════════════════════════════════════════
-            // 2. MATERIAL SCORECARD (current month)
-            // ══════════════════════════════════════════════════════════
-            $byMaterial = $currentMonthRows
+    
+            // ══════════════════════════════════════════════════════════════
+            // 2. MATERIAL SCORECARD — rounded, filter-aware
+            // ══════════════════════════════════════════════════════════════
+            $byMaterial = $mainRows
                 ->groupBy('material_id')
                 ->map(fn($group) => [
                     'material_name' => $group->first()->material->material_name
-                        ?? $group->first()->material->name
-                        ?? 'Unknown',
-                    'category' => $resolveCategory($group->first()),
-                    'unit' => $group->first()->material->unit
-                        ?? $group->first()->material->uom
-                        ?? 'KG',
-                    'total_qty' => round($group->sum('received_qty'), 3),
+                                    ?? $group->first()->material->name
+                                    ?? 'Unknown',
+                    'category'     => $resolveCategory($group->first()),
+                    'unit'         => $group->first()->material->unit
+                                    ?? $group->first()->material->uom
+                                    ?? 'KG',
+                    'total_qty'    => (int) round($group->sum('received_qty')), // ← whole number
                     'record_count' => $group->count(),
                 ])
                 ->sortByDesc('total_qty')
                 ->values();
-
-            // ══════════════════════════════════════════════════════════
-            // 3. SUPPLIER WISE ACCUMULATION (current month)
-            //    Grouped by supplier + material combination
-            // ══════════════════════════════════════════════════════════
-            $supplierAccumulation = $currentMonthRows
+    
+            // ══════════════════════════════════════════════════════════════
+            // 3. SUPPLIER WISE ACCUMULATION — rounded, filter-aware
+            // ══════════════════════════════════════════════════════════════
+            $supplierAccumulation = $mainRows
                 ->groupBy(fn($r) => ($r->supplier_id ?? 0) . '_' . ($r->material_id ?? 0))
                 ->map(fn($group) => [
                     'supplier_name' => $group->first()->supplier->supplier_name
-                        ?? $group->first()->supplier->name
-                        ?? 'Unknown',
+                                    ?? $group->first()->supplier->name
+                                    ?? 'Unknown',
                     'material_name' => $group->first()->material->material_name
-                        ?? $group->first()->material->name
-                        ?? '—',
-                    'unit' => $group->first()->material->unit
-                        ?? $group->first()->material->uom
-                        ?? 'KG',
-                    'total_qty' => round($group->sum('received_qty'), 3),
+                                    ?? $group->first()->material->name
+                                    ?? '—',
+                    'unit'          => $group->first()->material->unit
+                                    ?? $group->first()->material->uom
+                                    ?? 'KG',
+                    'total_qty'     => (int) round($group->sum('received_qty')), // ← whole number
                 ])
                 ->sortByDesc('total_qty')
                 ->values();
-
-            // ══════════════════════════════════════════════════════════
-            // 4. LAST DAY INWARDS (from filtered base)
-            // ══════════════════════════════════════════════════════════
-            $lastDay = collect();
+    
+            // ══════════════════════════════════════════════════════════════
+            // 4. LAST DAY INWARDS — from the same filtered dataset
+            // ══════════════════════════════════════════════════════════════
+            $lastDay     = collect();
             $lastDayDate = '';
-
-            if ($filteredRows->isNotEmpty()) {
-                // Find the most recent effective date
-                $lastDate = $filteredRows->map(
-                    fn($r) =>
-                    $r->receipt_date
-                    ? Carbon::parse($r->receipt_date)->toDateString()
-                    : $r->created_at?->toDateString()
+    
+            if ($mainRows->isNotEmpty()) {
+                $lastDate = $mainRows->map(
+                    fn($r) => $r->receipt_date
+                        ? Carbon::parse($r->receipt_date)->toDateString()
+                        : $r->created_at?->toDateString()
                 )->filter()->max();
-
+    
                 if ($lastDate) {
                     $lastDayDate = Carbon::parse($lastDate)->format('d M Y');
-
-                    $lastDay = $filteredRows
+    
+                    $lastDay = $mainRows
                         ->filter(fn($r) => (
                             ($r->receipt_date
                                 ? Carbon::parse($r->receipt_date)->toDateString()
@@ -215,69 +242,46 @@ class ReportController extends Controller
                         ->map(fn($r) => [
                             'supplier_name' => $r->supplier->supplier_name ?? '—',
                             'material_name' => $r->material->material_name
-                                ?? $r->material->name
-                                ?? '—',
-                            'received_qty' => (float) ($r->received_qty ?? 0),
-                            'unit' => $r->material->unit
-                                ?? $r->material->uom
-                                ?? 'KG',
-                            'section' => $resolveCategory($r),
+                                            ?? $r->material->name
+                                            ?? '—',
+                            'received_qty'  => (int) round($r->received_qty ?? 0), // ← whole number
+                            'unit'          => $r->material->unit
+                                            ?? $r->material->uom
+                                            ?? 'KG',
+                            'section'       => $resolveCategory($r),
                         ]);
                 }
             }
-
-            // ── Period label ───────────────────────────────────────────
-            $from = $request->date_from
-                ? Carbon::parse($request->date_from)->format('d M Y') : null;
-            $to = $request->date_to
-                ? Carbon::parse($request->date_to)->format('d M Y') : null;
-
-            $periodLabel = match (true) {
-                (bool) $from && (bool) $to => "{$from} → {$to}",
-                (bool) $from => "From {$from}",
-                (bool) $to => "Up to {$to}",
-                default => 'All time (filtered)',
-            };
-
-            $monthLabel = $now->format('F Y');
-
+    
             return response()->json([
                 'status' => 'ok',
-                'data' => [
-                    'by_category' => $byCategory,
-                    'by_material' => $byMaterial,
-                    'supplier_accumulation' => $supplierAccumulation,
-                    'last_day' => $lastDay,
-                    'last_day_date' => $lastDayDate,
-                    'period_label' => $periodLabel,
-                    'month_label' => $monthLabel,
-                    // debug info (remove in production)
-                    '_debug' => [
-                        'current_month_row_count' => $currentMonthRows->count(),
-                        'filtered_row_count' => $filteredRows->count(),
-                        'month' => $thisMonth,
-                        'year' => $thisYear,
-                    ],
+                'data'   => [
+                    'by_category'            => $byCategory,
+                    'by_material'            => $byMaterial,
+                    'supplier_accumulation'  => $supplierAccumulation,
+                    'last_day'               => $lastDay,
+                    'last_day_date'          => $lastDayDate,
+                    'period_label'           => $periodLabel,
+                    'month_label'            => $monthLabel,
                 ],
             ]);
-
+    
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Dashboard error', [
-                'msg' => $e->getMessage(),
+                'msg'   => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
             return response()->json([
-                'status' => 'error',
+                'status'  => 'error',
                 'message' => $e->getMessage(),
-                'data' => [
-                    'by_category' => [],
-                    'by_material' => [],
+                'data'    => [
+                    'by_category'           => [],
+                    'by_material'           => [],
                     'supplier_accumulation' => [],
-                    'last_day' => [],
-                    'last_day_date' => '',
-                    'period_label' => 'Error: ' . $e->getMessage(),
-                    'month_label' => now()->format('F Y'),
-                    '_debug' => ['error' => $e->getMessage()],
+                    'last_day'              => [],
+                    'last_day_date'         => '',
+                    'period_label'          => 'Error: ' . $e->getMessage(),
+                    'month_label'           => now()->format('F Y'),
                 ],
             ], 200);
         }
