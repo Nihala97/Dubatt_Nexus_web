@@ -1594,13 +1594,13 @@
                                                                 <div class="sc green" style="animation-delay:.05s">
                                                                     <svg class="sc-ico" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
                                                                     <div class="sc-label">Total Production — ${esc(d.month_label)}</div>
-                                                                    <div class="sc-val">${fmt(d.current_month_total, 1)}<span class="sc-unit">KG</span></div>
+                                                                    <div class="sc-val">${fmt(d.current_month_total, 0)}<span class="sc-unit">KG</span></div>
                                                                     ${pct !== null ? `<div class="sc-sub">${pct >= 0 ? '▲' : '▼'} ${Math.abs(pct)}% vs last month</div>` : ''}
                                                                 </div>
                                                                 <div class="sc amber" style="animation-delay:.1s">
                                                                     <svg class="sc-ico" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                                                                     <div class="sc-label">Total Production — ${esc(d.prev_label)}</div>
-                                                                    <div class="sc-val">${fmt(d.last_month_total, 1)}<span class="sc-unit">KG</span></div>
+                                                                    <div class="sc-val">${fmt(d.last_month_total, 0)}<span class="sc-unit">KG</span></div>
                                                                 </div>`;
         }
 

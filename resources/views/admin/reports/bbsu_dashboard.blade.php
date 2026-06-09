@@ -1420,11 +1420,11 @@
         function renderScorecards(d) {
             const grid = document.getElementById('scGrid');
             const chips = [
-                { label: 'Prev Month Total', val: fmtNum(d.last_month_total), sub: (d.last_month_label || '') + ' · KG', cls: 'c-navy', icon: `<rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="10" x2="23" y2="14"/>`, cats: d.last_month_by_category ?? [] },
-                { label: 'Selected Month Total', val: fmtNum(d.current_month_total), sub: (d.month_label || '') + ' · KG', cls: 'c-blue', icon: `<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>`, cats: d.current_month_by_category ?? [] },
-                { label: 'Year Total', val: fmtNum(d.year_total), sub: 'KG · Year ' + (d.selected_year ?? new Date().getFullYear()), cls: 'c-teal', icon: `<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>`, cats: [] },
+                { label: 'Prev Month Total', val: fmtNum(d.last_month_total, 0), sub: (d.last_month_label || '') + ' · KG', cls: 'c-navy', icon: `<rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="10" x2="23" y2="14"/>`, cats: d.last_month_by_category ?? [] },
+                { label: 'Selected Month Total', val: fmtNum(d.current_month_total, 0), sub: (d.month_label || '') + ' · KG', cls: 'c-blue', icon: `<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>`, cats: d.current_month_by_category ?? [] },
+                { label: 'Year Total', val: fmtNum(d.year_total, 0), sub: 'KG · Year ' + (d.selected_year ?? new Date().getFullYear()), cls: 'c-teal', icon: `<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>`, cats: [] },
                 { label: 'Avg HR / MT', val: d.avg_hr_per_mt, sub: 'Hrs per MT · batch duration (start→end)', cls: 'c-amber', icon: `<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>`, cats: [] },
-                { label: 'Avg Acid %', val: (document.getElementById('totalAcid')?.value ?? d.avg_acid_pct) + '%', sub: 'Σ(Input KG × Acid%) ÷ Σ(Input KG)', cls: 'c-red', icon: `<path d="M10 2v7.31l-3.72 6.17A4 4 0 0 0 10 22h4a4 4 0 0 0 3.72-6.52L14 9.31V2"/>`, cats: [] },
+                { label: 'Avg Acid %', val: parseFloat(d.avg_acid_pct || 0).toFixed(2) + '%', sub: 'Σ(Input KG × Acid%) ÷ Σ(Input KG)', cls: 'c-red', icon: `<path d="M10 2v7.31l-3.72 6.17A4 4 0 0 0 10 22h4a4 4 0 0 0 3.72-6.52L14 9.31V2"/>`, cats: [] },
             ];
             grid.innerHTML = chips.map(c => `
                                                                                                     <div class="sc-chip ${c.cls}">
@@ -1803,7 +1803,7 @@
         document.getElementById('drillModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeDrill(); });
 
         // ── UTILS ─────────────────────────────────────────────────────────
-        function fmtNum(n) { if (n === null || n === undefined || n === '') return '—'; return parseFloat(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        function fmtNum(n, d = 2) { if (n === null || n === undefined || n === '') return '—'; return parseFloat(n).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d }); }
         function escHtml(str) { if (str === null || str === undefined) return '—'; return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
     </script>
 @endpush

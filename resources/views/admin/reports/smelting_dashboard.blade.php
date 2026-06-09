@@ -1345,7 +1345,7 @@
                                                                         <svg class="sc-ico" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
                                                                         <div class="sc-label">Total Production — ${d.month_label}</div>
                                                                         <div class="sc-val">${fmt(d.current_month_total, 0)}<span class="sc-unit">KG</span></div>
-                                                                        <div class="sc-sub">${batches} batches · ${fmt(d.current_month_total / 1000, 2)} MT</div>
+                                                                        <div class="sc-sub">${batches} batches · ${fmt(d.current_month_total / 1000, 0)} MT</div>
                                                                     </div>
                                                                     <div class="sc amber">
                                                                         <svg class="sc-ico" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -1357,7 +1357,7 @@
                                                                         <svg class="sc-ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                                                                         <div class="sc-label">Total Production — ${d.year_label}</div>
                                                                         <div class="sc-val">${fmt(d.year_total, 0)}<span class="sc-unit">KG</span></div>
-                                                                        <div class="sc-sub">${fmt(d.year_total / 1000, 2)} MT year to date</div>
+                                                                        <div class="sc-sub">${fmt(d.year_total / 1000, 0)} MT year to date</div>
                                                                     </div>
                                                                     <div class="sc teal">
                                                                         <svg class="sc-ico" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>

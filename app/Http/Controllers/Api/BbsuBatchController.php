@@ -89,7 +89,7 @@ class BbsuBatchController extends Controller
     {
         $query = BbsuBatch::with(['inputDetails', 'outputMaterials', 'powerConsumption'])
             ->where('is_active', true);
-
+    
         if ($request->filled('status'))
             $query->where('status', $request->status);
         if ($request->filled('category'))
@@ -98,10 +98,16 @@ class BbsuBatchController extends Controller
             $query->whereDate('doc_date', $request->doc_date);
         if ($request->filled('batch_no'))
             $query->where('batch_no', 'like', '%' . $request->batch_no . '%');
-
+    
+        // ✅ Add these two
+        if ($request->filled('date_from'))
+            $query->whereDate('doc_date', '>=', $request->date_from);
+        if ($request->filled('date_to'))
+            $query->whereDate('doc_date', '<=', $request->date_to);
+    
         $batches = $query->orderByDesc('created_at')
             ->paginate($request->get('per_page', 15));
-
+    
         return response()->json(['status' => 'ok', 'data' => $batches]);
     }
 

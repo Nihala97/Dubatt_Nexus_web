@@ -857,8 +857,7 @@
         const EDIT_BASE = '{{ url('/admin/mes/bbsu') }}/';
         const CREATE_URL = '{{ route('admin.mes.bbsu.create') }}';
 
-        let state = { page: 1, perPage: 20, search: '', status: '', category: '', dateFrom: '', dateTo: '' };
-
+        let state = { page: 1, perPage: 20, search: '', status: '', filterStatus: '', category: '', dateFrom: '', dateTo: '' };
         const STATUS_MAP = {
             0: { label: 'Draft', cls: 'draft' },
             1: { label: 'Submitted', cls: 'submitted' },
@@ -871,10 +870,14 @@
             document.getElementById('tableBody').innerHTML =
                 '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--gr-text-muted);">Loading...</td></tr>';
 
+            const activeStatus = state.filterStatus !== undefined && state.filterStatus !== '' 
+                ? state.filterStatus 
+                : state.status;
+
             let url = `/bbsu-batches?page=${state.page}&per_page=${state.perPage}`;
             if (state.search) url += `&search=${encodeURIComponent(state.search)}`;
-            if (state.status !== '') url += `&status=${state.status}`;
-            if (state.category) url += `&category=${state.category}`;
+            if (activeStatus !== '') url += `&status=${activeStatus}`;
+            if (state.category) url += `&category=${encodeURIComponent(state.category)}`;
             if (state.dateFrom) url += `&date_from=${state.dateFrom}`;
             if (state.dateTo) url += `&date_to=${state.dateTo}`;
 
@@ -962,18 +965,18 @@
         }
 
         function applyFilters() {
-            state.status = document.getElementById('fStatus').value;
+            state.filterStatus = document.getElementById('fStatus').value;
             state.category = document.getElementById('fCategory').value;
             state.dateFrom = document.getElementById('fDateFrom').value;
             state.dateTo = document.getElementById('fDateTo').value;
             state.page = 1;
-            const count = [state.status, state.category, state.dateFrom, state.dateTo].filter(Boolean).length;
+            const count = [state.filterStatus, state.category, state.dateFrom, state.dateTo].filter(Boolean).length;
             document.getElementById('filterBadge').textContent = `${count} filter${count !== 1 ? 's' : ''}`;
             loadReceivings();
         }
 
         function clearFilters() {
-            state.status = ''; state.category = ''; state.dateFrom = ''; state.dateTo = '';
+            state.filterStatus = ''; state.category = ''; state.dateFrom = ''; state.dateTo = '';
             ['fStatus', 'fCategory', 'fDateFrom', 'fDateTo'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('filterBadge').textContent = '0 filters';
             state.page = 1; loadReceivings();
