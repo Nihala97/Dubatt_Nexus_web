@@ -1176,8 +1176,103 @@
     <div style="height:20px;"></div>
 
     <!-- ═══════════════════════════════════════
-                                         SECTION: BBSU Power Consumption
-                                    ════════════════════════════════════════ -->
+    SECTION: BBSU Recovery (frontend-only, no DB)
+     ════════════════════════════════════════ -->
+    <div class="form-card">
+        <div class="form-section-head">
+            <svg viewBox="0 0 24 24">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <polyline points="3 3 3 8 8 8" />
+            </svg>
+            <span>BBSU Recovery</span>
+        </div>
+        <div class="form-section-body">
+            <div class="form-grid-3">
+
+                <div class="field">
+                    <label for="rec_expected_output">Expected Output Qty (KG)</label>
+                    <div class="input-wrap">
+                        <svg class="ico" viewBox="0 0 24 24">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                        </svg>
+                        <input type="text" id="rec_expected_output" readonly placeholder="0.00"
+                            style="background:#f0f4f2;color:var(--green);font-weight:700;">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="rec_expected_paste_fines">Lead Paste &amp; Fines (59%)</label>
+                    <div class="input-wrap">
+                        <svg class="ico" viewBox="0 0 24 24">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                        </svg>
+                        <input type="text" id="rec_expected_paste_fines" readonly placeholder="0.00"
+                            style="background:#f0f4f2;color:var(--green);font-weight:700;">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="rec_expected_grids">Lead Grids (41%)</label>
+                    <div class="input-wrap">
+                        <svg class="ico" viewBox="0 0 24 24">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                        </svg>
+                        <input type="text" id="rec_expected_grids" readonly placeholder="0.00"
+                            style="background:#f0f4f2;color:var(--green);font-weight:700;">
+                    </div>
+                </div>
+
+            </div>
+
+            <div style="height:18px;"></div>
+
+            <div class="form-grid-3">
+
+                <div class="field">
+                    <label for="rec_actual_output">Actual Output</label>
+                    <div class="input-wrap">
+                        <svg class="ico" viewBox="0 0 24 24">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                        </svg>
+                        <input type="text" id="rec_actual_output" readonly placeholder="0.00"
+                            style="background:#f0f4f2;font-weight:700;">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="rec_actual_paste_fines">Lead Paste &amp; Fines</label>
+                    <div class="input-wrap">
+                        <svg class="ico" viewBox="0 0 24 24">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                        </svg>
+                        <input type="text" id="rec_actual_paste_fines" readonly placeholder="0.00"
+                            style="background:#f0f4f2;font-weight:700;">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="rec_actual_grids">Lead Grids</label>
+                    <div class="input-wrap">
+                        <svg class="ico" viewBox="0 0 24 24">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                        </svg>
+                        <input type="text" id="rec_actual_grids" readonly placeholder="0.00"
+                            style="background:#f0f4f2;font-weight:700;">
+                    </div>
+                </div>
+
+            </div>
+
+            <p style="font-size:12px;color:var(--text-muted);margin-top:14px;">
+                If an actual value is less than its corresponding expected value, it is shown in red.
+            </p>
+        </div>
+    </div>
+
+    <div style="height:20px;"></div>
+    <!-- ═══════════════════════════════════════
+                                 SECTION: BBSU Power Consumption
+                                ════════════════════════════════════════ -->
     <div class="form-card">
         <div class="form-section-head">
             <svg viewBox="0 0 24 24">
@@ -1907,6 +2002,70 @@
                 document.getElementById('outputTotalYield').value = inputTotal
                     ? ((total / inputTotal) * 100).toFixed(2) + '%'
                     : '0.00%';
+
+                // Keep BBSU Recovery section in sync whenever output qty/yield changes
+                calcRecovery();
+            }
+
+            // ─── BBSU Recovery (frontend-only, no DB) ─────────────────────────
+            // Row mapping (matches OUTPUT_KEYS order):
+            //  Row1 metallic     = Lead Grids
+            //  Row2 paste        = Lead Paste
+            //  Row3 fines        = Lead Fines
+            //  Row4 pp_chips     = PP Chips
+            //  Row5 abs_chips    = ABS Chips
+            //  Row6 separator    = Separator
+            //  Row7 battery_plates = Inhouse Plates
+            //  Row8 terminals    = Inhouse Terminals
+            //  Row9 acid         = Acid from ULAB
+            //
+            // Expected Output = Total Input − (Total Input × (Row4% + Row5% + Row6% + Row9%))
+            //   Lead Paste & Fines (59%) = Expected Output × 0.59
+            //   Lead Grids        (41%) = Expected Output × 0.41
+            //
+            // Actual Output = Row1(qty) + Row2(qty) + Row3(qty)
+            //   Actual Lead Paste & Fines = Row2(qty) + Row3(qty)
+            //   Actual Lead Grids         = Row1(qty)
+            //
+            // If an actual value is less than its expected counterpart, show it in red.
+            function calcRecovery() {
+                const totalInput = parseFloat(document.getElementById('totalQty')?.value) || 0;
+
+                const yieldPp = parseFloat(document.getElementById('out_yield_pp_chips')?.value) || 0;
+                const yieldAbs = parseFloat(document.getElementById('out_yield_abs_chips')?.value) || 0;
+                const yieldSep = parseFloat(document.getElementById('out_yield_separator')?.value) || 0;
+                const yieldAcid = parseFloat(document.getElementById('out_yield_acid')?.value) || 0;
+
+                const yieldSumFraction = (yieldPp + yieldAbs + yieldSep + yieldAcid) / 100;
+                const expectedOutput = totalInput - (totalInput * yieldSumFraction);
+                const expectedPasteFines = expectedOutput * 0.59;
+                const expectedGrids = expectedOutput * 0.41;
+
+                const qtyGrids = parseFloat(document.getElementById('out_qty_metallic')?.value) || 0;
+                const qtyPaste = parseFloat(document.getElementById('out_qty_paste')?.value) || 0;
+                const qtyFines = parseFloat(document.getElementById('out_qty_fines')?.value) || 0;
+
+                const actualOutput = qtyGrids + qtyPaste + qtyFines;
+                const actualPasteFines = qtyPaste + qtyFines;
+                const actualGrids = qtyGrids;
+
+                setRecoveryField('rec_expected_output', expectedOutput);
+                setRecoveryField('rec_expected_paste_fines', expectedPasteFines);
+                setRecoveryField('rec_expected_grids', expectedGrids);
+
+                setRecoveryField('rec_actual_output', actualOutput, expectedOutput);
+                setRecoveryField('rec_actual_paste_fines', actualPasteFines, expectedPasteFines);
+                setRecoveryField('rec_actual_grids', actualGrids, expectedGrids);
+            }
+
+            function setRecoveryField(id, value, compareToExpected = null) {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.value = (isFinite(value) ? value : 0).toFixed(2);
+                if (compareToExpected !== null) {
+                    el.style.color = value < compareToExpected ? '#dc2626' : 'var(--text)';
+                    el.style.fontWeight = '700';
+                }
             }
 
             // ─── Power Consumption ────────────────────────────────────────────
@@ -2276,6 +2435,7 @@
             window.saveForm = saveForm;
             window.submitBatch = submitBatch;
             window.calcOutputTotal = calcOutputTotal;
+            window.calcRecovery = calcRecovery;
             window.recalcTotals = recalcTotals;
             window.triggerAutosave = triggerAutosave;
             window.openLotDetailModal = openLotDetailModal;
