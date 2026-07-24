@@ -9,6 +9,7 @@ class RefiningRawMaterial extends Model
     protected $fillable = [
         'refining_batch_id',
         'raw_material_id',
+        'ref_batch_id',
         'qty',
         'smelting_batch_id',
         'smelting_batch_no',
@@ -22,4 +23,8 @@ class RefiningRawMaterial extends Model
         return $this->belongsTo(\App\Models\Material::class, 'raw_material_id');
     }
 
+    public function refBatch(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\RefiningBatch::class, 'ref_batch_id');
+    }
 }

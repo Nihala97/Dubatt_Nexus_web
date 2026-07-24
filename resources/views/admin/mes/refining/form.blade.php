@@ -1343,14 +1343,15 @@
                     </div>
                     <div class="tbl-wrap">
                         <table class="data-table" id="rawTable">
-                            <thead>
-                                <tr>
-                                    <th style="width:36px">#</th>
-                                    <th>Raw Material</th>
-                                    <th>QTY (KG)</th>
-                                    <th style="width:32px"></th>
-                                </tr>
-                            </thead>
+                        <thead>
+                            <tr>
+                                <th style="width:36px">#</th>
+                                <th>Raw Material</th>
+                                <th>Batch No</th>
+                                <th>QTY (KG)</th>
+                                <th style="width:32px"></th>
+                            </tr>
+                        </thead>
                             <tbody id="rawBody"></tbody>
                             <tfoot>
                                 <tr>
@@ -1380,14 +1381,15 @@
                     </div>
                     <div class="tbl-wrap">
                         <table class="data-table" id="chemTable">
-                            <thead>
-                                <tr>
-                                    <th style="width:36px">#</th>
-                                    <th>Chemical / Metal</th>
-                                    <th>QTY (KG)</th>
-                                    <th style="width:32px"></th>
-                                </tr>
-                            </thead>
+                        <thead>
+                            <tr>
+                                <th style="width:36px">#</th>
+                                <th>Chemical / Metal</th>
+                                <th>Batch No</th>
+                                <th>QTY (KG)</th>
+                                <th style="width:32px"></th>
+                            </tr>
+                        </thead>
                             <tbody id="chemBody"></tbody>
                             <tfoot>
                                 <tr>
@@ -2045,6 +2047,7 @@
         let autosaveTimer;
         let itemsList = [];
         let processNames = [];
+        let batchList = [];
         let outputModal = { type: null, rowIndex: null, blocks: [] };
         const OUTPUT_MAX_ROWS = 11;
 
@@ -2057,6 +2060,7 @@
             document.getElementById('date').value = new Date().toISOString().slice(0, 10);
             await loadItems();
             await loadProcessNames();
+            await loadBatches();
 
             if (isCreate) {
                 const res = await apiFetch('/refining/generate-batch-no');
@@ -2098,6 +2102,15 @@
                     processNames = d.data ?? [];
                 }
             } catch (e) { console.warn('Process names load failed', e); }
+        }
+        async function loadBatches() {
+            try {
+                const res = await apiFetch('/refining/batch-list');
+                if (res?.ok) {
+                    const d = await res.json();
+                    batchList = d.data ?? [];
+                }
+            } catch (e) { console.warn('Batch list load failed', e); }
         }
 
         // ════════════════════════════════════════════════════════════════
@@ -2237,6 +2250,10 @@
             const items = itemsList.map(i => ({ value: String(i.id), label: i.name ?? i.secondary_name ?? '' }));
             sddRegister(fieldId, items, selectedId ? String(selectedId) : null);
         }
+        function initBatchSdd(fieldId, selectedId = null) {
+            const items = batchList.map(b => ({ value: String(b.id), label: b.batch_no }));
+            sddRegister(fieldId, items, selectedId ? String(selectedId) : null);
+        }
 
         function initProcessSdd(fieldId, selectedVal = '') {
             const items = processNames.map(p => ({ value: p, label: p }));
@@ -2360,30 +2377,41 @@
             tr.innerHTML = `
                     <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
                     <td style="position:relative;min-width:160px">
-                      <div class="sdd" id="sdd_rm_id_${i}">
+                    <div class="sdd" id="sdd_rm_id_${i}">
                         <div class="sdd-trigger" onclick="toggleSdd('rm_id_'+${i})">
-                          <span class="sdd-trigger-text placeholder" id="sdd_rm_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                          <svg class="sdd-clear" onclick="clearSdd('rm_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                          <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                        <span class="sdd-trigger-text placeholder" id="sdd_rm_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                        <svg class="sdd-clear" onclick="clearSdd('rm_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
                         </div>
                         <input type="hidden" id="rm_id_${i}" onchange="onRawMaterialChange(${i})">
-                      </div>
+                    </div>
+                    </td>
+                    <td style="position:relative;min-width:150px">
+                    <div class="sdd" id="sdd_rm_batch_${i}">
+                        <div class="sdd-trigger" onclick="toggleSdd('rm_batch_'+${i})">
+                        <span class="sdd-trigger-text placeholder" id="sdd_rm_batch_${i}_label" data-placeholder="Select batch…">Select batch…</span>
+                        <svg class="sdd-clear" onclick="clearSdd('rm_batch_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                        <input type="hidden" id="rm_batch_${i}">
+                    </div>
                     </td>
                     <td>
-                      <input type="number" class="ri" id="rm_qty_${i}"
+                    <input type="number" class="ri" id="rm_qty_${i}"
                         value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
                         onclick="onRawQtyClick(${i})" onfocus="onRawQtyFocus(${i})"
                         oninput="recalcRawTotals()"
                         style="min-width:90px;cursor:pointer" title="Click to assign from smelting batch">
-                      <input type="hidden" id="rm_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
-                      <input type="hidden" id="rm_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
+                    <input type="hidden" id="rm_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
+                    <input type="hidden" id="rm_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
                     </td>
                     <td><button class="del-btn" onclick="removeRow('rrow-${i}',recalcRawTotals)" title="Remove">
-                      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                     </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initMaterialSdd(`rm_id_${i}`, data.raw_material_id ?? null);
+            initBatchSdd(`rm_batch_${i}`, data.ref_batch_id ?? null);
         }
 
         function onRawMaterialChange(i) { clearSmtOnRow('raw', i); }
@@ -2420,30 +2448,41 @@
             tr.innerHTML = `
                     <td style="text-align:center;font-size:12px;font-weight:700;color:var(--g);padding:8px 4px">${i}</td>
                     <td style="position:relative;min-width:160px">
-                      <div class="sdd" id="sdd_ch_id_${i}">
+                    <div class="sdd" id="sdd_ch_id_${i}">
                         <div class="sdd-trigger" onclick="toggleSdd('ch_id_'+${i})">
-                          <span class="sdd-trigger-text placeholder" id="sdd_ch_id_${i}_label" data-placeholder="Select material…">Select material…</span>
-                          <svg class="sdd-clear" onclick="clearSdd('ch_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                          <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                        <span class="sdd-trigger-text placeholder" id="sdd_ch_id_${i}_label" data-placeholder="Select material…">Select material…</span>
+                        <svg class="sdd-clear" onclick="clearSdd('ch_id_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
                         </div>
                         <input type="hidden" id="ch_id_${i}" onchange="onChemMaterialChange(${i})">
-                      </div>
+                    </div>
+                    </td>
+                    <td style="position:relative;min-width:150px">
+                    <div class="sdd" id="sdd_ch_batch_${i}">
+                        <div class="sdd-trigger" onclick="toggleSdd('ch_batch_'+${i})">
+                        <span class="sdd-trigger-text placeholder" id="sdd_ch_batch_${i}_label" data-placeholder="Select batch…">Select batch…</span>
+                        <svg class="sdd-clear" onclick="clearSdd('ch_batch_'+${i},event)" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        <svg class="sdd-trigger-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                        <input type="hidden" id="ch_batch_${i}">
+                    </div>
                     </td>
                     <td>
-                      <input type="number" class="ri" id="ch_qty_${i}"
+                    <input type="number" class="ri" id="ch_qty_${i}"
                         value="${data.qty ?? ''}" step="0.001" placeholder="0.000"
                         onclick="onChemQtyClick(${i})" onfocus="onChemQtyFocus(${i})"
                         oninput="recalcChemTotals()"
                         style="min-width:90px;cursor:pointer" title="Click to assign from smelting batch">
-                      <input type="hidden" id="ch_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
-                      <input type="hidden" id="ch_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
+                    <input type="hidden" id="ch_smt_id_${i}" value="${data.smelting_batch_id ?? ''}">
+                    <input type="hidden" id="ch_smt_no_${i}" value="${data.smelting_batch_no ?? ''}">
                     </td>
                     <td><button class="del-btn" onclick="removeRow('crow-${i}',recalcChemTotals)" title="Remove">
-                      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                     </button></td>`;
             animateIn(tr);
             tbody.appendChild(tr);
             initMaterialSdd(`ch_id_${i}`, data.chemical_id ?? null);
+            initBatchSdd(`ch_batch_${i}`, data.ref_batch_id ?? null);
         }
 
         function onChemMaterialChange(i) { clearSmtOnRow('chem', i); }
@@ -3046,6 +3085,7 @@
                     smelting_batch_id: (document.getElementById(`rm_smt_id_${i}`)?.value || '').split(',')[0] || null,
                     smelting_batch_no: (document.getElementById(`rm_smt_no_${i}`)?.value || '').split(',')[0] || null,
                     smelting_selections: smtSels,
+                    ref_batch_id: document.getElementById(`rm_batch_${i}`)?.value || null,
                 });
             });
 
@@ -3061,6 +3101,7 @@
                     smelting_batch_id: (document.getElementById(`ch_smt_id_${i}`)?.value || '').split(',')[0] || null,
                     smelting_batch_no: (document.getElementById(`ch_smt_no_${i}`)?.value || '').split(',')[0] || null,
                     smelting_selections: smtSels,
+                    ref_batch_id: document.getElementById(`ch_batch_${i}`)?.value || null,
                 });
             });
 

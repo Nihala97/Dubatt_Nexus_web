@@ -456,6 +456,14 @@ class RefiningBatchController extends Controller
 
         return response()->json(['status' => 'ok', 'data' => $merged]);
     }
+    public function getBatchList(): JsonResponse
+    {
+        $batches = RefiningBatch::where('is_active', true)
+            ->orderByDesc('created_at')
+            ->get(['id', 'batch_no']);
+
+        return response()->json(['status' => 'ok', 'data' => $batches]);
+    }
 
     // ══════════════════════════════════════════════════════════════════
     // PRIVATE: Inventory processing on SUBMIT
@@ -632,7 +640,9 @@ class RefiningBatchController extends Controller
         return [
             'material',
             'rawMaterials',
+            'rawMaterials.refBatch',
             'chemicals',
+            'chemicals.refBatch',
             'processDetails',
             'finishedGoodsBlocks',
             'finishedGoodsSummary',
@@ -662,6 +672,7 @@ class RefiningBatchController extends Controller
                 RefiningRawMaterial::create([
                     'refining_batch_id' => $batch->id,
                     'raw_material_id' => $row['raw_material_id'],
+                    'ref_batch_id' => $row['ref_batch_id'] ?? null,
                     'qty' => $row['qty'] ?? 0,
                     'smelting_batch_id' => $row['smelting_batch_id'] ?? null,
                     'smelting_batch_no' => $row['smelting_batch_no'] ?? null,
@@ -683,6 +694,7 @@ class RefiningBatchController extends Controller
                 RefiningChemical::create([
                     'refining_batch_id' => $batch->id,
                     'chemical_id' => $row['chemical_id'],
+                    'ref_batch_id' => $row['ref_batch_id'] ?? null,
                     'qty' => $row['qty'] ?? 0,
                     'smelting_batch_id' => $row['smelting_batch_id'] ?? null,
                     'smelting_batch_no' => $row['smelting_batch_no'] ?? null,

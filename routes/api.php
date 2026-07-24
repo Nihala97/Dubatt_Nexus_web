@@ -177,6 +177,7 @@ Route::middleware('auth:sanctum')->group(function () {
           Route::get('/smelting-lots', [RefiningBatchController::class, 'getAllSmeltingLots']);
           Route::get('/smelting-lots/{materialId}', [RefiningBatchController::class, 'getSmeltingLots']);
           Route::get('/process-names', [RefiningBatchController::class, 'getProcessNames']);
+          Route::get('/batch-list', [RefiningBatchController::class, 'getBatchList']);
 
           Route::get('/', [RefiningBatchController::class, 'index']);
           Route::post('/', [RefiningBatchController::class, 'store']);
