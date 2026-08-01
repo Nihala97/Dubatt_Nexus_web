@@ -1672,15 +1672,16 @@
                         <h4>Raw Materials</h4>
                         <div class="tbl-wrap">
                             <table class="dt">
-                                <thead><tr><th>Material</th><th class="num">Qty (KG)</th><th class="num">Yield %</th><th class="num">Expected (KG)</th></tr></thead>
+                                <thead><tr><th>Material</th><th>BBSU Batch</th><th class="num">Qty (KG)</th><th class="num">Yield %</th><th class="num">Expected (KG)</th></tr></thead>
                                 <tbody>${rawRows.map(rm => `<tr>
                                     <td>${esc(rm.material)}</td>
+                                    <td>${esc(rm.bbsu_no)}</td>
                                     <td class="num">${fmt(rm.qty, 0)}</td>
                                     <td class="num">${fmt(rm.yield_pct, 2)}%</td>
                                     <td class="num">${fmt(rm.expected, 0)}</td>
                                 </tr>`).join('')}</tbody>
                                 <tfoot><tr>
-                                    <td style="text-align:right;color:var(--txtmu);font-size:10px">TOTAL</td>
+                                    <td colspan="2" style="text-align:right;color:var(--txtmu);font-size:10px">TOTAL</td>
                                     <td class="num">${fmt(rawRows.reduce((s, rm) => s + parseFloat(rm.qty || 0), 0), 0)}</td>
                                     <td></td>
                                     <td class="num">${fmt(rawRows.reduce((s, rm) => s + parseFloat(rm.expected || 0), 0), 0)}</td>
