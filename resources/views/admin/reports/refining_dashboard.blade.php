@@ -1076,6 +1076,15 @@
                         </svg>
                         Download Excel
                     </button>
+                    <button class="btn btn-outline btn-sm" onclick="printBatchPDF()"
+                        style="padding:4px 10px;font-size:11px">
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="6 9 6 2 18 2 18 9" />
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                            <rect x="6" y="14" width="12" height="8" />
+                        </svg>
+                        Print / PDF
+                    </button>
                     <button class="modal-close" onclick="closeDrill()">✕</button>
                 </div>
             </div>
@@ -2036,18 +2045,20 @@
                             <thead>
                                 <tr style="background:var(--gl)">
                                     <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:left;border-bottom:2px solid var(--bdr)">Material</th>
+                                    <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:left;border-bottom:2px solid var(--bdr)">Batch No</th>
                                     <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:right;border-bottom:2px solid var(--bdr)">Qty (KG)</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${rawMatRows.map(r => `<tr>
                                     <td style="padding:6px 10px;border-bottom:1px solid #edf2ef">${esc(r.material)}</td>
+                                    <td style="padding:6px 10px;border-bottom:1px solid #edf2ef;color:var(--txtmu);font-size:11.5px">${esc(r.ref_batch_no)}</td>
                                     <td style="padding:6px 10px;border-bottom:1px solid #edf2ef;text-align:right;font-weight:700;color:var(--blue)">${fmt(r.qty, 3)}</td>
                                 </tr>`).join('')}
                             </tbody>
                             <tfoot>
                                 <tr style="background:var(--gl)">
-                                    <td style="padding:7px 10px;font-size:10px;color:var(--txtmu);text-align:right;font-weight:700;border-top:2px solid var(--bdr)">TOTAL</td>
+                                    <td colspan="2" style="padding:7px 10px;font-size:10px;color:var(--txtmu);text-align:right;font-weight:700;border-top:2px solid var(--bdr)">TOTAL</td>
                                     <td style="padding:7px 10px;text-align:right;font-weight:800;color:var(--g);border-top:2px solid var(--bdr)">${fmt(rawMatRows.reduce((s, r) => s + parseFloat(r.qty || 0), 0), 3)}</td>
                                 </tr>
                             </tfoot>
@@ -2062,18 +2073,20 @@
                             <thead>
                                 <tr style="background:var(--gl)">
                                     <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:left;border-bottom:2px solid var(--bdr)">Chemical / Metal</th>
+                                    <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:left;border-bottom:2px solid var(--bdr)">Batch No</th>
                                     <th style="padding:8px 10px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g);text-align:right;border-bottom:2px solid var(--bdr)">Qty (KG)</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${chemRows.map(c => `<tr>
                                     <td style="padding:6px 10px;border-bottom:1px solid #edf2ef">${esc(c.chemical)}</td>
+                                    <td style="padding:6px 10px;border-bottom:1px solid #edf2ef;color:var(--txtmu);font-size:11.5px">${esc(c.ref_batch_no)}</td>
                                     <td style="padding:6px 10px;border-bottom:1px solid #edf2ef;text-align:right;font-weight:700;color:var(--purple)">${fmt(c.qty, 3)}</td>
                                 </tr>`).join('')}
                             </tbody>
                             <tfoot>
                                 <tr style="background:var(--gl)">
-                                    <td style="padding:7px 10px;font-size:10px;color:var(--txtmu);text-align:right;font-weight:700;border-top:2px solid var(--bdr)">TOTAL</td>
+                                    <td colspan="2" style="padding:7px 10px;font-size:10px;color:var(--txtmu);text-align:right;font-weight:700;border-top:2px solid var(--bdr)">TOTAL</td>
                                     <td style="padding:7px 10px;text-align:right;font-weight:800;color:var(--g);border-top:2px solid var(--bdr)">${fmt(chemRows.reduce((s, c) => s + parseFloat(c.qty || 0), 0), 3)}</td>
                                 </tr>
                             </tfoot>
@@ -2228,6 +2241,87 @@
             }
 
             XLSX.writeFile(wb, `Refining_${r.batch_no}_${r.date_raw || r.date}.xlsx`);
+        }
+        function printBatchPDF() {
+            const r = currentDrillRow;
+            if (!r) return;
+
+            const fgRows = (r.fg_details ?? []).map(f => `
+                <tr><td>${esc(f.material)} <span style="color:#6b8a78;font-size:10px">(${esc(f.category)})</span></td><td style="text-align:right;font-weight:700">${fmt(f.qty, 3)}</td></tr>`).join('');
+            const drossRows = (r.dross_details ?? []).map(d => `
+                <tr><td>${esc(d.material)}</td><td style="text-align:right;font-weight:700">${fmt(d.qty, 3)}</td></tr>`).join('');
+            const rawRows = (r.raw_materials ?? []).map(m => `
+                <tr><td>${esc(m.material)}</td><td>${esc(m.ref_batch_no)}</td><td style="text-align:right;font-weight:700">${fmt(m.qty, 3)}</td></tr>`).join('');
+            const chemRows = (r.chemicals ?? []).map(c => `
+                <tr><td>${esc(c.chemical)}</td><td>${esc(c.ref_batch_no)}</td><td style="text-align:right;font-weight:700">${fmt(c.qty, 3)}</td></tr>`).join('');
+            const procRows = (r.process_details ?? []).map(p => `
+                <tr><td>${esc(p.process)}</td><td>${p.start}</td><td>${p.end}</td><td style="text-align:right">${fmt(p.total_time, 1)} min</td></tr>`).join('');
+
+            const html = `<!DOCTYPE html><html><head><title>Batch ${esc(r.batch_no)}</title>
+            <style>
+                @page { size: A4; margin: 14mm; }
+                * { box-sizing: border-box; }
+                body { font-family: Arial, Helvetica, sans-serif; color:#1e2d26; font-size:12px; margin:0; }
+                h1 { font-size:16px; color:#145f2d; margin:0 0 2px; }
+                .sub { color:#6b8a78; font-size:11px; margin-bottom:16px; }
+                h2 { font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:#1a7a3a; border-bottom:2px solid #dde8e2; padding-bottom:4px; margin:18px 0 8px; }
+                table { width:100%; border-collapse:collapse; margin-bottom:6px; }
+                th { background:#e8f5ed; color:#1a7a3a; font-size:9.5px; text-transform:uppercase; letter-spacing:.5px; text-align:left; padding:6px 8px; border-bottom:2px solid #dde8e2; }
+                td { padding:5px 8px; border-bottom:1px solid #edf2ef; font-size:11.5px; }
+                .tot td { font-weight:800; background:#e8f5ed; }
+                .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:6px; }
+                .tile { border:1px solid #dde8e2; border-radius:6px; padding:8px; text-align:center; }
+                .tile .l { font-size:9px; color:#6b8a78; text-transform:uppercase; }
+                .tile .v { font-size:14px; font-weight:800; color:#1a7a3a; }
+                .two { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+                @media print { .two { grid-template-columns:1fr 1fr; } }
+            </style></head><body>
+                <h1>Refining Batch Report — ${esc(r.batch_no)}</h1>
+                <div class="sub">Date: ${r.date} &nbsp;|&nbsp; Pot: ${esc(r.pot_no)} &nbsp;|&nbsp; Material: ${esc(r.material_name)} &nbsp;|&nbsp; Status: ${r.status >= 1 ? 'Submitted' : 'Draft'}</div>
+
+                <div class="two">
+                    <div>
+                        <h2>Finished Goods Output</h2>
+                        <table><tbody>${fgRows}<tr class="tot"><td>Total</td><td style="text-align:right">${fmt(r.total_fg_qty, 3)} KG</td></tr></tbody></table>
+                    </div>
+                    <div>
+                        <h2>Dross Output</h2>
+                        <table><tbody>${drossRows}<tr class="tot"><td>Total</td><td style="text-align:right">${fmt(r.total_dross_qty, 3)} KG</td></tr></tbody></table>
+                    </div>
+                </div>
+
+                <h2>Lead Raw Materials</h2>
+                <table><thead><tr><th>Material</th><th>Batch No</th><th style="text-align:right">Qty (KG)</th></tr></thead>
+                <tbody>${rawRows}<tr class="tot"><td colspan="2">Total</td><td style="text-align:right">${fmt(r.total_raw_qty, 3)}</td></tr></tbody></table>
+
+                <h2>Chemicals &amp; Metals</h2>
+                <table><thead><tr><th>Chemical / Metal</th><th>Batch No</th><th style="text-align:right">Qty (KG)</th></tr></thead>
+                <tbody>${chemRows}</tbody></table>
+
+                <h2>Consumption Summary</h2>
+                <div class="grid">
+                    <div class="tile"><div class="l">LPG (m³)</div><div class="v">${fmt(r.lpg_consumption, 3)}</div></div>
+                    <div class="tile"><div class="l">LPG (Ltr)</div><div class="v">${fmt(r.lpg_consumption_ltr, 3)}</div></div>
+                    <div class="tile"><div class="l">LPG2 (m³)</div><div class="v">${fmt(r.lpg2_consumption, 3)}</div></div>
+                    <div class="tile"><div class="l">LPG2 (Ltr)</div><div class="v">${fmt(r.lpg2_consumption_ltr, 3)}</div></div>
+                    <div class="tile"><div class="l">Electricity</div><div class="v">${fmt(r.electricity_consumption, 3)}</div></div>
+                    <div class="tile"><div class="l">O₂ Flow (NM³)</div><div class="v">${fmt(r.oxygen_flow_nm3, 3)}</div></div>
+                    <div class="tile"><div class="l">O₂ Cons (KG)</div><div class="v">${fmt(r.oxygen_consumption, 3)}</div></div>
+                    <div class="tile"><div class="l">Process (min)</div><div class="v">${fmt(r.total_process_time, 3)}</div></div>
+                </div>
+
+                <h2>Process Details</h2>
+                <table><thead><tr><th>Process</th><th>Start</th><th>End</th><th style="text-align:right">Time</th></tr></thead>
+                <tbody>${procRows}</tbody></table>
+
+                ${r.remarks && r.remarks !== '—' ? `<h2>Remarks</h2><div>${esc(r.remarks)}</div>` : ''}
+            </body></html>`;
+
+            const w = window.open('', '_blank', 'width=900,height=1000');
+            w.document.open();
+            w.document.write(html);
+            w.document.close();
+            setTimeout(() => { try { w.focus(); w.print(); } catch (e) { } }, 350);
         }
 
         // ════════════════════════════════════════════════════════════

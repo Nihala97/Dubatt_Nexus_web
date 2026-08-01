@@ -1819,7 +1819,9 @@ class ReportController extends Controller
         $query = \App\Models\RefiningBatch::with([
             'material',
             'rawMaterials.material',
+            'rawMaterials.refBatch',     
             'chemicals',
+            'chemicals.refBatch',       
             'processDetails',
             'finishedGoodsSummary.material',
             'drossSummary.material',
@@ -1972,6 +1974,7 @@ class ReportController extends Controller
                     ?? optional($r->rawMaterial)->secondary_name
                     ?? optional($r->rawMaterial)->name
                     ?? '—',
+                'ref_batch_no' => optional($r->refBatch)->batch_no ?? '—',
                 'qty' => round($r->qty, 3),
             ])->values(),
             'chemicals' => $chems->map(fn($c) => [
@@ -1994,6 +1997,7 @@ class ReportController extends Controller
                         ?? $c->name
                         ?? '—';
                 })(),
+                'ref_batch_no' => optional($c->refBatch)->batch_no ?? '—',
                 'qty' => round($c->qty, 3),
             ])->values(),
             'remarks' => $b->remarks ?? '—',

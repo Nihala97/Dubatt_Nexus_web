@@ -1217,6 +1217,15 @@
                         </svg>
                         Download Excel
                     </button>
+                    <button class="btn btn-outline btn-sm" onclick="printBatchPDF()"
+                        style="padding:4px 10px;font-size:11px;background:#fff">
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="6 9 6 2 18 2 18 9" />
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                            <rect x="6" y="14" width="12" height="8" />
+                        </svg>
+                        Print / PDF
+                    </button>
                     <button class="detail-modal-close" onclick="closeDetail()">✕</button>
                 </div>
             </div>
@@ -1659,27 +1668,26 @@
 
             const rawRows = r.raw_materials ?? [];
             const rawHtml = rawRows.length ? `
-                                                                    <div class="detail-section">
-                                                                        <h4>Raw Materials</h4>
-                                                                        <div class="tbl-wrap">
-                                                                            <table class="dt">
-                                                                                <thead><tr><th>Material</th><th>BBSU Batch</th><th class="num">Qty (KG)</th><th class="num">Yield %</th><th class="num">Expected (KG)</th></tr></thead>
-                                                                                <tbody>${rawRows.map(rm => `<tr>
-                                                                                    <td>${esc(rm.material)}</td>
-                                                                                    <td>${esc(rm.bbsu_no)}</td>
-                                                                                    <td class="num">${fmt(rm.qty, 0)}</td>
-                                                                                    <td class="num">${fmt(rm.yield_pct, 2)}%</td>
-                                                                                    <td class="num">${fmt(rm.expected, 0)}</td>
-                                                                                </tr>`).join('')}</tbody>
-                                                                                <tfoot><tr>
-                                                                                    <td colspan="2" style="text-align:right;color:var(--txtmu);font-size:10px">TOTAL</td>
-                                                                                    <td class="num">${fmt(rawRows.reduce((s, rm) => s + parseFloat(rm.qty || 0), 0), 0)}</td>
-                                                                                    <td></td>
-                                                                                    <td class="num">${fmt(rawRows.reduce((s, rm) => s + parseFloat(rm.expected || 0), 0), 0)}</td>
-                                                                                </tr></tfoot>
-                                                                            </table>
-                                                                        </div>
-                                                                    </div>` : '';
+                    <div class="detail-section">
+                        <h4>Raw Materials</h4>
+                        <div class="tbl-wrap">
+                            <table class="dt">
+                                <thead><tr><th>Material</th><th class="num">Qty (KG)</th><th class="num">Yield %</th><th class="num">Expected (KG)</th></tr></thead>
+                                <tbody>${rawRows.map(rm => `<tr>
+                                    <td>${esc(rm.material)}</td>
+                                    <td class="num">${fmt(rm.qty, 0)}</td>
+                                    <td class="num">${fmt(rm.yield_pct, 2)}%</td>
+                                    <td class="num">${fmt(rm.expected, 0)}</td>
+                                </tr>`).join('')}</tbody>
+                                <tfoot><tr>
+                                    <td style="text-align:right;color:var(--txtmu);font-size:10px">TOTAL</td>
+                                    <td class="num">${fmt(rawRows.reduce((s, rm) => s + parseFloat(rm.qty || 0), 0), 0)}</td>
+                                    <td></td>
+                                    <td class="num">${fmt(rawRows.reduce((s, rm) => s + parseFloat(rm.expected || 0), 0), 0)}</td>
+                                </tr></tfoot>
+                            </table>
+                        </div>
+                    </div>` : '';
 
             const procRows = r.process_details ?? [];
             const procHtml = procRows.length ? `
@@ -1824,6 +1832,75 @@
             }
 
             XLSX.writeFile(wb, `Smelting_${r.batch_no}_${r.date_raw || r.date}.xlsx`);
+        }
+        function printBatchPDF() {
+            const r = currentDetailRow;
+            if (!r) return;
+
+            const rawRows = (r.raw_materials ?? []).map(rm => `
+                <tr><td>${esc(rm.material)}</td><td style="text-align:right;font-weight:700">${fmt(rm.qty, 0)}</td><td style="text-align:right">${fmt(rm.yield_pct, 2)}%</td><td style="text-align:right">${fmt(rm.expected, 0)}</td></tr>`).join('');
+            const fluxRows = (r.flux_chemicals ?? []).map(f => `
+                <tr><td>${esc(f.chemical)}</td><td style="text-align:right;font-weight:700">${fmt(f.qty, 3)}</td></tr>`).join('');
+            const procRows = (r.process_details ?? []).map(p => `
+                <tr><td>${esc(p.process)}</td><td>${esc(p.start)}</td><td>${esc(p.end)}</td><td style="text-align:right">${fmt(p.total_time, 0)} min</td><td>${esc(p.firing_mode)}</td></tr>`).join('');
+
+            const html = `<!DOCTYPE html><html><head><title>Batch ${esc(r.batch_no)}</title>
+            <style>
+                @page { size: A4; margin: 14mm; }
+                * { box-sizing: border-box; }
+                body { font-family: Arial, Helvetica, sans-serif; color:#1e2d26; font-size:12px; margin:0; }
+                h1 { font-size:16px; color:#145f2d; margin:0 0 2px; }
+                .sub { color:#6b8a78; font-size:11px; margin-bottom:16px; }
+                h2 { font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:#1a7a3a; border-bottom:2px solid #dde8e2; padding-bottom:4px; margin:18px 0 8px; }
+                table { width:100%; border-collapse:collapse; margin-bottom:6px; }
+                th { background:#e8f5ed; color:#1a7a3a; font-size:9.5px; text-transform:uppercase; letter-spacing:.5px; text-align:left; padding:6px 8px; border-bottom:2px solid #dde8e2; }
+                td { padding:5px 8px; border-bottom:1px solid #edf2ef; font-size:11.5px; }
+                .tot td { font-weight:800; background:#e8f5ed; }
+                .grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:6px; }
+                .tile { border:1px solid #dde8e2; border-radius:6px; padding:8px; text-align:center; }
+                .tile .l { font-size:9px; color:#6b8a78; text-transform:uppercase; }
+                .tile .v { font-size:14px; font-weight:800; color:#1a7a3a; }
+            </style></head><body>
+                <h1>Smelting Batch Report — ${esc(r.batch_no)}</h1>
+                <div class="sub">Date: ${r.date} &nbsp;|&nbsp; Charge No: ${esc(r.charge_no)} &nbsp;|&nbsp; Rotary: R${r.rotary_no} &nbsp;|&nbsp; Status: ${r.status >= 1 ? 'Submitted' : 'Draft'}</div>
+
+                <h2>Batch Summary</h2>
+                <div class="grid">
+                    <div class="tile"><div class="l">Start</div><div class="v" style="font-size:12px">${r.start_time}</div></div>
+                    <div class="tile"><div class="l">End</div><div class="v" style="font-size:12px">${r.end_time}</div></div>
+                    <div class="tile"><div class="l">Duration</div><div class="v">${fmt(r.duration_hours, 3)}</div></div>
+                    <div class="tile"><div class="l">Output (KG)</div><div class="v">${fmt(r.output_qty, 0)}</div></div>
+                    <div class="tile"><div class="l">Expected (KG)</div><div class="v">${fmt(r.expected_output_qty, 0)}</div></div>
+                    <div class="tile"><div class="l">Avg Yield %</div><div class="v">${fmt(r.avg_yield_pct, 2)}%</div></div>
+                    <div class="tile"><div class="l">LPG (m³)</div><div class="v">${fmt(r.lpg_consumption, 3)}</div></div>
+                    <div class="tile"><div class="l">O₂ (m³)</div><div class="v">${fmt(r.o2_consumption, 3)}</div></div>
+                    <div class="tile"><div class="l">ID Fan Cons.</div><div class="v">${fmt(r.id_fan_consumption, 3)}</div></div>
+                    <div class="tile"><div class="l">Rotary Pwr Cons.</div><div class="v">${fmt(r.rotary_power_consumption, 3)}</div></div>
+                    <div class="tile"><div class="l">Process (min)</div><div class="v">${fmt(r.total_process_mins, 0)}</div></div>
+                    <div class="tile"><div class="l">Avg Inside °C</div><div class="v">${fmt(r.avg_inside_temp, 1)}</div></div>
+                    <div class="tile"><div class="l">Avg PGC °C</div><div class="v">${fmt(r.avg_pgc_temp, 1)}</div></div>
+                </div>
+
+                <h2>Raw Materials</h2>
+                <table><thead><tr><th>Material</th><th style="text-align:right">Qty (KG)</th><th style="text-align:right">Yield %</th><th style="text-align:right">Expected (KG)</th></tr></thead>
+                <tbody>${rawRows}<tr class="tot"><td>Total</td><td style="text-align:right">${fmt(r.total_raw_qty, 0)}</td><td></td><td style="text-align:right">${fmt(r.expected_output_qty, 0)}</td></tr></tbody></table>
+
+                <h2>Flux Chemicals</h2>
+                <table><thead><tr><th>Chemical</th><th style="text-align:right">Qty (KG)</th></tr></thead>
+                <tbody>${fluxRows}<tr class="tot"><td>Total</td><td style="text-align:right">${fmt(r.total_flux_qty, 0)}</td></tr></tbody></table>
+
+                <h2>Process Details</h2>
+                <table><thead><tr><th>Process</th><th>Start</th><th>End</th><th style="text-align:right">Time</th><th>Firing Mode</th></tr></thead>
+                <tbody>${procRows}</tbody></table>
+
+                ${r.remarks && r.remarks !== '—' ? `<h2>Remarks</h2><div>${esc(r.remarks)}</div>` : ''}
+            </body></html>`;
+
+            const w = window.open('', '_blank', 'width=900,height=1000');
+            w.document.open();
+            w.document.write(html);
+            w.document.close();
+            setTimeout(() => { try { w.focus(); w.print(); } catch (e) { } }, 350);
         }
 
         // ════════════════════════════════════════════════════════════
