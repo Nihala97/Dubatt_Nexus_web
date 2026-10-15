@@ -131,6 +131,15 @@ Route::middleware('auth:sanctum')->group(function () {
                ->middleware('module:acid_testing,can_edit');
           Route::delete('/{id}', [AcidTestingController::class, 'destroy'])
                ->middleware('module:acid_testing,can_delete');
+          // ── Attachment (no status restriction — available at any status) ──
+          Route::post('/{id}/attachment', [AcidTestingController::class, 'uploadAttachment'])
+               ->middleware('module:acid_testing,can_edit');
+          Route::post('/{id}/attachments', [AcidTestingController::class, 'uploadAttachment'])
+               ->middleware('module:acid_testing,can_edit');
+          Route::delete('/{id}/attachment/{attachmentId?}', [AcidTestingController::class, 'removeAttachment'])
+               ->middleware('module:acid_testing,can_edit');
+          Route::delete('/{id}/attachments/{attachmentId?}', [AcidTestingController::class, 'removeAttachment'])
+               ->middleware('module:acid_testing,can_edit');
      });
 
      // ── BBSU ──────────────────────────────────────────────────────

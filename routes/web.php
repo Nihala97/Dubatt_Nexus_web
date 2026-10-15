@@ -50,6 +50,8 @@ Route::prefix('admin/mes/acidTesting')->name('admin.mes.acidTesting.')->group(fu
     Route::get('/create', [AcidTestingWebController::class, 'create'])->name('create');
     Route::get('/{id}/edit', [AcidTestingWebController::class, 'edit'])->name('edit');
     Route::get('/{id}/print', [AcidTestingWebController::class, 'printView'])->name('print');
+    Route::get('/{id}/attachment/{attachmentId?}', [AcidTestingWebController::class, 'serveAttachment'])->name('attachment');
+    Route::get('/{id}/download', [AcidTestingWebController::class, 'downloadPackage'])->name('download');
     Route::delete('/{id}', [AcidTestingWebController::class, 'destroy'])->name('destroy');
 });
 // Route::prefix('admin/mes/acidTesting')->name('admin.mes.acidTesting.')->group(function () {

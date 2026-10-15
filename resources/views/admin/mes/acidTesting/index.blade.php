@@ -10,169 +10,6 @@
 
 @push('styles')
     <style>
-        /* ── Searchable Dropdown (SDD) ── */
-        .sdd {
-            display: block;
-            width: 100%;
-            position: relative;
-        }
-
-        .sdd-trigger {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 11px;
-            border: 1.5px solid var(--border);
-            border-radius: 8px;
-            background: var(--bg);
-            font-family: inherit;
-            font-size: 13px;
-            color: var(--text);
-            cursor: pointer;
-            user-select: none;
-            gap: 6px;
-            transition: border-color .2s, box-shadow .2s;
-            min-height: 36px;
-            box-sizing: border-box;
-        }
-
-        .sdd-trigger:hover,
-        .sdd.open>.sdd-trigger {
-            border-color: var(--green);
-            background: var(--white);
-        }
-
-        .sdd-trigger-text {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            text-align: left;
-        }
-
-        .sdd-trigger-text.placeholder {
-            color: var(--text-muted);
-        }
-
-        .sdd-trigger-chevron {
-            width: 13px;
-            height: 13px;
-            stroke: var(--text-muted);
-            fill: none;
-            stroke-width: 2.5;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            flex-shrink: 0;
-            transition: transform .18s;
-        }
-
-        .sdd.open>.sdd-trigger .sdd-trigger-chevron {
-            transform: rotate(180deg);
-            stroke: var(--green);
-        }
-
-        .sdd-portal {
-            position: fixed;
-            z-index: 9999;
-            background: #fff;
-            border: 1.5px solid var(--green);
-            border-radius: 10px;
-            box-shadow: 0 6px 24px rgba(0, 0, 0, .16);
-            min-width: 220px;
-            overflow: hidden;
-            display: none;
-            animation: sddIn .12s ease;
-        }
-
-        .sdd-portal.visible {
-            display: block;
-        }
-
-        @keyframes sddIn {
-            from {
-                opacity: 0;
-                transform: translateY(-4px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .sdd-search-wrap {
-            padding: 8px 10px;
-            border-bottom: 1px solid var(--border);
-            position: relative;
-        }
-
-        .sdd-search-ico {
-            position: absolute;
-            left: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 13px;
-            height: 13px;
-            stroke: var(--text-muted);
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            pointer-events: none;
-        }
-
-        .sdd-search {
-            width: 100%;
-            padding: 7px 10px 7px 32px;
-            border: 1.5px solid var(--border);
-            border-radius: 7px;
-            background: var(--bg);
-            font-family: inherit;
-            font-size: 13px;
-            color: var(--text);
-            outline: none;
-            transition: border-color .18s;
-            box-sizing: border-box;
-        }
-
-        .sdd-search:focus {
-            border-color: var(--green);
-            background: #fff;
-        }
-
-        .sdd-list {
-            max-height: 220px;
-            overflow-y: auto;
-            padding: 4px 0;
-        }
-
-        .sdd-item {
-            padding: 8px 14px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: background .1s;
-            color: var(--text);
-        }
-
-        .sdd-item:hover {
-            background: #f0f9f4;
-            color: var(--green);
-        }
-
-        .sdd-item.selected {
-            background: #e8f5ed;
-            color: var(--green);
-            font-weight: 600;
-        }
-
-        .sdd-empty {
-            padding: 18px 14px;
-            font-size: 12.5px;
-            color: var(--text-muted);
-            text-align: center;
-        }
-
         /* ── Page header ── */
         .page-header {
             display: flex;
@@ -359,7 +196,8 @@
             border-radius: 12px;
             margin-bottom: 20px;
             box-shadow: var(--shadow-sm);
-            overflow: hidden;
+            overflow: visible;
+            /* lets the dropdown panels show outside the bar */
         }
 
         .filter-bar-header {
@@ -394,6 +232,10 @@
             font-weight: 700;
             padding: 2px 7px;
             border-radius: 20px;
+        }
+
+        .filter-bar-header .filter-count {
+            color: #fff;
         }
 
         .filter-toggle-icon {
@@ -463,6 +305,151 @@
             display: flex;
             gap: 10px;
             margin-top: 14px;
+        }
+
+        /* ── Multi-select checkbox dropdowns ── */
+        .msel {
+            position: relative;
+        }
+
+        .msel-trigger {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            padding: 8px 11px;
+            min-height: 36px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--text);
+            cursor: pointer;
+            text-align: left;
+            box-sizing: border-box;
+        }
+
+        .msel.open .msel-trigger,
+        .msel-trigger:hover {
+            border-color: var(--green);
+            background: var(--white);
+        }
+
+        .msel-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        .msel-text.placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .msel-trigger svg {
+            width: 13px;
+            height: 13px;
+            flex-shrink: 0;
+            stroke: var(--text-muted);
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: transform .18s;
+        }
+
+        .msel.open .msel-trigger svg {
+            transform: rotate(180deg);
+            stroke: var(--green);
+        }
+
+        .msel-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            min-width: 100%;
+            width: 280px;
+            max-width: 90vw;
+            background: #fff;
+            border: 1.5px solid var(--green);
+            border-radius: 10px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, .16);
+            z-index: 60;
+            overflow: hidden;
+        }
+
+        .msel.open .msel-panel {
+            display: block;
+        }
+
+        .filter-group .msel-search {
+            width: calc(100% - 20px);
+            margin: 8px 10px;
+            padding: 7px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            background: var(--bg);
+            font-size: 12.5px;
+        }
+
+        .msel-list {
+            max-height: 230px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+
+        .filter-group label.msel-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin: 0;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0;
+            text-transform: none;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .filter-group label.msel-item:hover {
+            background: #f0f9f4;
+        }
+
+        .filter-group .msel-item input[type=checkbox] {
+            width: 15px;
+            height: 15px;
+            padding: 0;
+            margin: 0;
+            accent-color: var(--green);
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .msel-foot {
+            border-top: 1px solid var(--border);
+            padding: 6px 10px;
+            text-align: right;
+            background: var(--bg);
+        }
+
+        .msel-foot button {
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .msel-foot button:hover {
+            color: #ef4444;
         }
 
         /* ── Tab bar ── */
@@ -684,6 +671,11 @@
             color: #7c3aed;
         }
 
+        .action-btn.download-btn:hover {
+            border-color: #0284c7;
+            color: #0284c7;
+        }
+
         .action-btn svg {
             width: 14px;
             height: 14px;
@@ -698,6 +690,41 @@
             display: flex;
             gap: 6px;
             align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* ── Attachment count badge (display only) ── */
+        .attach-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: default;
+        }
+
+        .attach-count svg {
+            width: 12px;
+            height: 12px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+
+        .attach-count.has {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .attach-count.none {
+            background: #fee2e2;
+            color: #991b1b;
         }
 
         /* ── Empty state ── */
@@ -823,29 +850,30 @@
 
 @section('content')
 
-    <div class="sdd-portal" id="sddPortal">
-        <div class="sdd-search-wrap">
-            <svg class="sdd-search-ico" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input class="sdd-search" id="sddPortalSearch" placeholder="Search…" autocomplete="off"
-                oninput="sddPortalFilter(this.value)" onkeydown="if(event.key==='Escape') sddClosePortal()">
-        </div>
-        <div class="sdd-list" id="sddPortalList"></div>
-    </div>
     @php
-        $q = \App\Models\AcidTesting::with(['supplier', 'createdBy', 'details' => fn($q) => $q->where('is_active', 1)])->where('is_active', true);
+        // Supplier list for the filter dropdown
+        $suppliers = \App\Models\Supplier::orderBy('supplier_name')->get(['id', 'supplier_name']);
 
-        if (request('status') !== null && request('status') !== '') {
-            if (request('status') == '1') {
-                $q->where('status', '>=', 1);
-            } else {
-                $q->where('status', request('status'));
-            }
+        // Multi-select filters (also accept old single values like ?status=1)
+        $statusFilter = array_values(array_filter((array) request('status', []), fn($v) => $v !== '' && $v !== null));
+        $supplierFilter = array_values(array_filter((array) request('supplier_id', []), fn($v) => $v !== '' && $v !== null));
+
+        $q = \App\Models\AcidTesting::with(['supplier', 'createdBy', 'details' => fn($q) => $q->where('is_active', 1), 'attachments'])
+            ->where('is_active', true);
+
+        if (count($statusFilter)) {
+            $q->where(function ($sq) use ($statusFilter) {
+                if (in_array('0', $statusFilter, true)) {
+                    $sq->orWhere('status', 0);
+                }
+                if (in_array('1', $statusFilter, true)) {
+                    $sq->orWhere('status', '>=', 1);
+                }
+            });
         }
-        if (request('supplier_id'))
-            $q->where('supplier_id', request('supplier_id'));
+        if (count($supplierFilter)) {
+            $q->whereIn('supplier_id', $supplierFilter);
+        }
         if (request('date_from'))
             $q->whereDate('test_date', '>=', request('date_from'));
         if (request('date_to'))
@@ -865,7 +893,14 @@
         $submittedCnt = (clone $atBase)->where('status', '>=', 1)->count();
         $thisMonthCnt = (clone $atBase)->whereMonth('test_date', now()->month)->whereYear('test_date', now()->year)->count();
 
-        $suppliers = \App\Models\Supplier::orderBy('supplier_name')->get(['id', 'supplier_name']);
+        $activeFilters = (count($statusFilter) ? 1 : 0)
+            + (count($supplierFilter) ? 1 : 0)
+            + (request('date_from') ? 1 : 0)
+            + (request('date_to') ? 1 : 0)
+            + (request('search') ? 1 : 0);
+
+        $activeTab = count($statusFilter) === 1 ? (string) $statusFilter[0] : 'all';
+        $keep = request()->except(['status', 'page']);
     @endphp
 
     {{-- ── Page Header ── --}}
@@ -953,7 +988,6 @@
 
     {{-- ── Filter Bar ── --}}
     <form method="GET" action="{{ route('admin.mes.acidTesting.index') }}" id="filterForm">
-        @php $activeFilters = count(array_filter(request()->only(['status', 'supplier_id', 'date_from', 'date_to', 'search']))); @endphp
 
         <div class="filter-bar">
             <div class="filter-bar-header" onclick="toggleFilter()">
@@ -972,27 +1006,66 @@
             </div>
             <div class="filter-body {{ $activeFilters ? 'open' : '' }}" id="filterBody">
                 <div class="filter-grid">
+
+                    {{-- STATUS (multi-select) --}}
                     <div class="filter-group">
                         <label>Status</label>
-                        <select name="status">
-                            <option value="">All Status</option>
-                            <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Draft</option>
-                            <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Submitted</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Supplier</label>
-                        <div class="sdd" id="sdd_supplier_id">
-                            <div class="sdd-trigger" onclick="toggleSdd('supplier_id')">
-                                <span class="sdd-trigger-text placeholder" id="sdd_supplier_id_label"
-                                    data-placeholder="All Suppliers">All Suppliers</span>
-                                <svg class="sdd-trigger-chevron" viewBox="0 0 24 24">
+                        <div class="msel" id="msel_status" data-placeholder="All Status">
+                            <button type="button" class="msel-trigger" onclick="mselToggle('msel_status')">
+                                <span class="msel-text placeholder">All Status</span>
+                                <svg viewBox="0 0 24 24">
                                     <polyline points="6 9 12 15 18 9" />
                                 </svg>
+                            </button>
+                            <div class="msel-panel">
+                                <div class="msel-list">
+                                    <label class="msel-item">
+                                        <input type="checkbox" name="status[]" value="0" data-label="Draft" {{ in_array('0', $statusFilter, true) ? 'checked' : '' }} onchange="mselUpdate('msel_status')">
+                                        <span>Draft</span>
+                                    </label>
+                                    <label class="msel-item">
+                                        <input type="checkbox" name="status[]" value="1" data-label="Submitted" {{ in_array('1', $statusFilter, true) ? 'checked' : '' }}
+                                            onchange="mselUpdate('msel_status')">
+                                        <span>Submitted</span>
+                                    </label>
+                                </div>
+                                <div class="msel-foot">
+                                    <button type="button" onclick="mselClear('msel_status')">Clear selection</button>
+                                </div>
                             </div>
-                            <input type="hidden" id="supplier_id" name="supplier_id" value="{{ request('supplier_id') }}">
                         </div>
                     </div>
+
+                    {{-- SUPPLIER (multi-select with search) --}}
+                    <div class="filter-group">
+                        <label>Supplier</label>
+                        <div class="msel" id="msel_supplier" data-placeholder="All Suppliers">
+                            <button type="button" class="msel-trigger" onclick="mselToggle('msel_supplier')">
+                                <span class="msel-text placeholder">All Suppliers</span>
+                                <svg viewBox="0 0 24 24">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </button>
+                            <div class="msel-panel">
+                                <input type="text" class="msel-search" placeholder="Search suppliers…" autocomplete="off"
+                                    oninput="mselFilter(this)">
+                                <div class="msel-list">
+                                    @foreach($suppliers as $s)
+                                        <label class="msel-item">
+                                            <input type="checkbox" name="supplier_id[]" value="{{ $s->id }}"
+                                                data-label="{{ $s->supplier_name }}" {{ in_array((string) $s->id, $supplierFilter, true) ? 'checked' : '' }}
+                                                onchange="mselUpdate('msel_supplier')">
+                                            <span>{{ $s->supplier_name }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                <div class="msel-foot">
+                                    <button type="button" onclick="mselClear('msel_supplier')">Clear selection</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="filter-group">
                         <label>Date From</label>
                         <input type="date" name="date_from" value="{{ request('date_from') }}">
@@ -1009,18 +1082,17 @@
             </div>
         </div>
 
-        {{-- ── Tabs ── --}}
-        @php $activeTab = request('status', 'all'); @endphp
+        {{-- ── Tabs (keep all other filters) ── --}}
         <div class="tab-bar">
-            <a href="{{ route('admin.mes.acidTesting.index') }}"
-                class="tab {{ in_array($activeTab, ['all', '']) ? 'active' : '' }}">
+            <a href="{{ route('admin.mes.acidTesting.index', $keep) }}"
+                class="tab {{ $activeTab === 'all' ? 'active' : '' }}">
                 All <span class="tab-count">{{ $totalAll }}</span>
             </a>
-            <a href="{{ route('admin.mes.acidTesting.index', ['status' => '0']) }}"
+            <a href="{{ route('admin.mes.acidTesting.index', array_merge($keep, ['status' => ['0']])) }}"
                 class="tab {{ $activeTab === '0' ? 'active' : '' }}">
                 Draft <span class="tab-count">{{ $draftCnt }}</span>
             </a>
-            <a href="{{ route('admin.mes.acidTesting.index', ['status' => '1']) }}"
+            <a href="{{ route('admin.mes.acidTesting.index', array_merge($keep, ['status' => ['1']])) }}"
                 class="tab {{ $activeTab === '1' ? 'active' : '' }}">
                 Submitted <span class="tab-count">{{ $submittedCnt }}</span>
             </a>
@@ -1063,6 +1135,12 @@
                         $isSubmitted = (int) $test->status >= 1;
                         $statusLabel = $isSubmitted ? 'submitted' : 'draft';
                         $palletCount = $test->details->count();
+
+                        $attCount = $test->attachments ? $test->attachments->count() : 0;
+                        // legacy fallback: old records that only have attachment_path on the header
+                        if ($attCount === 0 && !empty($test->attachment_path)) {
+                            $attCount = 1;
+                        }
                     @endphp
                     <tr id="row-{{ $test->id }}">
                         <td>
@@ -1131,7 +1209,7 @@
                                     </a>
                                 @endif
 
-                                {{-- PRINT (submitted only) --}}
+                                {{-- PRINT + DOWNLOAD (submitted only) --}}
                                 @if($isSubmitted)
                                     <a href="{{ route('admin.mes.acidTesting.print', $test->id) }}" class="action-btn print-btn"
                                         title="Print Report" target="_blank">
@@ -1141,7 +1219,25 @@
                                             <rect x="6" y="14" width="12" height="8" />
                                         </svg>
                                     </a>
+                                    <a href="{{ route('admin.mes.acidTesting.download', $test->id) }}"
+                                        class="action-btn download-btn" title="Download Report + Attachments">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                            <polyline points="7 10 12 15 17 10" />
+                                            <line x1="12" y1="15" x2="12" y2="3" />
+                                        </svg>
+                                    </a>
                                 @endif
+
+                                {{-- ATTACHMENT COUNT (display only) --}}
+                                <span class="attach-count {{ $attCount > 0 ? 'has' : 'none' }}"
+                                    title="{{ $attCount }} attachment{{ $attCount === 1 ? '' : 's' }}">
+                                    <svg viewBox="0 0 24 24">
+                                        <path
+                                            d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                                    </svg>
+                                    {{ $attCount }} {{ $attCount === 1 ? 'attachment' : 'attachments' }}
+                                </span>
 
                                 {{-- DELETE (draft only) --}}
                                 @if(!$isSubmitted)
@@ -1149,7 +1245,6 @@
                                         data-permission="acid_testing,can_delete"
                                         onclick="deleteBatch({{ $test->id }}, '{{ $test->lot_number }}', '/acid-testings/{{ $test->id }}')"
                                         title="Delete">
-                                        {{ $test->status }}
                                         <svg viewBox="0 0 24 24">
                                             <polyline points="3 6 5 6 21 6" />
                                             <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
@@ -1265,136 +1360,68 @@
             searchTimer = setTimeout(() => document.getElementById('filterForm').submit(), 500);
         }
 
-        /* ── Inject keyframe styles once ── */
+        /* ── Inject keyframe styles once (used by toasts) ── */
         if (!document.getElementById('_utilStyles')) {
             const s = document.createElement('style');
             s.id = '_utilStyles';
             s.textContent = `
-                @keyframes _toastIn  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-                @keyframes _toastOut { from{opacity:1;transform:translateY(0)}   to{opacity:0;transform:translateY(10px)} }
-                @keyframes _fadeIn   { from{opacity:0} to{opacity:1} }
-                @keyframes _fadeOut  { from{opacity:1} to{opacity:0} }
-                @keyframes _slideUp  { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-            `;
+                    @keyframes _toastIn  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+                    @keyframes _toastOut { from{opacity:1;transform:translateY(0)}   to{opacity:0;transform:translateY(10px)} }
+                    @keyframes _fadeIn   { from{opacity:0} to{opacity:1} }
+                    @keyframes _fadeOut  { from{opacity:1} to{opacity:0} }
+                    @keyframes _slideUp  { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+                `;
             document.head.appendChild(s);
         }
 
-        /* ── SDD Engine (always outside the if block) ── */
-        const sddRegistry = {};
-        let sddActiveField = null;
-
-        function sddRegister(fieldId, items, selectedValue = null) {
-            sddRegistry[fieldId] = { items, selected: null };
-            if (selectedValue) sddSelect(fieldId, String(selectedValue), false);
-            sddUpdateTrigger(fieldId);
+        /* ── Multi-select checkbox dropdowns ── */
+        function mselToggle(id) {
+            document.querySelectorAll('.msel.open').forEach(el => { if (el.id !== id) el.classList.remove('open'); });
+            document.getElementById(id).classList.toggle('open');
         }
 
-        function sddUpdateTrigger(fieldId) {
-            const reg = sddRegistry[fieldId];
-            const label = document.getElementById(`sdd_${fieldId}_label`);
-            const hidden = document.getElementById(fieldId);
-            if (!label) return;
-            if (reg?.selected) {
-                label.textContent = reg.selected.label;
-                label.classList.remove('placeholder');
-                label.style.fontWeight = '600';
-                label.style.color = 'var(--text)';
+        function mselUpdate(id) {
+            const wrap = document.getElementById(id);
+            const text = wrap.querySelector('.msel-text');
+            const checked = [...wrap.querySelectorAll('input[type=checkbox]:checked')];
+            if (!checked.length) {
+                text.textContent = wrap.dataset.placeholder;
+                text.classList.add('placeholder');
             } else {
-                label.textContent = label.dataset.placeholder || 'Select…';
-                label.classList.add('placeholder');
-                label.style.fontWeight = '';
-                label.style.color = '';
+                text.classList.remove('placeholder');
+                text.textContent = checked.length <= 2
+                    ? checked.map(c => c.dataset.label).join(', ')
+                    : checked.length + ' selected';
             }
-            if (hidden) hidden.value = reg?.selected?.value ?? '';
         }
 
-        function sddSelect(fieldId, value, submit = false) {
-            if (!sddRegistry[fieldId]) return;
-            const item = value
-                ? sddRegistry[fieldId].items.find(i => String(i.value) === String(value))
-                : null;
-            sddRegistry[fieldId].selected = item || null;
-            sddUpdateTrigger(fieldId);
-            sddClosePortal();
-            if (submit) document.getElementById('filterForm').submit();
+        function mselClear(id) {
+            document.getElementById(id).querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false);
+            mselUpdate(id);
         }
 
-        function toggleSdd(fieldId) {
-            if (sddActiveField === fieldId) { sddClosePortal(); return; }
-            sddOpenPortal(fieldId);
+        function mselFilter(input) {
+            const q = input.value.toLowerCase().trim();
+            input.closest('.msel').querySelectorAll('.msel-item').forEach(item => {
+                item.style.display = item.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
         }
-
-        function sddOpenPortal(fieldId) {
-            const trigger = document.querySelector(`#sdd_${fieldId} .sdd-trigger`);
-            if (!trigger || !sddRegistry[fieldId]) return;
-            sddActiveField = fieldId;
-            document.querySelectorAll('.sdd.open').forEach(el => el.classList.remove('open'));
-            document.getElementById(`sdd_${fieldId}`)?.classList.add('open');
-            const portal = document.getElementById('sddPortal');
-            const rect = trigger.getBoundingClientRect();
-            const portalW = Math.max(rect.width, 260);
-            portal.style.width = portalW + 'px';
-            let left = rect.left;
-            if (left + portalW > window.innerWidth - 8) left = Math.max(8, window.innerWidth - portalW - 8);
-            portal.style.left = left + 'px';
-            portal.style.top = (rect.bottom + 4) + 'px';
-            sddPortalRender('');
-            portal.classList.add('visible');
-            const search = document.getElementById('sddPortalSearch');
-            if (search) { search.value = ''; setTimeout(() => search.focus(), 40); }
-        }
-
-        function sddClosePortal() {
-            document.getElementById('sddPortal')?.classList.remove('visible');
-            document.querySelectorAll('.sdd.open').forEach(el => el.classList.remove('open'));
-            sddActiveField = null;
-        }
-
-        function sddPortalRender(query) {
-            if (!sddActiveField || !sddRegistry[sddActiveField]) return;
-            const q = query.toLowerCase().trim();
-            const items = sddRegistry[sddActiveField].items;
-            const filtered = q ? items.filter(i => i.label.toLowerCase().includes(q)) : items;
-            const current = sddRegistry[sddActiveField].selected?.value ?? '';
-            const list = document.getElementById('sddPortalList');
-            if (!list) return;
-            if (!filtered.length) {
-                list.innerHTML = '<div class="sdd-empty">No results found</div>';
-                return;
-            }
-            const allSel = !current ? ' selected' : '';
-            list.innerHTML =
-                `<div class="sdd-item${allSel}" onclick="sddSelect('${sddActiveField}','',false)">All Suppliers</div>` +
-                filtered.map(item => {
-                    const sel = String(item.value) === String(current) ? ' selected' : '';
-                    return `<div class="sdd-item${sel}" onclick="sddSelect('${sddActiveField}','${item.value}',false)">${item.label}</div>`;
-                }).join('');
-        }
-
-        function sddPortalFilter(query) { sddPortalRender(query); }
 
         document.addEventListener('click', e => {
-            if (!e.target.closest('.sdd') && !e.target.closest('#sddPortal')) sddClosePortal();
+            if (!e.target.closest('.msel')) {
+                document.querySelectorAll('.msel.open').forEach(el => el.classList.remove('open'));
+            }
         });
 
-        document.addEventListener('scroll', () => {
-            if (sddActiveField) {
-                const trigger = document.querySelector(`#sdd_${sddActiveField} .sdd-trigger`);
-                if (trigger) {
-                    const rect = trigger.getBoundingClientRect();
-                    const portal = document.getElementById('sddPortal');
-                    portal.style.top = (rect.bottom + 4) + 'px';
-                    portal.style.left = rect.left + 'px';
-                }
-            }
-        }, true);
+        // show the current selection text on page load
+        document.querySelectorAll('.msel').forEach(el => mselUpdate(el.id));
 
-        /* ── Init supplier SDD ── */
-        (function () {
-            const suppliers = @json($suppliers);
-            const items = suppliers.map(s => ({ value: String(s.id), label: s.supplier_name }));
-            const currentVal = "{{ request('supplier_id') }}";
-            sddRegister('supplier_id', items, currentVal || null);
-        })();
+        function showToast(msg, bg) {
+            const t = document.createElement('div');
+            t.style.cssText = `position:fixed;bottom:24px;right:24px;background:${bg};color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.15);z-index:99999;display:flex;align-items:center;gap:8px;animation:_toastIn .2s ease;`;
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => { t.style.animation = '_toastOut .2s ease'; setTimeout(() => t.remove(), 200); }, 3000);
+        }
     </script>
 @endpush

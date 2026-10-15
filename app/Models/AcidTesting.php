@@ -23,6 +23,8 @@ class AcidTesting extends Model
         'invoice_qty',
         'received_qty',
         'net_avg_acid_pct',
+        'attachment_path',
+        'attachment_name',
         'status',
         'is_active',
         'created_by',
@@ -101,7 +103,8 @@ class AcidTesting extends Model
         return $this->belongsTo(User::class, 'updated_by')->select('id', 'name');
     }
 
-
-
-
+    public function attachments()
+    {
+        return $this->hasMany(AcidTestAttachment::class, 'acid_test_id')->orderBy('id', 'desc');
+    }
 }

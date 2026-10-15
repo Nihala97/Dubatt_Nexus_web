@@ -204,6 +204,7 @@ class AcidTestingController extends Controller
             'createdBy',
             'updatedBy',
             'details' => fn($q) => $q->where('is_active', 1),
+            'attachments',
         ])
             ->where('is_active', 1)
             ->findOrFail($id);
@@ -595,5 +596,133 @@ class AcidTestingController extends Controller
                 'updated_by' => auth()->id(),
             ]);
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // POST /api/acid-testings/{id}/attachment(s)
+    // Upload one or multiple attachments for any acid test record,
+    // regardless of status (draft or submitted).
+    // ─────────────────────────────────────────────────────────────
+    public function uploadAttachment(Request $request, $id)
+    {
+        $header = AcidTesting::where('is_active', 1)->findOrFail($id);
+
+        $files = [];
+        if ($request->hasFile('attachments')) {
+            $f = $request->file('attachments');
+            $files = is_array($f) ? $f : [$f];
+        } elseif ($request->hasFile('attachment')) {
+            $files = [$request->file('attachment')];
+        }
+
+        if (empty($files)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Please select at least one valid file to upload.',
+            ], 422);
+        }
+
+        $uploaded = [];
+        foreach ($files as $file) {
+            // max 20 MB per file
+            if ($file->getSize() > 20971520) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => "File {$file->getClientOriginalName()} exceeds the 20 MB limit.",
+                ], 422);
+            }
+
+            $originalName = $file->getClientOriginalName();
+            $path = $file->storeAs(
+                'acid-test-attachments/' . $header->id,
+                time() . '_' . uniqid() . '_' . $originalName
+            );
+
+            $att = \App\Models\AcidTestAttachment::create([
+                'acid_test_id' => $header->id,
+                'file_path'    => $path,
+                'file_name'    => $originalName,
+                'file_size'    => $file->getSize(),
+                'mime_type'    => $file->getMimeType(),
+                'created_by'   => auth()->id(),
+            ]);
+
+            $uploaded[] = $att;
+        }
+
+        // Sync latest attachment on the header record as fallback
+        $latest = $header->attachments()->first();
+        $header->update([
+            'attachment_path' => $latest?->file_path,
+            'attachment_name' => $latest?->file_name,
+            'updated_by'      => auth()->id(),
+        ]);
+
+        return response()->json([
+            'status'  => 'ok',
+            'message' => count($uploaded) > 1
+                ? count($uploaded) . ' attachments uploaded successfully.'
+                : 'Attachment uploaded successfully.',
+            'data'    => [
+                'attachments'    => $header->attachments()->get(),
+                'count'          => $header->attachments()->count(),
+                'has_attachment' => true,
+            ],
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // DELETE /api/acid-testings/{id}/attachment/{attachmentId?}
+    // Remove one specific attachment (or all attachments if none specified)
+    // for any acid test record, regardless of status (draft or submitted).
+    // ─────────────────────────────────────────────────────────────
+    public function removeAttachment(Request $request, $id, $attachmentId = null)
+    {
+        $header = AcidTesting::where('is_active', 1)->findOrFail($id);
+
+        $targetId = $attachmentId ?: $request->attachment_id;
+
+        if ($targetId) {
+            $att = \App\Models\AcidTestAttachment::where('acid_test_id', $header->id)
+                ->findOrFail($targetId);
+
+            if (\Illuminate\Support\Facades\Storage::exists($att->file_path)) {
+                \Illuminate\Support\Facades\Storage::delete($att->file_path);
+            }
+            $att->delete();
+        } else {
+            // Remove all attachments
+            $allAtts = \App\Models\AcidTestAttachment::where('acid_test_id', $header->id)->get();
+            foreach ($allAtts as $att) {
+                if (\Illuminate\Support\Facades\Storage::exists($att->file_path)) {
+                    \Illuminate\Support\Facades\Storage::delete($att->file_path);
+                }
+                $att->delete();
+            }
+
+            if ($header->attachment_path && \Illuminate\Support\Facades\Storage::exists($header->attachment_path)) {
+                \Illuminate\Support\Facades\Storage::delete($header->attachment_path);
+            }
+        }
+
+        // Re-sync header with newest remaining attachment or null
+        $latest = $header->attachments()->first();
+        $header->update([
+            'attachment_path' => $latest?->file_path,
+            'attachment_name' => $latest?->file_name,
+            'updated_by'      => auth()->id(),
+        ]);
+
+        $remainingCount = $header->attachments()->count();
+
+        return response()->json([
+            'status'  => 'ok',
+            'message' => 'Attachment removed successfully.',
+            'data'    => [
+                'attachments'    => $header->attachments()->get(),
+                'count'          => $remainingCount,
+                'has_attachment' => $remainingCount > 0,
+            ],
+        ]);
     }
 }

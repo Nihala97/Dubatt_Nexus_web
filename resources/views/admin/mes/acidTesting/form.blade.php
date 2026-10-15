@@ -1026,13 +1026,137 @@
 
       .fg2,
       .fg4 {
-        grid-template-columns: 1fr
+        grid-template-columns: 1fr;
       }
 
       .form-actions {
         flex-direction: column;
-        align-items: stretch
+        align-items: stretch;
       }
+    }
+
+    /* ── Attachment Card Styles ─────────────────────────────────── */
+    .attach-box {
+      border: 1.5px solid var(--bdr);
+      border-radius: 10px;
+      padding: 16px 20px;
+      background: var(--white);
+      transition: all .2s;
+    }
+
+    .attach-view {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .attach-view-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .attach-file-ico {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: var(--gl);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .attach-file-ico svg {
+      width: 22px;
+      height: 22px;
+      stroke: var(--g);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .attach-file-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--txt);
+      word-break: break-all;
+    }
+
+    .attach-file-sub {
+      font-size: 11.5px;
+      color: var(--txtmu);
+      margin-top: 2px;
+    }
+
+    .attach-view-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .attach-drop-zone {
+      border: 2px dashed var(--bdr);
+      border-radius: 10px;
+      padding: 24px 20px;
+      text-align: center;
+      background: #fafcfb;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .attach-drop-zone:hover,
+    .attach-drop-zone.drag-over {
+      border-color: var(--g);
+      background: var(--gxl);
+    }
+
+    .attach-drop-zone svg {
+      width: 32px;
+      height: 32px;
+      stroke: var(--txtmu);
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      margin-bottom: 8px;
+      transition: stroke .2s;
+    }
+
+    .attach-drop-zone:hover svg {
+      stroke: var(--g);
+    }
+
+    .attach-drop-zone p {
+      font-size: 13px;
+      color: var(--txtm);
+      margin: 0 0 4px;
+    }
+
+    .attach-drop-zone p strong {
+      color: var(--g);
+    }
+
+    .attach-drop-zone small {
+      font-size: 11px;
+      color: var(--txtmu);
+    }
+
+    .attach-selected-file {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--gl);
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-top: 12px;
     }
   </style>
 @endpush
@@ -1212,6 +1336,24 @@
   </div>
 
   {{-- ══════════════════════════════════════════════════════════
+  CARD 1.5 — Batch Attachment (Available at Any Status)
+  ══════════════════════════════════════════════════════════ --}}
+  <div class="card" id="attachmentSectionCard">
+    <div class="card-head">
+      <div class="card-head-left">
+        <svg viewBox="0 0 24 24">
+          <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+        </svg>
+        <span>Attachment / Document</span>
+      </div>
+      <div id="attachStatusPill"></div>
+    </div>
+    <div class="card-body" id="attachmentCardBody" style="padding:16px 20px;">
+      <!-- Populated dynamically by renderAttachmentUI() -->
+    </div>
+  </div>
+
+  {{-- ══════════════════════════════════════════════════════════
   CARD 2 — Pallet Weight Records (Section 1)
   Columns: SR | Pallet No | ULAB Type | Gross Wt | Avg P&F | Net Wt | [acid cols if acid present]
   ══════════════════════════════════════════════════════════ --}}
@@ -1351,6 +1493,263 @@
     let sddActiveField = null;
     let lotItems = [];  // [{lot_no, supplier_name, vehicle_number, ...}]
 
+    // Attachment state (Multiple files supported, available at any record status)
+    let attachmentsList = [];
+    let pendingFiles = [];
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function renderAttachmentUI() {
+      const container = document.getElementById('attachmentCardBody');
+      const pill = document.getElementById('attachStatusPill');
+      if (!container) return;
+
+      const actDiv = document.getElementById('headerActions');
+      if (actDiv && !isCreate && recordId) {
+        let ha = document.getElementById('headerAttachAction');
+        if (!ha) {
+          ha = document.createElement('div');
+          ha.id = 'headerAttachAction';
+          actDiv.prepend(ha);
+        }
+        if (attachmentsList.length === 1) {
+          ha.innerHTML = `<a href="{{ url('/admin/mes/acidTesting') }}/${recordId}/attachment/${attachmentsList[0].id}" target="_blank" class="btn btn-outline btn-sm" style="color:var(--g);border-color:var(--g);display:inline-flex;align-items:center;gap:6px;">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            View Attachment
+          </a>`;
+        } else if (attachmentsList.length > 1) {
+          ha.innerHTML = `<button type="button" onclick="document.getElementById('attachmentSectionCard').scrollIntoView({behavior:'smooth'})" class="btn btn-outline btn-sm" style="color:var(--g);border-color:var(--g);display:inline-flex;align-items:center;gap:6px;">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            Attachments (${attachmentsList.length})
+          </button>`;
+        } else {
+          ha.innerHTML = `<button type="button" onclick="document.getElementById('attachmentSectionCard').scrollIntoView({behavior:'smooth'})" class="btn btn-outline btn-sm" style="display:inline-flex;align-items:center;gap:6px;">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            Add Attachment
+          </button>`;
+        }
+      }
+
+      if (pill) {
+        if (attachmentsList.length > 0) {
+          pill.innerHTML = `<span class="badge-status badge-submitted" style="font-size:11px;">● ${attachmentsList.length} Attached</span>`;
+        } else {
+          pill.innerHTML = `<span class="badge-status badge-draft" style="font-size:11px;background:#fee2e2;color:#991b1b;">● 0 Attachments</span>`;
+        }
+      }
+
+      let html = '';
+
+      // Existing attachments section (if any)
+      if (attachmentsList.length > 0) {
+        html += `
+          <div class="attach-box" style="margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:var(--g);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+              <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Attached Documents (${attachmentsList.length})
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              ${attachmentsList.map((att, i) => `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border:1px solid var(--bdr);border-radius:8px;gap:12px;flex-wrap:wrap;">
+                  <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+                    <div class="attach-file-ico" style="width:36px;height:36px;">
+                      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                    <div style="min-width:0;">
+                      <div style="font-weight:700;font-size:13px;color:var(--txt);word-break:break-all;">${escapeHtml(att.file_name)}</div>
+                      <div style="font-size:11px;color:var(--txtmu);">
+                        ${att.file_size ? (att.file_size / 1024).toFixed(1) + ' KB · ' : ''}
+                        ${att.created_at ? new Date(att.created_at).toLocaleDateString() : 'Attached'}
+                      </div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+                    <a href="{{ url('/admin/mes/acidTesting') }}/${recordId}/attachment/${att.id}" target="_blank" class="btn btn-primary btn-sm" title="View / Print">
+                      <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      View / Print
+                    </a>
+                    <a href="{{ url('/admin/mes/acidTesting') }}/${recordId}/attachment/${att.id}?download=1" class="btn btn-outline btn-sm" title="Download">
+                      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      Download
+                    </a>
+                    <button type="button" class="btn btn-outline btn-sm" style="color:var(--err);border-color:#fca5a5;" onclick="removeBatchAttachment(${att.id})" title="Remove Document">
+                      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      // Upload Zone
+      html += `
+        <div class="attach-box">
+          <div style="font-size:11px;font-weight:700;color:var(--txtmu);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">
+            ${attachmentsList.length > 0 ? 'Attach Additional Files' : 'Upload Files'}
+          </div>
+
+          <div class="attach-drop-zone" id="batchDropZone" onclick="document.getElementById('batchFileInput').click()">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <p><strong>Click to browse</strong> or drag &amp; drop documents here</p>
+            <small>Select one or multiple files (PDF, Images, Word, Excel up to 20 MB each) · Allowed at any status</small>
+            <input type="file" id="batchFileInput" multiple style="display:none" onchange="onBatchFilesSelected(this)">
+          </div>
+
+          ${pendingFiles.length > 0 ? `
+            <div style="margin-top:14px;">
+              <div style="font-size:12px;font-weight:700;color:var(--g);margin-bottom:8px;">
+                Selected for Upload (${pendingFiles.length} file${pendingFiles.length > 1 ? 's' : ''}):
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+                ${pendingFiles.map((f, idx) => `
+                  <div class="attach-selected-file" style="margin-top:0;">
+                    <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                      <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--g);fill:none;stroke-width:2;flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <div style="min-width:0;">
+                        <span style="font-weight:700;font-size:13px;color:var(--txt);word-break:break-all;">${escapeHtml(f.name)}</span>
+                        <span style="font-size:11px;color:var(--txtmu);margin-left:6px;">(${(f.size / 1024).toFixed(1)} KB)</span>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-outline btn-sm" style="color:var(--err);border-color:#fca5a5;padding:3px 8px;font-size:11px;" onclick="removePendingFile(${idx})" title="Remove from list">✕</button>
+                  </div>
+                `).join('')}
+              </div>
+              <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="clearPendingFiles()">Clear Selection</button>
+                ${!isCreate ? `
+                  <button type="button" class="btn btn-primary btn-sm" id="btnUploadBatchAttach" onclick="uploadSelectedAttachments()">
+                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Upload ${pendingFiles.length} File${pendingFiles.length > 1 ? 's' : ''}
+                  </button>
+                ` : `
+                  <span style="font-size:12px;color:var(--txtmu);">Files will be attached automatically upon creation.</span>
+                `}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      container.innerHTML = html;
+      bindBatchDropZone();
+    }
+
+    function bindBatchDropZone() {
+      const dz = document.getElementById('batchDropZone');
+      if (!dz) return;
+      dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+      dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+      dz.addEventListener('drop', e => {
+        e.preventDefault();
+        dz.classList.remove('drag-over');
+        if (e.dataTransfer.files && e.dataTransfer.files.length) {
+          handleBatchFiles(Array.from(e.dataTransfer.files));
+        }
+      });
+    }
+
+    function onBatchFilesSelected(input) {
+      if (input.files && input.files.length) {
+        handleBatchFiles(Array.from(input.files));
+      }
+      input.value = '';
+    }
+
+    function handleBatchFiles(files) {
+      for (const file of files) {
+        if (file.size > 20 * 1024 * 1024) {
+          showAlert(`File "${file.name}" exceeds the 20 MB limit.`);
+          return;
+        }
+        pendingFiles.push(file);
+      }
+      renderAttachmentUI();
+    }
+
+    function removePendingFile(idx) {
+      pendingFiles.splice(idx, 1);
+      renderAttachmentUI();
+    }
+
+    function clearPendingFiles() {
+      pendingFiles = [];
+      renderAttachmentUI();
+    }
+
+    async function uploadAttachmentsForRecord(id, files) {
+      const formData = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        formData.append('attachments[]', files[i]);
+      }
+      const token = localStorage.getItem('auth_token');
+      const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+      const headers = { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+
+      return await fetch(`/api/acid-testings/${id}/attachments`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+    }
+
+    async function uploadSelectedAttachments() {
+      if (!pendingFiles.length || !recordId) return;
+      const btn = document.getElementById('btnUploadBatchAttach');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" style="animation:spin .7s linear infinite;width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Uploading ${pendingFiles.length} file(s)…`;
+      }
+      try {
+        const res = await uploadAttachmentsForRecord(recordId, pendingFiles);
+        const json = await res.json();
+        if (res.ok && json.status === 'ok') {
+          attachmentsList = json.data.attachments || [];
+          pendingFiles = [];
+          renderAttachmentUI();
+          showAlert(json.message || 'Attachments uploaded successfully.', 'success');
+        } else {
+          showAlert(json.message || 'Upload failed.');
+        }
+      } catch (e) {
+        showAlert('Network error uploading attachment.');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function removeBatchAttachment(attId) {
+      if (!recordId) return;
+      if (!confirm('Are you sure you want to remove this attachment?')) return;
+
+      try {
+        const res = await apiFetch(`/acid-testings/${recordId}/attachments/${attId}`, {
+          method: 'DELETE',
+        });
+        const json = await res?.json();
+        if (res?.ok && json?.status === 'ok') {
+          attachmentsList = json.data.attachments || [];
+          renderAttachmentUI();
+          showAlert('Attachment removed successfully.', 'success');
+        } else {
+          showAlert(json?.message || 'Failed to remove attachment.');
+        }
+      } catch (e) {
+        showAlert('Network error removing attachment.');
+      }
+    }
+
     const ACID_PRESENT = 'ACID PRESENT';
     const ULAB_OPTIONS = [
       { id: 1000024, name: 'USED GEL BATTERY/ABS' },
@@ -1372,6 +1771,7 @@
         document.getElementById('pageSubtitle').textContent = 'Record new acid testing log';
         document.getElementById('breadcrumbTitle').textContent = 'Create';
         document.getElementById('btnSaveLabel').textContent = 'Create Record';
+        renderAttachmentUI();
         addRow();
       } else {
         await loadRecord();
@@ -1674,6 +2074,17 @@
         actDiv.prepend(sb);
         setupAutosave();
       }
+
+      // Initialize attachment UI (always allowed at any status)
+      attachmentsList = data.attachments || [];
+      if (!attachmentsList.length && data.attachment_path) {
+        attachmentsList = [{
+          id: 0,
+          file_path: data.attachment_path,
+          file_name: data.attachment_name || 'Attached Document',
+        }];
+      }
+      renderAttachmentUI();
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -1964,7 +2375,16 @@
 
       if (res.ok && data.status === 'ok') {
         if (isCreate) {
-          window.location.href = `{{ url('/admin/mes/acidTesting') }}/${data.data.id}/edit`;
+          const newId = data.data.id;
+          if (pendingFiles.length) {
+            btn.innerHTML = `<svg viewBox="0 0 24 24" style="animation:spin .7s linear infinite;width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Uploading ${pendingFiles.length} attachment(s)…`;
+            try {
+              await uploadAttachmentsForRecord(newId, pendingFiles);
+            } catch (e) {
+              console.warn('Initial attachment upload failed', e);
+            }
+          }
+          window.location.href = `{{ url('/admin/mes/acidTesting') }}/${newId}/edit`;
         } else {
           showAlert('Saved successfully.', 'success');
         }

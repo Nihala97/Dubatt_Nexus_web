@@ -359,7 +359,8 @@
             border-radius: 12px;
             margin-bottom: 20px;
             box-shadow: var(--shadow-sm);
-            overflow: hidden;
+            overflow: visible;
+            /* lets the dropdown panels show outside the bar */
         }
 
         .filter-bar-header {
@@ -463,6 +464,151 @@
             display: flex;
             gap: 10px;
             margin-top: 14px;
+        }
+
+        /* ── Multi-select checkbox dropdowns ── */
+        .msel {
+            position: relative;
+        }
+
+        .msel-trigger {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            padding: 8px 11px;
+            min-height: 36px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--text);
+            cursor: pointer;
+            text-align: left;
+            box-sizing: border-box;
+        }
+
+        .msel.open .msel-trigger,
+        .msel-trigger:hover {
+            border-color: var(--green);
+            background: var(--white);
+        }
+
+        .msel-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        .msel-text.placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .msel-trigger svg {
+            width: 13px;
+            height: 13px;
+            flex-shrink: 0;
+            stroke: var(--text-muted);
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: transform .18s;
+        }
+
+        .msel.open .msel-trigger svg {
+            transform: rotate(180deg);
+            stroke: var(--green);
+        }
+
+        .msel-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            min-width: 100%;
+            width: 280px;
+            max-width: 90vw;
+            background: #fff;
+            border: 1.5px solid var(--green);
+            border-radius: 10px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, .16);
+            z-index: 60;
+            overflow: hidden;
+        }
+
+        .msel.open .msel-panel {
+            display: block;
+        }
+
+        .filter-group .msel-search {
+            width: calc(100% - 20px);
+            margin: 8px 10px;
+            padding: 7px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            background: var(--bg);
+            font-size: 12.5px;
+        }
+
+        .msel-list {
+            max-height: 230px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+
+        .filter-group label.msel-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin: 0;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0;
+            text-transform: none;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .filter-group label.msel-item:hover {
+            background: #f0f9f4;
+        }
+
+        .filter-group .msel-item input[type=checkbox] {
+            width: 15px;
+            height: 15px;
+            padding: 0;
+            margin: 0;
+            accent-color: var(--green);
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .msel-foot {
+            border-top: 1px solid var(--border);
+            padding: 6px 10px;
+            text-align: right;
+            background: var(--bg);
+        }
+
+        .msel-foot button {
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .msel-foot button:hover {
+            color: #ef4444;
         }
 
         /* ── Tab bar ── */
@@ -837,15 +983,23 @@
     @php
         $q = \App\Models\Receiving::with(['createdBy'])->where('is_active', true);
 
-        if (request('status') !== null && request('status') !== '') {
-            if (request('status') == '1') {
-                $q->where('status', '>=', 1);
-            } else {
-                $q->where('status', request('status'));
-            }
+        // Multi-select filters (also accept old single values like ?status=1)
+        $statusFilter = array_values(array_filter((array) request('status', []), fn($v) => $v !== '' && $v !== null));
+        $supplierFilter = array_values(array_filter((array) request('supplier_id', []), fn($v) => $v !== '' && $v !== null));
+
+        if (count($statusFilter)) {
+            $q->where(function ($sq) use ($statusFilter) {
+                if (in_array('0', $statusFilter, true)) {
+                    $sq->orWhere('status', 0);
+                }
+                if (in_array('1', $statusFilter, true)) {
+                    $sq->orWhere('status', '>=', 1);
+                }
+            });
         }
-        if (request('supplier_id'))
-            $q->where('supplier_id', request('supplier_id'));
+        if (count($supplierFilter)) {
+            $q->whereIn('supplier_id', $supplierFilter);
+        }
         if (request('date_from'))
             $q->whereDate('receipt_date', '>=', request('date_from'));
         if (request('date_to'))
@@ -953,7 +1107,13 @@
 
     {{-- ── Filter Bar ── --}}
     <form method="GET" action="{{ route('admin.mes.receiving.index') }}" id="filterForm">
-        @php $activeFilters = count(array_filter(request()->only(['status', 'supplier_id', 'date_from', 'date_to', 'search']))); @endphp
+        @php
+            $activeFilters = (count($statusFilter) ? 1 : 0)
+                + (count($supplierFilter) ? 1 : 0)
+                + (request('date_from') ? 1 : 0)
+                + (request('date_to') ? 1 : 0)
+                + (request('search') ? 1 : 0);
+        @endphp
 
         <div class="filter-bar">
             <div class="filter-bar-header" onclick="toggleFilter()">
@@ -972,27 +1132,66 @@
             </div>
             <div class="filter-body {{ $activeFilters ? 'open' : '' }}" id="filterBody">
                 <div class="filter-grid">
+
+                    {{-- STATUS (multi-select) --}}
                     <div class="filter-group">
                         <label>Status</label>
-                        <select name="status">
-                            <option value="">All Status</option>
-                            <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Draft</option>
-                            <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Submitted</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Suppliers</label>
-                        <div class="sdd" id="sdd_supplier_id">
-                            <div class="sdd-trigger" onclick="toggleSdd('supplier_id')">
-                                <span class="sdd-trigger-text placeholder" id="sdd_supplier_id_label"
-                                    data-placeholder="All Suppliers">All Suppliers</span>
-                                <svg class="sdd-trigger-chevron" viewBox="0 0 24 24">
+                        <div class="msel" id="msel_status" data-placeholder="All Status">
+                            <button type="button" class="msel-trigger" onclick="mselToggle('msel_status')">
+                                <span class="msel-text placeholder">All Status</span>
+                                <svg viewBox="0 0 24 24">
                                     <polyline points="6 9 12 15 18 9" />
                                 </svg>
+                            </button>
+                            <div class="msel-panel">
+                                <div class="msel-list">
+                                    <label class="msel-item">
+                                        <input type="checkbox" name="status[]" value="0" data-label="Draft" {{ in_array('0', $statusFilter, true) ? 'checked' : '' }} onchange="mselUpdate('msel_status')">
+                                        <span>Draft</span>
+                                    </label>
+                                    <label class="msel-item">
+                                        <input type="checkbox" name="status[]" value="1" data-label="Submitted" {{ in_array('1', $statusFilter, true) ? 'checked' : '' }}
+                                            onchange="mselUpdate('msel_status')">
+                                        <span>Submitted</span>
+                                    </label>
+                                </div>
+                                <div class="msel-foot">
+                                    <button type="button" onclick="mselClear('msel_status')">Clear selection</button>
+                                </div>
                             </div>
-                            <input type="hidden" id="supplier_id" name="supplier_id" value="{{ request('supplier_id') }}">
                         </div>
                     </div>
+
+                    {{-- SUPPLIER (multi-select with search) --}}
+                    <div class="filter-group">
+                        <label>Supplier</label>
+                        <div class="msel" id="msel_supplier" data-placeholder="All Suppliers">
+                            <button type="button" class="msel-trigger" onclick="mselToggle('msel_supplier')">
+                                <span class="msel-text placeholder">All Suppliers</span>
+                                <svg viewBox="0 0 24 24">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </button>
+                            <div class="msel-panel">
+                                <input type="text" class="msel-search" placeholder="Search suppliers…" autocomplete="off"
+                                    oninput="mselFilter(this)">
+                                <div class="msel-list">
+                                    @foreach($suppliers as $s)
+                                        <label class="msel-item">
+                                            <input type="checkbox" name="supplier_id[]" value="{{ $s->id }}"
+                                                data-label="{{ $s->supplier_name }}" {{ in_array((string) $s->id, $supplierFilter, true) ? 'checked' : '' }}
+                                                onchange="mselUpdate('msel_supplier')">
+                                            <span>{{ $s->supplier_name }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                <div class="msel-foot">
+                                    <button type="button" onclick="mselClear('msel_supplier')">Clear selection</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="filter-group">
                         <label>Date From</label>
                         <input type="date" name="date_from" value="{{ request('date_from') }}">
@@ -1009,18 +1208,21 @@
             </div>
         </div>
 
-        {{-- ── Tabs ── --}}
-        @php $activeTab = request('status', 'all'); @endphp
+        {{-- ── Tabs (keep all other filters) ── --}}
+        @php
+            $activeTab = count($statusFilter) === 1 ? (string) $statusFilter[0] : 'all';
+            $keep = request()->except(['status', 'page']);
+        @endphp
         <div class="tab-bar">
-            <a href="{{ route('admin.mes.receiving.index') }}"
-                class="tab {{ in_array($activeTab, ['all', '']) ? 'active' : '' }}">
+            <a href="{{ route('admin.mes.receiving.index', $keep) }}"
+                class="tab {{ $activeTab === 'all' ? 'active' : '' }}">
                 All <span class="tab-count">{{ $totalAll }}</span>
             </a>
-            <a href="{{ route('admin.mes.receiving.index', ['status' => '0']) }}"
+            <a href="{{ route('admin.mes.receiving.index', array_merge($keep, ['status' => ['0']])) }}"
                 class="tab {{ $activeTab === '0' ? 'active' : '' }}">
                 Draft <span class="tab-count">{{ $draftCnt }}</span>
             </a>
-            <a href="{{ route('admin.mes.receiving.index', ['status' => '1']) }}"
+            <a href="{{ route('admin.mes.receiving.index', array_merge($keep, ['status' => ['1']])) }}"
                 class="tab {{ $activeTab === '1' ? 'active' : '' }}">
                 Submitted <span class="tab-count">{{ $submittedCnt }}</span>
             </a>
@@ -1278,21 +1480,21 @@
             const toast = document.createElement('div');
             toast.id = '_toast';
             toast.style.cssText = `
-                        position:fixed; bottom:24px; right:24px;
-                        background:${bg}; color:#fff;
-                        padding:12px 20px; border-radius:10px;
-                        font-size:13px; font-weight:600;
-                        box-shadow:0 4px 20px rgba(0,0,0,.15);
-                        z-index:10000;
-                        display:flex; align-items:center; gap:8px;
-                        animation:_toastIn .2s ease;
-                    `;
+                            position:fixed; bottom:24px; right:24px;
+                            background:${bg}; color:#fff;
+                            padding:12px 20px; border-radius:10px;
+                            font-size:13px; font-weight:600;
+                            box-shadow:0 4px 20px rgba(0,0,0,.15);
+                            z-index:10000;
+                            display:flex; align-items:center; gap:8px;
+                            animation:_toastIn .2s ease;
+                        `;
             toast.innerHTML = `
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            style="width:16px;height:16px;flex-shrink:0">${icon}</svg>
-                        <span>${message}</span>
-                    `;
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                style="width:16px;height:16px;flex-shrink:0">${icon}</svg>
+                            <span>${message}</span>
+                        `;
             document.body.appendChild(toast);
             setTimeout(() => {
                 toast.style.animation = '_toastOut .2s ease forwards';
@@ -1305,39 +1507,39 @@
                 const overlay = document.createElement('div');
                 overlay.id = '_confirmOverlay';
                 overlay.style.cssText = `
-                            position:fixed; inset:0;
-                            background:rgba(0,0,0,.45);
-                            z-index:10001;
-                            display:flex; align-items:center; justify-content:center;
-                            animation:_fadeIn .15s ease;
-                        `;
+                                position:fixed; inset:0;
+                                background:rgba(0,0,0,.45);
+                                z-index:10001;
+                                display:flex; align-items:center; justify-content:center;
+                                animation:_fadeIn .15s ease;
+                            `;
                 overlay.innerHTML = `
-                            <div style="
-                                background:var(--white, #fff);
-                                border:1px solid var(--border, #e5e7eb);
-                                border-radius:16px;
-                                padding:28px 28px 24px;
-                                width:100%; max-width:380px;
-                                box-shadow:0 20px 60px rgba(0,0,0,.18);
-                                animation:_slideUp .18px ease;
-                                font-family:inherit;
-                            ">
-                                <div style="width:48px;height:48px;background:#fee2e2;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px">
-                                        <polyline points="3 6 5 6 21 6"/>
-                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                                        <path d="M10 11v6M14 11v6"/>
-                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                                    </svg>
+                                <div style="
+                                    background:var(--white, #fff);
+                                    border:1px solid var(--border, #e5e7eb);
+                                    border-radius:16px;
+                                    padding:28px 28px 24px;
+                                    width:100%; max-width:380px;
+                                    box-shadow:0 20px 60px rgba(0,0,0,.18);
+                                    animation:_slideUp .18px ease;
+                                    font-family:inherit;
+                                ">
+                                    <div style="width:48px;height:48px;background:#fee2e2;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px">
+                                            <polyline points="3 6 5 6 21 6"/>
+                                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                            <path d="M10 11v6M14 11v6"/>
+                                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                                        </svg>
+                                    </div>
+                                    <p style="font-size:15px;font-weight:700;color:var(--text,#111);margin:0 0 6px">Confirm Delete</p>
+                                    <p style="font-size:13px;color:var(--text-muted,#6b7280);margin:0 0 24px;line-height:1.5">${message}</p>
+                                    <div style="display:flex;gap:10px;justify-content:flex-end">
+                                        <button id="_confirmCancel" style="padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--white,#fff);color:var(--text,#111);border:1.5px solid var(--border,#e5e7eb);transition:all .15s;">Cancel</button>
+                                        <button id="_confirmOk" style="padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:#ef4444;color:#fff;border:1.5px solid #ef4444;transition:all .15s;">Delete</button>
+                                    </div>
                                 </div>
-                                <p style="font-size:15px;font-weight:700;color:var(--text,#111);margin:0 0 6px">Confirm Delete</p>
-                                <p style="font-size:13px;color:var(--text-muted,#6b7280);margin:0 0 24px;line-height:1.5">${message}</p>
-                                <div style="display:flex;gap:10px;justify-content:flex-end">
-                                    <button id="_confirmCancel" style="padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--white,#fff);color:var(--text,#111);border:1.5px solid var(--border,#e5e7eb);transition:all .15s;">Cancel</button>
-                                    <button id="_confirmOk" style="padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:#ef4444;color:#fff;border:1.5px solid #ef4444;transition:all .15s;">Delete</button>
-                                </div>
-                            </div>
-                        `;
+                            `;
                 document.body.appendChild(overlay);
                 const cancelBtn = overlay.querySelector('#_confirmCancel');
                 const okBtn = overlay.querySelector('#_confirmOk');
@@ -1363,16 +1565,16 @@
             const s = document.createElement('style');
             s.id = '_utilStyles';
             s.textContent = `
-                        @keyframes _toastIn  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-                        @keyframes _toastOut { from { opacity:1; transform:translateY(0); }   to { opacity:0; transform:translateY(10px); } }
-                        @keyframes _fadeIn   { from { opacity:0; }  to { opacity:1; } }
-                        @keyframes _fadeOut  { from { opacity:1; }  to { opacity:0; } }
-                        @keyframes _slideUp  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-                    `;
+                            @keyframes _toastIn  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+                            @keyframes _toastOut { from { opacity:1; transform:translateY(0); }   to { opacity:0; transform:translateY(10px); } }
+                            @keyframes _fadeIn   { from { opacity:0; }  to { opacity:1; } }
+                            @keyframes _fadeOut  { from { opacity:1; }  to { opacity:0; } }
+                            @keyframes _slideUp  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+                        `;
             document.head.appendChild(s);
         }
 
-        /* ── SDD Engine (always runs, not inside the if block) ── */
+        /* ── SDD Engine (no longer used by the filters; kept so nothing else breaks) ── */
         const sddRegistry = {};
         let sddActiveField = null;
 
@@ -1390,7 +1592,7 @@
             if (reg?.selected) {
                 label.textContent = reg.selected.label;
                 label.classList.remove('placeholder');
-                label.style.fontWeight = '600';          // ← bold when selected
+                label.style.fontWeight = '600';
                 label.style.color = 'var(--text)';
             } else {
                 label.textContent = label.dataset.placeholder || 'Select…';
@@ -1481,12 +1683,46 @@
             }
         }, true);
 
-        /* ── Init supplier SDD ── */
-        (function () {
-            const suppliers = @json($suppliers);
-            const items = suppliers.map(s => ({ value: String(s.id), label: s.supplier_name }));
-            const currentVal = "{{ request('supplier_id') }}";
-            sddRegister('supplier_id', items, currentVal || null);
-        })();
+        /* ── Multi-select checkbox dropdowns (Status + Supplier) ── */
+        function mselToggle(id) {
+            document.querySelectorAll('.msel.open').forEach(el => { if (el.id !== id) el.classList.remove('open'); });
+            document.getElementById(id).classList.toggle('open');
+        }
+
+        function mselUpdate(id) {
+            const wrap = document.getElementById(id);
+            const text = wrap.querySelector('.msel-text');
+            const checked = [...wrap.querySelectorAll('input[type=checkbox]:checked')];
+            if (!checked.length) {
+                text.textContent = wrap.dataset.placeholder;
+                text.classList.add('placeholder');
+            } else {
+                text.classList.remove('placeholder');
+                text.textContent = checked.length <= 2
+                    ? checked.map(c => c.dataset.label).join(', ')
+                    : checked.length + ' selected';
+            }
+        }
+
+        function mselClear(id) {
+            document.getElementById(id).querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false);
+            mselUpdate(id);
+        }
+
+        function mselFilter(input) {
+            const q = input.value.toLowerCase().trim();
+            input.closest('.msel').querySelectorAll('.msel-item').forEach(item => {
+                item.style.display = item.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.msel')) {
+                document.querySelectorAll('.msel.open').forEach(el => el.classList.remove('open'));
+            }
+        });
+
+        // show the current selection text on page load
+        document.querySelectorAll('.msel').forEach(el => mselUpdate(el.id));
     </script>
 @endpush
