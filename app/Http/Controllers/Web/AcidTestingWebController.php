@@ -163,16 +163,22 @@ class AcidTestingWebController extends Controller
         $html = preg_replace('/<div class="no-print">.*?<\/div>/s', '', $html);
 
         // Render with headless Chrome = same output as the browser's Print / Save PDF
-        $shot = \Spatie\Browsershot\Browsershot::html($html)
-            ->setNodeBinary(env('NODE_BINARY', 'node'))
-            ->setNpmBinary(env('NPM_BINARY', 'npm'))
-            ->setNodeModulePath(base_path('node_modules'))
-            ->format('A4')
-            ->margins(8, 10, 8, 10)      // top, right, bottom, left in mm (same as @page 8mm 10mm)
-            ->showBackground()           // keeps grey header and total row shading
-            ->waitUntilNetworkIdle()     // lets the company logo load
-            ->noSandbox()
-            ->timeout(90);
+           $shot = \Spatie\Browsershot\Browsershot::html($html)
+    ->setNodeBinary('/usr/bin/node')
+    ->setNpmBinary('/usr/bin/npm')
+    ->setNodeModulePath('/opt/browsershot-runtime/node_modules')
+    ->setChromePath('/opt/browsershot-runtime/.cache/chrome/linux-155.0.8059.79/chrome-linux64/chrome')
+    ->setEnvironmentOptions([
+        'HOME' => '/tmp',
+        'XDG_CONFIG_HOME' => '/tmp',
+        'XDG_CACHE_HOME' => '/tmp',
+    ])
+    ->format('A4')
+    ->margins(8, 10, 8, 10)
+    ->showBackground()
+    ->waitUntilNetworkIdle()
+    ->noSandbox()
+    ->timeout(90);  
 
         if (env('CHROME_PATH')) {        // optional: use an installed Chrome instead of Puppeteer's
             $shot->setChromePath(env('CHROME_PATH'));

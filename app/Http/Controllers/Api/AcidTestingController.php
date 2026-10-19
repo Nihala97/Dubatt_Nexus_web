@@ -605,15 +605,42 @@ class AcidTestingController extends Controller
     // ─────────────────────────────────────────────────────────────
     public function uploadAttachment(Request $request, $id)
     {
+         $uploadErrors = [];
+
+foreach ($request->allFiles() as $key => $value) {
+    foreach (is_array($value) ? $value : [$value] as $file) {
+        if ($file instanceof \Illuminate\Http\UploadedFile) {
+            $uploadErrors[$key][] = [
+                'name' => $file->getClientOriginalName(),
+                'error' => $file->getError(),
+                'valid' => $file->isValid(),
+                'size' => $file->getSize(),
+            ];
+        }
+    }
+}
+
+\Log::info('Acid attachment upload diagnostic', [
+    'content_length' => $request->server('CONTENT_LENGTH'),
+    'content_type' => $request->header('Content-Type'),
+    'all_file_keys' => array_keys($request->allFiles()),
+    'attachments_present' => $request->hasFile('attachments'),
+    'attachment_present' => $request->hasFile('attachment'),
+    'php_file_errors' => $uploadErrors,
+]);
         $header = AcidTesting::where('is_active', 1)->findOrFail($id);
 
         $files = [];
-        if ($request->hasFile('attachments')) {
-            $f = $request->file('attachments');
-            $files = is_array($f) ? $f : [$f];
-        } elseif ($request->hasFile('attachment')) {
-            $files = [$request->file('attachment')];
-        }
+
+       if ($request->hasFile('attachments')) {
+           $f = $request->file('attachments');
+           $files = is_array($f) ? $f : [$f];
+       } elseif ($request->hasFile('attachments[]')) {
+           $f = $request->file('attachments[]');
+           $files = is_array($f) ? $f : [$f]; 
+       } elseif ($request->hasFile('attachment')) {
+           $files = [$request->file('attachment')];
+       }
 
         if (empty($files)) {
             return response()->json([
@@ -624,8 +651,8 @@ class AcidTestingController extends Controller
 
         $uploaded = [];
         foreach ($files as $file) {
-            // max 20 MB per file
-            if ($file->getSize() > 20971520) {
+            // max 50 MB per file
+            if ($file->getSize() > 52428800 ) {
                 return response()->json([
                     'status'  => 'error',
                     'message' => "File {$file->getClientOriginalName()} exceeds the 20 MB limit.",
