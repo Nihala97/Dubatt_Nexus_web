@@ -392,21 +392,26 @@ class AcidTestingController extends Controller
             // Each detail row's net_weight is the actual usable output
             // weight for that pallet after acid testing / sorting.
             //
-            // For acid rows   : stock_code is the resolved condition code
-            //                   (e.g. 1000001 for 18–24%)
-            // For non-acid rows: stock_code is null; use ulab_type as the
-            //                   material identifier (stored in ulab_type col)
+            // For acid rows   : resolved condition stock_code from batch net_avg_acid_pct
+            //                   (e.g. 1000001 for 18–24%, 1000052 for 2-10%)
+            // For non-acid rows: use ulab_type as the material identifier
             //
             // We group by the effective material key and sum net_weight,
             // then post one stockIn per group.
             //
             $activeDetails = $header->details->where('is_active', 1);
+            $batchAcidCondition = (float) $header->net_avg_acid_pct > 0
+                ? $this->resolveCondition((float) $header->net_avg_acid_pct)
+                : null;
 
             // Build a map: materialKey → total net_weight
-            // materialKey = stock_code if set, else ulab_type
             $grouped = [];
             foreach ($activeDetails as $row) {
-                $key = $row->stock_code ?? $row->ulab_type;
+                $isAcidRow = ((string) $row->ulab_type === '5' || (float) $row->avg_acid_pct > 0 || in_array((string) $row->ulab_type, ['1000001', '1000002', '1000003', '1000022', '1000052']));
+                $key = $isAcidRow
+                    ? ($batchAcidCondition?->stock_code ?? $row->stock_code ?? $row->ulab_type)
+                    : ($row->stock_code ?? $row->ulab_type);
+
                 if (!$key)
                     continue;                     // skip rows with no identifier
                 $netWt = (float) $row->net_weight;
@@ -569,12 +574,10 @@ class AcidTestingController extends Controller
                 : 0.0;
 
             if ($isAcid) {
-                $dbUlabType = $batchAcidCondition?->stock_code;
-                $dbStockCode = $batchAcidCondition?->stock_code;
-                $dbRemarks = $batchAcidCondition?->description;
+                $dbUlabType = '5';
+                $dbRemarks = $batchAcidCondition?->description ?? 'ULAB - ACID PRESENT';
             } else {
                 $dbUlabType = $frontUlabType;
-                $dbStockCode = null;   // non-acid: no acid-condition stock_code
                 $dbRemarks = $nonAcidDescriptions[$frontUlabType] ?? null;
             }
 
@@ -584,7 +587,6 @@ class AcidTestingController extends Controller
                 'gross_weight' => $gross,
                 'net_weight' => (float) ($row['net_weight'] ?? 0),
                 'ulab_type' => $dbUlabType,
-                'stock_code' => $dbStockCode,
                 'initial_weight' => $initial ?: null,
                 'drained_weight' => $drained ?: null,
                 'weight_difference' => $weightDiff ?: null,

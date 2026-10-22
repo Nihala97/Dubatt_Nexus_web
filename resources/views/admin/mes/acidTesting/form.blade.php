@@ -2034,7 +2034,11 @@
       rowCount = 0;
 
       (data.details ?? []).forEach(row => {
-        const frontUlabType = parseInt(row.ulab_type) < 1000024 ? '5' : row.ulab_type;
+        let frontUlabType = String(row.ulab_type ?? '');
+        const acidStockCodes = ['5', '1000001', '1000002', '1000003', '1000022', '1000052', 'ACID_PRESENT', 'ACID PRESENT'];
+        if (acidStockCodes.includes(frontUlabType) || (parseFloat(row.avg_acid_pct) > 0 && frontUlabType !== '1000025')) {
+          frontUlabType = '5';
+        }
         addRow({
           pallet_no: row.pallet_no,
           ulab_type: frontUlabType,
@@ -2180,11 +2184,13 @@
       tr.id = `prow-${idx}`;
       tr.dataset.idx = idx;
 
-      const ulabOpts = ULAB_OPTIONS.map(u =>
-        `<option value="${u.id}" ${(data.ulab_type ?? '') == u.id ? 'selected' : ''}>${u.name}</option>`
+      const selectedUlab = data.ulab_type !== undefined && data.ulab_type !== null ? String(data.ulab_type) : '';
+      const hasMatch = ULAB_OPTIONS.some(u => String(u.id) === selectedUlab);
+      const placeholderOpt = `<option value="" disabled ${!hasMatch ? 'selected' : ''}>-- Select Type --</option>`;
+      const ulabOpts = placeholderOpt + ULAB_OPTIONS.map(u =>
+        `<option value="${u.id}" ${selectedUlab === String(u.id) ? 'selected' : ''}>${u.name}</option>`
       ).join('');
-      console.log("Acid", data.ulab_types);
-      const isAcid = (data.ulab_type ?? '') == 5 || (data.ulab_type ?? '') == 1000025;
+      const isAcid = selectedUlab === '5' || selectedUlab === '1000025';
       const cellDis = isAcid ? '' : 'cell-disabled';
       const avgPFVal = parseFloat(document.getElementById('avg_pallet_foreign_weight').value || 0).toFixed(3);
 
@@ -2316,7 +2322,7 @@
         const ulab = document.getElementById(`ulab_${idx}`)?.value;
         const gross = parseFloat(document.getElementById(`gross_${idx}`)?.value) || 0;
         const net = parseFloat(document.getElementById(`net_${idx}`)?.value) || 0;
-        const isAcid = ulab === ACID_PRESENT || ulab == 1000025;
+        const isAcid = String(ulab) === '5' || ulab === ACID_PRESENT || String(ulab) === '1000025';
         const initial = document.getElementById(`initial_${idx}`).value;
         const drained = document.getElementById(`drained_${idx}`).value;
 

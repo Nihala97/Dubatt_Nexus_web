@@ -299,7 +299,7 @@ class BbsuBatchController extends Controller
             $result = collect();
 
             // ── 1. Group ALL Acid Pallets together as ONE row ──
-            $acidRows = $data->filter(fn($r) => (float) $r->avg_acid_pct > 0);
+            $acidRows = $data->filter(fn($r) => (string) $r->ulab_type === '5' || (float) $r->avg_acid_pct > 0 || in_array((string) $r->ulab_type, ['1000001', '1000002', '1000003', '1000022', '1000052']));
             if ($acidRows->isNotEmpty()) {
                 $condition = $this->resolveConditionByPct($netAvgPct);
                 $stockCode = $condition?->stock_code ?? '5';
@@ -322,7 +322,7 @@ class BbsuBatchController extends Controller
             }
 
             // ── 2. Group Non-Acid (Dry) Pallets by their respective ulab_type ──
-            $dryGroups = $data->filter(fn($r) => !((float) $r->avg_acid_pct > 0))->groupBy('ulab_type');
+            $dryGroups = $data->filter(fn($r) => !((string) $r->ulab_type === '5' || (float) $r->avg_acid_pct > 0 || in_array((string) $r->ulab_type, ['1000001', '1000002', '1000003', '1000022', '1000052'])))->groupBy('ulab_type');
             foreach ($dryGroups as $ulabType => $rows) {
                 $rowNet = (float) $rows->sum('net_weight');
                 $thisMaterialUsed = (float) ($usedByUlab[$ulabType] ?? 0);
@@ -632,7 +632,7 @@ class BbsuBatchController extends Controller
         $netAvgPct = (float) ($acidTest->net_avg_acid_pct ?? 0);
 
         // ── 1. Group ALL Acid Pallets together as ONE row ──
-        $acidRows = $data->filter(fn($r) => (float) $r->avg_acid_pct > 0);
+        $acidRows = $data->filter(fn($r) => (string) $r->ulab_type === '5' || (float) $r->avg_acid_pct > 0 || in_array((string) $r->ulab_type, ['1000001', '1000002', '1000003', '1000022', '1000052']));
         if ($acidRows->isNotEmpty()) {
             // Resolve the common category for the whole batch
             $condition = $this->resolveConditionByPct($netAvgPct);
@@ -656,7 +656,7 @@ class BbsuBatchController extends Controller
         }
 
         // ── 2. Group Non-Acid (Dry) Pallets by their respective ulab_type ──
-        $dryGroups = $data->filter(fn($r) => !((float) $r->avg_acid_pct > 0))->groupBy('ulab_type');
+        $dryGroups = $data->filter(fn($r) => !((string) $r->ulab_type === '5' || (float) $r->avg_acid_pct > 0 || in_array((string) $r->ulab_type, ['1000001', '1000002', '1000003', '1000022', '1000052'])))->groupBy('ulab_type');
         foreach ($dryGroups as $ulabType => $rows) {
             $rowNet = (float) $rows->sum('net_weight');
             $thisMaterialUsed = (float) ($usedByUlab[$ulabType] ?? 0);
