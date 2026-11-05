@@ -32,7 +32,7 @@ class ReceivingWebController extends Controller
             ->get(['id', 'supplier_name', 'supplier_code']);
 
         $materials = \App\Models\Material::orderBy('secondary_name')
-            ->get(['id', 'secondary_name', 'material_code']);
+            ->get(['id', 'secondary_name', 'material_code', 'category']);
 
         return view('admin.mes.receiving.form', compact('suppliers', 'materials')); // <-- was missing
     }
@@ -43,7 +43,7 @@ class ReceivingWebController extends Controller
             ->get(['id', 'supplier_name', 'supplier_code']);
 
         $materials = \App\Models\Material::orderBy('secondary_name')
-            ->get(['id', 'secondary_name', 'material_code']);
+            ->get(['id', 'secondary_name', 'material_code', 'category']);
 
         return view('admin.mes.receiving.form', compact('suppliers', 'materials', 'id') + ['item_id' => $id]);
     }

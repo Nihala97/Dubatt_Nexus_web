@@ -7,7 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreReceivingRequest;
 use App\Http\Requests\UpdateReceivingRequest;
 use App\Models\Receiving;
+use App\Models\Material;
 use App\Services\InventoryService;
+use Illuminate\Support\Facades\DB;
 
 class ReceivingController extends Controller
 {
@@ -33,7 +35,8 @@ class ReceivingController extends Controller
             ->when($request->lot_no, fn($q) => $q->where('lot_no', 'like', "%{$request->lot_no}%"))
             ->when($request->search, fn($q) => $q->where(function ($q) use ($request) {
                 $q->where('lot_no', 'like', "%{$request->search}%")
-                    ->orWhere('vehicle_number', 'like', "%{$request->search}%");
+                    ->orWhere('vehicle_number', 'like', "%{$request->search}%")
+                    ->orWhere('driver_name', 'like', "%{$request->search}%");
             }))
             ->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 20);
@@ -45,6 +48,68 @@ class ReceivingController extends Controller
     }
 
     /**
+     * Compute next available numeric lot number for ULAB materials.
+     */
+    public function generateNextUlabLot(): string
+    {
+        $driver = DB::connection()->getDriverName();
+
+        $query = Receiving::withTrashed()
+            ->join('materials', 'receivings.material_id', '=', 'materials.id')
+            ->whereRaw('UPPER(TRIM(materials.category)) = ?', ['ULAB']);
+
+        if ($driver === 'mysql') {
+            $highestLotRow = $query
+                ->whereRaw("receivings.lot_no REGEXP '^[0-9]+$'")
+                ->orderByRaw("CAST(receivings.lot_no AS UNSIGNED) DESC")
+                ->select('receivings.lot_no')
+                ->first();
+        } elseif ($driver === 'sqlite') {
+            $highestLotRow = $query
+                ->whereRaw("receivings.lot_no GLOB '[0-9]*'")
+                ->orderByRaw("CAST(receivings.lot_no AS INTEGER) DESC")
+                ->select('receivings.lot_no')
+                ->first();
+        } else {
+            $lots = $query->pluck('receivings.lot_no');
+            $numericMax = $lots->filter(fn($l) => preg_match('/^\d+$/', trim($l)))
+                ->map(fn($l) => (int)trim($l))
+                ->max();
+            $candidate = ($numericMax ?: 0) + 1;
+            while (Receiving::withTrashed()->where('lot_no', (string) $candidate)->exists()) {
+                $candidate++;
+            }
+            return (string) $candidate;
+        }
+
+        $highest = $highestLotRow && preg_match('/^\d+$/', trim($highestLotRow->lot_no))
+            ? (int) trim($highestLotRow->lot_no)
+            : 0;
+
+        $candidate = $highest > 0 ? $highest + 1 : 1;
+
+        while (Receiving::withTrashed()->where('lot_no', (string) $candidate)->exists()) {
+            $candidate++;
+        }
+
+        return (string) $candidate;
+    }
+
+    /**
+     * GET /api/receivings/next-lot
+     * Preview the next auto-generated lot number for ULAB materials
+     */
+    public function getNextLot(Request $request)
+    {
+        $nextLot = $this->generateNextUlabLot();
+
+        return response()->json([
+            'status' => 'ok',
+            'next_lot' => $nextLot,
+        ]);
+    }
+
+    /**
      * POST /api/receivings
      * Create new receiving record
      */
@@ -52,16 +117,38 @@ class ReceivingController extends Controller
     {
         $data = $request->validated();
         $data['created_by'] = auth()->id();
-        // $data['updated_by'] = auth()->id();
         $data['status'] = 0; // 0 = Pending
 
-        $receiving = Receiving::create($data);
+        $material = Material::findOrFail($data['material_id']);
+        $isUlab = strtoupper(trim($material->category ?? '')) === 'ULAB';
 
-        return response()->json([
-            'status' => 'ok',
-            'message' => 'Receiving record created successfully.',
-            'data' => $receiving->load(['supplier', 'material']),
-        ], 201);
+        $driver = DB::connection()->getDriverName();
+        $lockAcquired = false;
+
+        try {
+            if ($isUlab && $driver === 'mysql') {
+                DB::select("SELECT GET_LOCK('receiving_ulab_lot_lock', 15)");
+                $lockAcquired = true;
+            }
+
+            $receiving = DB::transaction(function () use (&$data, $isUlab) {
+                if ($isUlab) {
+                    $data['lot_no'] = $this->generateNextUlabLot();
+                }
+
+                return Receiving::create($data);
+            });
+
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Receiving record created successfully.',
+                'data' => $receiving->load(['supplier', 'material']),
+            ], 201);
+        } finally {
+            if ($lockAcquired && $driver === 'mysql') {
+                DB::select("SELECT RELEASE_LOCK('receiving_ulab_lot_lock')");
+            }
+        }
     }
 
     /**
@@ -108,7 +195,7 @@ class ReceivingController extends Controller
      */
     public function update(UpdateReceivingRequest $request, $id)
     {
-        $receiving = Receiving::findOrFail($id);
+        $receiving = Receiving::with('material')->findOrFail($id);
 
         // Lock record if it has moved to acid testing
         if ($receiving->status >= 2) {
@@ -120,6 +207,12 @@ class ReceivingController extends Controller
 
         $data = $request->validated();
         $data['updated_by'] = auth()->id();
+
+        // Keep saved lot number on edit; do not allow editing lot_no for ULAB materials
+        $isUlab = $receiving->material && strtoupper(trim($receiving->material->category ?? '')) === 'ULAB';
+        if ($isUlab) {
+            unset($data['lot_no']);
+        }
 
         $receiving->update($data);
 

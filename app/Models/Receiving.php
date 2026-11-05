@@ -18,6 +18,7 @@ class Receiving extends Model
         'received_qty',
         'unit',
         'vehicle_number',
+        'driver_name',
         'lot_no',
         'remarks',
         'status',

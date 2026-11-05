@@ -986,6 +986,7 @@
         // Multi-select filters (also accept old single values like ?status=1)
         $statusFilter = array_values(array_filter((array) request('status', []), fn($v) => $v !== '' && $v !== null));
         $supplierFilter = array_values(array_filter((array) request('supplier_id', []), fn($v) => $v !== '' && $v !== null));
+        $materialFilter = array_values(array_filter((array) request('material_id', []), fn($v) => $v !== '' && $v !== null));
 
         if (count($statusFilter)) {
             $q->where(function ($sq) use ($statusFilter) {
@@ -1000,6 +1001,9 @@
         if (count($supplierFilter)) {
             $q->whereIn('supplier_id', $supplierFilter);
         }
+        if (count($materialFilter)) {
+            $q->whereIn('material_id', $materialFilter);
+        }
         if (request('date_from'))
             $q->whereDate('receipt_date', '>=', request('date_from'));
         if (request('date_to'))
@@ -1008,6 +1012,7 @@
             $q->where(function ($sq) {
                 $sq->where('lot_no', 'like', '%' . request('search') . '%')
                     ->orWhere('vehicle_number', 'like', '%' . request('search') . '%')
+                    ->orWhere('driver_name', 'like', '%' . request('search') . '%')
                     ->orWhereHas('supplier', fn($s) => $s->where('supplier_name', 'like', '%' . request('search') . '%'));
             });
 
@@ -1020,6 +1025,7 @@
         $thisMonthCnt = (clone $atBase)->whereMonth('receipt_date', now()->month)->whereYear('receipt_date', now()->year)->count();
 
         $suppliers = \App\Models\Supplier::orderBy('supplier_name')->get(['id', 'supplier_name']);
+        $materials = \App\Models\Material::where('is_active', true)->orderBy('material_name')->get(['id', 'material_name']);
     @endphp
 
     {{-- ── Page Header ── --}}
@@ -1110,6 +1116,7 @@
         @php
             $activeFilters = (count($statusFilter) ? 1 : 0)
                 + (count($supplierFilter) ? 1 : 0)
+                + (count($materialFilter) ? 1 : 0)
                 + (request('date_from') ? 1 : 0)
                 + (request('date_to') ? 1 : 0)
                 + (request('search') ? 1 : 0);
@@ -1192,6 +1199,36 @@
                         </div>
                     </div>
 
+                    {{-- MATERIAL (multi-select with search) --}}
+                    <div class="filter-group">
+                        <label>Material</label>
+                        <div class="msel" id="msel_material" data-placeholder="All Materials">
+                            <button type="button" class="msel-trigger" onclick="mselToggle('msel_material')">
+                                <span class="msel-text placeholder">All Materials</span>
+                                <svg viewBox="0 0 24 24">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </button>
+                            <div class="msel-panel">
+                                <input type="text" class="msel-search" placeholder="Search materials…" autocomplete="off"
+                                    oninput="mselFilter(this)">
+                                <div class="msel-list">
+                                    @foreach($materials as $m)
+                                        <label class="msel-item">
+                                            <input type="checkbox" name="material_id[]" value="{{ $m->id }}"
+                                                data-label="{{ $m->material_name }}" {{ in_array((string) $m->id, $materialFilter, true) ? 'checked' : '' }}
+                                                onchange="mselUpdate('msel_material')">
+                                            <span>{{ $m->material_name }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                <div class="msel-foot">
+                                    <button type="button" onclick="mselClear('msel_material')">Clear selection</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="filter-group">
                         <label>Date From</label>
                         <input type="date" name="date_from" value="{{ request('date_from') }}">
@@ -1250,6 +1287,7 @@
                     <th>Test Date</th>
                     <th>Lot No</th>
                     <th>Vehicle No</th>
+                    <th>Driver Name</th>
                     <th>Supplier</th>
                     <th>Material</th>
                     <th>Invoiced Qty</th>
@@ -1277,6 +1315,7 @@
                             <strong style="color:var(--text)">{{ $test->lot_no ?? '—' }}</strong>
                         </td>
                         <td>{{ $test->vehicle_number ?? '—' }}</td>
+                        <td>{{ $test->driver_name ?? '—' }}</td>
 
                         <td>
                             <div style="font-weight:600;color:var(--text)">{{ $test->supplier->supplier_name ?? '—' }}</div>
@@ -1348,7 +1387,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="10">
+                        <td colspan="11">
                             <div class="empty-state">
                                 <svg viewBox="0 0 24 24">
                                     <path

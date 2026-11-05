@@ -615,7 +615,7 @@
                     <span>Primary Details</span>
                 </div>
                 <div class="form-section-body">
-                    <div class="form-grid-3">
+                    <div class="form-grid-2">
 
                         <div class="field">
                             <label for="receipt_date">Receipt Date <span class="req">*</span></label>
@@ -659,6 +659,20 @@
                                     placeholder="Truck/Vehicle License" required>
                             </div>
                             <div class="error-msg" id="err_vehicle_number"></div>
+                        </div>
+
+                        <div class="field">
+                            <label for="driver_name">Driver Name <span class="req">*</span></label>
+                            <div class="input-wrap">
+                                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                    <circle cx="12" cy="7" r="4" />
+                                </svg>
+                                <input type="text" id="driver_name" name="driver_name"
+                                    placeholder="Driver Name" required>
+                            </div>
+                            <div class="error-msg" id="err_driver_name"></div>
                         </div>
 
                         <div class="field full">
@@ -976,6 +990,7 @@
                 receipt_date: document.getElementById('receipt_date').value,
                 lot_no: document.getElementById('lot_no').value,
                 vehicle_number: document.getElementById('vehicle_number').value,
+                driver_name: (document.getElementById('driver_name')?.value || '').trim(),
                 supplier_id: document.getElementById('supplier_id').value,
                 material_id: document.getElementById('material_id').value,
                 invoice_qty: document.getElementById('invoice_qty').value,
@@ -986,7 +1001,7 @@
         }
 
         function setReadonly(readonly) {
-            const fields = ['receipt_date', 'lot_no', 'vehicle_number', 'invoice_qty', 'received_qty', 'unit', 'remarks'];
+            const fields = ['receipt_date', 'lot_no', 'vehicle_number', 'driver_name', 'invoice_qty', 'received_qty', 'unit', 'remarks'];
             fields.forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
@@ -1029,43 +1044,93 @@
             return allItems;
         }
 
-        // async function loadDropdowns() {
-        //     // Fetch ALL suppliers and materials — no record cap
-        //     const [suppliers, materials] = await Promise.all([
-        //         fetchAllPages('/suppliers'),
-        //         fetchAllPages('/materials'),
-        //     ]);
-
-        //     const supplierItems = suppliers.map(s => ({
-        //         value: String(s.id),
-        //         label: `${s.supplier_name} (${s.supplier_code})`,
-        //     }));
-        //     sddRegister('supplier_id', supplierItems);
-
-        //     const materialItems = materials.map(m => ({
-        //         value: String(m.id),
-        //         label: `${m.secondary_name} (${m.material_code})`,
-        //     }));
-        //     sddRegister('material_id', materialItems);
-        // }
         async function loadDropdowns() {
-            const supplierItems = @json(
+            const supplierItems = {!! json_encode(
                 $suppliers->map(fn($s) => [
                     'value' => (string) $s->id,
                     'label' => $s->supplier_name . ' (' . $s->supplier_code . ')',
                 ])->sortBy('label')->values()
-            );
+            ) !!};
 
-            const materialItems = @json(
+            const materialItems = {!! json_encode(
                 $materials->map(fn($m) => [
                     'value' => (string) $m->id,
                     'label' => $m->secondary_name . ' (' . $m->material_code . ')',
+                    'category' => (string) ($m->category ?? ''),
                 ])->sortBy('label')->values()
-            );
+            ) !!};
 
             sddRegister('supplier_id', supplierItems);
             sddRegister('material_id', materialItems);
         }
+
+        // ════════════════════════════════════════════════════════════════════
+        // ULAB AUTO LOT GENERATION LOGIC
+        // ════════════════════════════════════════════════════════════════════
+        let userManualLotNo = '';
+        let lastAutoLot = '';
+        let isFetchingLot = false;
+
+        function isSelectedMaterialUlab() {
+            const matId = document.getElementById('material_id')?.value;
+            if (!matId) return false;
+            const item = sddRegistry['material_id']?.items?.find(i => String(i.value) === String(matId));
+            return item ? String(item.category || '').trim().toUpperCase() === 'ULAB' : false;
+        }
+
+        async function onMaterialChange() {
+            if (!isCreate) return;
+
+            const lotInput = document.getElementById('lot_no');
+            const isUlab = isSelectedMaterialUlab();
+
+            if (isUlab) {
+                // Save user's typed manual value before overwriting with auto lot
+                if (!lotInput.readOnly && lotInput.value) {
+                    userManualLotNo = lotInput.value;
+                }
+
+                lotInput.readOnly = true;
+                lotInput.style.backgroundColor = '#eef6f1';
+                lotInput.style.cursor = 'default';
+                lotInput.placeholder = 'Generating lot no...';
+
+                if (isFetchingLot) return;
+                isFetchingLot = true;
+
+                try {
+                    const res = await apiFetch('/receivings/next-lot');
+                    if (res?.ok) {
+                        const json = await res.json();
+                        if (isSelectedMaterialUlab()) {
+                            const nextLot = String(json.next_lot ?? '');
+                            lastAutoLot = nextLot;
+                            lotInput.value = nextLot;
+                            const errLot = document.getElementById('err_lot_no');
+                            if (errLot) errLot.textContent = '';
+                            lotInput.classList.remove('is-invalid');
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch next lot preview:', e);
+                } finally {
+                    isFetchingLot = false;
+                }
+            } else {
+                lotInput.readOnly = false;
+                lotInput.style.backgroundColor = '';
+                lotInput.style.cursor = '';
+                lotInput.placeholder = 'Unique lot identifier';
+
+                // Switching from ULAB to non-ULAB: restore user's typed manual lot or clear
+                if (lastAutoLot && lotInput.value === lastAutoLot) {
+                    lotInput.value = userManualLotNo || '';
+                } else if (!lotInput.value && userManualLotNo) {
+                    lotInput.value = userManualLotNo;
+                }
+            }
+        }
+
         // ════════════════════════════════════════════════════════════════════
         // LOAD RECORD — unchanged
         // ════════════════════════════════════════════════════════════════════
@@ -1079,6 +1144,7 @@
             document.getElementById('receipt_date').value = data.receipt_date?.split('T')[0] ?? '';
             document.getElementById('lot_no').value = data.lot_no ?? '';
             document.getElementById('vehicle_number').value = data.vehicle_number ?? '';
+            document.getElementById('driver_name').value = data.driver_name ?? '';
             document.getElementById('invoice_qty').value = data.invoice_qty ?? '';
             document.getElementById('received_qty').value = data.received_qty ?? '';
             document.getElementById('unit').value = data.unit ?? 'MT';
@@ -1086,6 +1152,14 @@
 
             if (data.supplier_id) sddSelect('supplier_id', String(data.supplier_id), false);
             if (data.material_id) sddSelect('material_id', String(data.material_id), false);
+
+            const isUlab = data.material && String(data.material.category || '').trim().toUpperCase() === 'ULAB';
+            if (isUlab) {
+                const lotInput = document.getElementById('lot_no');
+                lotInput.readOnly = true;
+                lotInput.style.backgroundColor = '#eef6f1';
+                lotInput.style.cursor = 'default';
+            }
 
             document.getElementById('pageTitle').textContent = 'Edit Receiving';
             document.getElementById('pageSubtitle').textContent = 'Update receiving details';
@@ -1115,6 +1189,14 @@
         async function saveForm(silent = false) {
             clearAlert();
             clearFieldErrors();
+
+            const driverName = (document.getElementById('driver_name')?.value || '').trim();
+            if (!driverName) {
+                showFieldErrors({ driver_name: 'Driver Name is required.' });
+                if (!silent) showAlert('Driver Name is required.');
+                return;
+            }
+
             const btn = document.getElementById('btnSave');
             btn.disabled = true;
             const method = isCreate ? 'POST' : 'PUT';
@@ -1161,7 +1243,7 @@
         }
 
         function setupAutosave() {
-            const fields = ['receipt_date', 'lot_no', 'vehicle_number', 'supplier_id', 'material_id',
+            const fields = ['receipt_date', 'lot_no', 'vehicle_number', 'driver_name', 'supplier_id', 'material_id',
                 'invoice_qty', 'received_qty', 'unit', 'remarks'];
             fields.forEach(id => {
                 const el = document.getElementById(id);
@@ -1187,6 +1269,16 @@
         // ════════════════════════════════════════════════════════════════════
         async function init() {
             await loadDropdowns();
+
+            // Track user's manual lot typing for non-ULAB materials
+            document.getElementById('lot_no')?.addEventListener('input', function() {
+                if (!this.readOnly) {
+                    userManualLotNo = this.value;
+                }
+            });
+
+            // Listen for material change to toggle auto / manual lot_no
+            document.getElementById('material_id')?.addEventListener('change', onMaterialChange);
 
             if (isCreate) {
                 document.getElementById('receipt_date').value = new Date().toISOString().split('T')[0];
