@@ -83,6 +83,66 @@ class SmeltingBatchController extends Controller
         return response()->json(['status' => 'ok', 'batch_no' => $batchNo]);
     }
 
+    public function generateChargeNoPreview(Request $request): JsonResponse
+    {
+        $request->validate([
+            'rotary_no' => 'required|integer',
+        ]);
+
+        $rotaryNo = (int) $request->rotary_no;
+        if (!in_array($rotaryNo, [1, 2], true)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Unsupported Rotary No {$rotaryNo}. Auto-generation only supports Rotary 1 and 2.",
+            ], 422);
+        }
+
+        $nextChargeNo = $this->calculateNextChargeNo($rotaryNo);
+
+        return response()->json([
+            'status' => 'ok',
+            'rotary_no' => $rotaryNo,
+            'charge_no' => (string) $nextChargeNo,
+        ]);
+    }
+
+    /**
+     * Calculate next available unique charge number for a given rotary
+     */
+    protected function calculateNextChargeNo(int $rotaryNo): int
+    {
+        $startNo = SmeltingBatch::ROTARY_START_CHARGES[$rotaryNo] ?? 1;
+
+        $rotaryCharges = SmeltingBatch::where('rotary_no', $rotaryNo)
+            ->whereNotNull('charge_no')
+            ->pluck('charge_no');
+
+        $maxNumeric = 0;
+        foreach ($rotaryCharges as $raw) {
+            $trimmed = trim((string) $raw);
+            if ($trimmed !== '' && ctype_digit($trimmed)) {
+                $val = (int) $trimmed;
+                // For Rotary 2, historical batch #52 had charge_no 799 (a Rotary 1 series typo)
+                // Filter out values >= 700 for Rotary 2 so it doesn't skew Rotary 2's 665 sequence
+                if ($rotaryNo === 2 && $val >= 700) {
+                    continue;
+                }
+                if ($val > $maxNumeric) {
+                    $maxNumeric = $val;
+                }
+            }
+        }
+
+        $candidate = max($maxNumeric + 1, $startNo);
+
+        while (SmeltingBatch::where('charge_no', (string) $candidate)->exists()) {
+            $candidate++;
+        }
+
+        return $candidate;
+    }
+
+
     // ══════════════════════════════════════════════════════════════════
     // STORE  POST /api/smelting-batches
     // ══════════════════════════════════════════════════════════════════
@@ -90,7 +150,7 @@ class SmeltingBatchController extends Controller
     {
         $request->validate([
             'batch_no' => 'required|string|unique:smelting_batches,batch_no',
-            'charge_no' => 'required|string|max:50',
+            'charge_no' => 'nullable|string|max:50',
             'rotary_no' => 'required|integer|in:1,2',
             'date' => 'required|date',
             'start_time' => 'nullable|date_format:H:i',
@@ -101,9 +161,20 @@ class SmeltingBatchController extends Controller
             DB::beginTransaction();
             $userId = auth()->id();
 
+            $rotaryNo = (int) $request->rotary_no;
+            $chargeNo = null;
+
+            if (in_array($rotaryNo, [1, 2], true)) {
+                // Lock smelting_batches rows to prevent concurrent duplicate charge numbers
+                SmeltingBatch::lockForUpdate()->count();
+                $chargeNo = (string) $this->calculateNextChargeNo($rotaryNo);
+            } else {
+                $chargeNo = (string) ($request->charge_no ?? '');
+            }
+
             $batch = SmeltingBatch::create([
                 'batch_no' => $request->batch_no,
-                'charge_no' => $request->charge_no,
+                'charge_no' => $chargeNo,
                 'rotary_no' => $request->rotary_no,
                 'date' => $request->date,
                 'start_time' => $request->date . ' ' . ($request->start_time ?? '00:00') . ':00',
@@ -173,9 +244,17 @@ class SmeltingBatchController extends Controller
             DB::beginTransaction();
             $userId = auth()->id();
 
+            $newRotary = $request->filled('rotary_no') ? (int) $request->rotary_no : (int) $batch->rotary_no;
+            $updatedChargeNo = $batch->charge_no;
+
+            if ($newRotary !== (int) $batch->rotary_no && in_array($newRotary, [1, 2], true)) {
+                SmeltingBatch::lockForUpdate()->count();
+                $updatedChargeNo = (string) $this->calculateNextChargeNo($newRotary);
+            }
+
             $batch->update([
-                'rotary_no' => $request->rotary_no ?? $batch->rotary_no,
-                'charge_no' => $request->charge_no ?? $batch->charge_no,
+                'rotary_no' => $newRotary,
+                'charge_no' => $updatedChargeNo,
                 'date' => $request->date ?? $batch->date,
                 'start_time' => $request->filled('start_time')
                     ? ($request->date ?? \Carbon\Carbon::parse($batch->date)->format('Y-m-d')) . ' ' . $request->start_time . ':00'
@@ -231,7 +310,6 @@ class SmeltingBatchController extends Controller
 
             // Update header fields that are present
             $headerFields = [
-                'charge_no',
                 'rotary_no',
                 'date',
                 'start_time',

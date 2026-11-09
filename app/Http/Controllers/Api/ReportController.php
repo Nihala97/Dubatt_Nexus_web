@@ -22,6 +22,7 @@ class ReportController extends Controller
         $allowedSorts = [
             'receipt_date',
             'lot_no',
+            'driver_name',
             'supplier_name',
             'material_name',
             'received_qty',
@@ -38,13 +39,14 @@ class ReportController extends Controller
             ->when($request->supplier_id, fn($q) => $q->where('supplier_id', $request->supplier_id))
             ->when($request->material_id, fn($q) => $q->where('material_id', $request->material_id))
             ->when($request->lot_no, fn($q) => $q->where('lot_no', 'like', "%{$request->lot_no}%"))
+            ->when($request->driver_name, fn($q) => $q->where('driver_name', 'like', "%{$request->driver_name}%"))
             ->when($request->filled('category'), fn($q) => $q->whereHas(
                 'material',
                 fn($mq) =>
                 $mq->where('category', $request->category)
             ));
 
-        $nativeSort = in_array($sortBy, ['receipt_date', 'lot_no', 'received_qty', 'invoice_qty']);
+        $nativeSort = in_array($sortBy, ['receipt_date', 'lot_no', 'driver_name', 'received_qty', 'invoice_qty']);
         $query->orderBy($nativeSort ? $sortBy : 'receipt_date', $nativeSort ? $sortDir : 'desc');
 
         $paginated = $query->paginate($perPage);
@@ -56,6 +58,7 @@ class ReportController extends Controller
                 : ($r->created_at?->format('d/m/Y') ?? '—'),
             'receipt_date_raw' => $r->receipt_date ?? $r->created_at?->toDateString(),
             'lot_no' => $r->lot_no ?? '—',
+            'driver_name' => $r->driver_name ?? '—',
             'supplier_name' => $r->supplier->supplier_name ?? '—',
             'material_name' => $r->material->material_name ?? $r->material->name ?? '—',
             'received_qty' => (float) ($r->received_qty ?? 0),

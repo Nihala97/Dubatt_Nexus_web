@@ -169,6 +169,7 @@ Route::middleware('auth:sanctum')->group(function () {
      Route::prefix('smelting-batches')->middleware('module:smelting')->group(function () {
           Route::get('/', [SmeltingBatchController::class, 'index']);
           Route::get('/generate-batch-no', [SmeltingBatchController::class, 'generateBatchNo']);
+          Route::get('/generate-charge-no', [SmeltingBatchController::class, 'generateChargeNoPreview']);
           // Route::get('/bbsu-lots/all', [SmeltingBatchController::class, 'getAllBbsuLots']);
           Route::get('/bbsu-lots/{materialId}', [SmeltingBatchController::class, 'getBbsuLots']);
           Route::post('/', [SmeltingBatchController::class, 'store']);

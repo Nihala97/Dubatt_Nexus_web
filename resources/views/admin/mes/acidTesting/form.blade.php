@@ -1379,8 +1379,7 @@
         <table class="dt" id="palletTable">
           <thead>
             <tr>
-              <th class="tc" style="width:40px">#</th>
-              <th style="min-width:90px">Pallet No</th>
+              <th style="min-width:110px">Pallet No <span style="font-size:9px;font-weight:400">Auto</span></th>
               <th style="min-width:170px">ULAB Type</th>
               <th style="min-width:110px">Gross Wt (KG)</th>
               <th style="min-width:110px">Avg P&amp;F (KG) <span style="font-size:9px;font-weight:400">Auto</span></th>
@@ -1397,7 +1396,7 @@
           <tbody id="palletBody"></tbody>
           <tfoot>
             <tr>
-              <td colspan="3" style="text-align:right;font-size:10.5px;letter-spacing:.7px;color:var(--txtmu)">TOTAL (KG)
+              <td colspan="2" style="text-align:right;font-size:10.5px;letter-spacing:.7px;color:var(--txtmu)">TOTAL (KG)
               </td>
               <td><input type="text" id="totalGross" readonly class="ri" placeholder="0.000"
                   style="font-weight:800;color:var(--g);background:var(--gl)"></td>
@@ -2194,9 +2193,10 @@
       const cellDis = isAcid ? '' : 'cell-disabled';
       const avgPFVal = parseFloat(document.getElementById('avg_pallet_foreign_weight').value || 0).toFixed(3);
 
+      const palletVal = data.pallet_no !== undefined && data.pallet_no !== null && data.pallet_no !== '' ? data.pallet_no : '';
+
       tr.innerHTML = `
-                                    <td class="sr-n">${idx}</td>
-                                    <td><input type="text" class="ri" id="pallet_no_${idx}" value="${data.pallet_no ?? ''}" placeholder="WP-${String(idx).padStart(2, '0')}"></td>
+                                    <td><input type="text" class="ri pallet-no-input" id="pallet_no_${idx}" value="${palletVal}" readonly style="background:var(--gl);font-weight:700;color:var(--g);cursor:default;"></td>
                                     <td>
                                       <select class="rsel" id="ulab_${idx}" onchange="onUlabChange(${idx})">
                                         ${ulabOpts}
@@ -2224,9 +2224,9 @@
                                       <input type="number" class="ri" id="acid_pct_${idx}" readonly>
                                     </td>
                                     <td style="text-align:center">
-                                      ${idx > 1 ? `<button class="del-btn" onclick="removeRow(${idx})" title="Remove">
+                                      <button class="del-btn" onclick="removeRow(${idx})" title="Remove">
                                         <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                                      </button>` : ''}
+                                      </button>
                                     </td>`;
 
       tbody.appendChild(tr);
@@ -2236,6 +2236,7 @@
         tr.style.opacity = '1'; tr.style.transform = 'translateY(0)';
       });
 
+      renumberRows();
       calcRow(idx);
       calcAvgPalletForeign();
     }
@@ -2269,6 +2270,11 @@
     }
 
     function removeRow(idx) {
+      const rows = document.querySelectorAll('#palletBody tr');
+      if (rows.length <= 1) {
+        showAlert('At least one pallet row is required.');
+        return;
+      }
       const tr = document.getElementById(`prow-${idx}`);
       if (!tr) return;
       tr.style.transition = 'opacity .18s'; tr.style.opacity = '0';
@@ -2281,8 +2287,16 @@
     }
 
     function renumberRows() {
-      document.querySelectorAll('#palletBody tr').forEach((tr, i) => {
-        tr.querySelector('.sr-n').textContent = i + 1;
+      const rows = document.querySelectorAll('#palletBody tr');
+      rows.forEach((tr, i) => {
+        const pInput = tr.querySelector('.pallet-no-input');
+        if (pInput) {
+          pInput.value = i + 1;
+        }
+        const delBtn = tr.querySelector('.del-btn');
+        if (delBtn) {
+          delBtn.style.display = rows.length > 1 ? '' : 'none';
+        }
       });
     }
 
@@ -2360,9 +2374,23 @@
     // ════════════════════════════════════════════════════════════════
     // SAVE / SUBMIT
     // ════════════════════════════════════════════════════════════════
+    function checkNetWeightExceeded() {
+      const totalNet = parseFloat(document.getElementById('totalNet')?.value) || 0;
+      const inhouseWeight = parseFloat(document.getElementById('inhouse_weight')?.value) || 0;
+
+      if (inhouseWeight > 0 && totalNet > inhouseWeight) {
+        return confirm(`Warning: Total Net Wt (${totalNet.toFixed(3)} KG) exceeds InHouse Weigh Bridge received quantity (${inhouseWeight.toFixed(3)} KG).\n\nDo you want to proceed and save?`);
+      }
+      return true;
+    }
+
     async function saveForm() {
       const payload = buildPayload();
       if (!payload) return;
+
+      if (!checkNetWeightExceeded()) {
+        return;
+      }
 
       const btn = document.getElementById('btnSave');
       btn.disabled = true;
@@ -2402,6 +2430,15 @@
     }
 
     async function submitRecord() {
+      const totalNet = parseFloat(document.getElementById('totalNet')?.value) || 0;
+      const inhouseWeight = parseFloat(document.getElementById('inhouse_weight')?.value) || 0;
+
+      if (inhouseWeight > 0 && totalNet > inhouseWeight) {
+        if (!confirm(`Warning: Total Net Wt (${totalNet.toFixed(3)} KG) exceeds InHouse Weigh Bridge received quantity (${inhouseWeight.toFixed(3)} KG).\n\nDo you want to proceed and submit this record?`)) {
+          return;
+        }
+      }
+
       if (!confirm('Submit this record? It will be locked from further edits.')) return;
 
       // Do NOT save before submitting — submit acts on the already-saved draft.

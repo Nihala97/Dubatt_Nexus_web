@@ -278,6 +278,13 @@
                     </div>
                 </div>
                 <div class="field">
+                    <label>Driver Name</label>
+                    <div class="iw">
+                        <svg class="ico" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <input type="text" id="f_driver_name" placeholder="Search driver…" oninput="onFilterChange()">
+                    </div>
+                </div>
+                <div class="field">
                     <label>Rows per page</label>
                     <div class="iw">
                         <svg class="ico" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
@@ -390,6 +397,7 @@
                     <tr>
                         <th class="sortable" data-col="receipt_date" onclick="sortBy('receipt_date')"># Date <span class="sort-ico"><svg class="ico-asc" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg><svg class="ico-desc" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span></th>
                         <th class="sortable" data-col="lot_no" onclick="sortBy('lot_no')">Lot No <span class="sort-ico"><svg class="ico-asc" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg><svg class="ico-desc" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span></th>
+                        <th class="sortable" data-col="driver_name" onclick="sortBy('driver_name')">Driver Name <span class="sort-ico"><svg class="ico-asc" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg><svg class="ico-desc" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span></th>
                         <th class="sortable" data-col="supplier_name" onclick="sortBy('supplier_name')">Supplier <span class="sort-ico"><svg class="ico-asc" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg><svg class="ico-desc" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span></th>
                         <th class="sortable" data-col="material_name" onclick="sortBy('material_name')">Material <span class="sort-ico"><svg class="ico-asc" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg><svg class="ico-desc" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span></th>
                         <th class="sortable num" data-col="received_qty" onclick="sortBy('received_qty')">Received Qty <span class="sort-ico"><svg class="ico-asc" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg><svg class="ico-desc" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span></th>
@@ -400,11 +408,11 @@
                     </tr>
                 </thead>
                 <tbody id="reportBody">
-                    <tr class="state-row"><td colspan="9"><span class="spinner"></span>Loading…</td></tr>
+                    <tr class="state-row"><td colspan="10"><span class="spinner"></span>Loading…</td></tr>
                 </tbody>
                 <tfoot id="reportFoot" style="display:none">
                     <tr>
-                        <td colspan="4" style="text-align:right;font-size:10.5px;letter-spacing:.5px;color:var(--txtmu)">PAGE TOTAL</td>
+                        <td colspan="5" style="text-align:right;font-size:10.5px;letter-spacing:.5px;color:var(--txtmu)">PAGE TOTAL</td>
                         <td class="num" id="footReceived"></td>
                         <td class="num" id="footInvoice"></td>
                         <td colspan="3"></td>
@@ -539,6 +547,7 @@ function buildParams(page) {
         material_id: document.getElementById('f_material_id').value,
         category:    document.getElementById('f_category').value,
         lot_no:      document.getElementById('f_lot_no').value,
+        driver_name: document.getElementById('f_driver_name')?.value ?? '',
         sort_by:     currentSort,
         sort_dir:    currentDir,
         per_page:    document.getElementById('f_per_page').value,
@@ -560,7 +569,7 @@ async function loadReport(page = 1) {
 
 function renderTable(rows) {
     const tbody = document.getElementById('reportBody'), tfoot = document.getElementById('reportFoot');
-    if (!rows.length) { tbody.innerHTML = `<tr class="state-row"><td colspan="9">No records found.</td></tr>`; tfoot.style.display='none'; return; }
+    if (!rows.length) { tbody.innerHTML = `<tr class="state-row"><td colspan="10">No records found.</td></tr>`; tfoot.style.display='none'; return; }
     let pr=0, pi=0;
     tbody.innerHTML = rows.map(r => {
         pr += r.received_qty; pi += r.invoice_qty;
@@ -570,6 +579,7 @@ function renderTable(rows) {
         return `<tr>
             <td>${escHtml(r.receipt_date)}</td>
             <td style="font-weight:600">${escHtml(r.lot_no)}</td>
+            <td>${escHtml(r.driver_name)}</td>
             <td>${escHtml(r.supplier_name)}</td>
             <td>${escHtml(r.material_name)}</td>
             <td class="num">${fmtNum(r.received_qty)}</td>
@@ -632,7 +642,7 @@ function onFilterChange() {
 }
 
 function resetFilters() {
-    ['f_date_from','f_date_to','f_lot_no'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    ['f_date_from','f_date_to','f_lot_no','f_driver_name'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     document.getElementById('f_per_page').value = '50';
     document.getElementById('f_category').value = '';
     sddSelect('f_supplier_id','',false);
@@ -650,11 +660,11 @@ async function exportExcel() {
     const exportRows = await fetchAllForExport();
     if (!exportRows.length) { btn.disabled=false; btn.innerHTML=`Export Excel`; return; }
     const wsData = [
-        ['Date','Lot No','Supplier','Material','Received Qty','Invoice Qty','Unit','Category','Status'],
-        ...exportRows.map(r=>[r.receipt_date,r.lot_no,r.supplier_name,r.material_name,r.received_qty,r.invoice_qty,r.unit,r.category,r.status>=1?'Submitted':'Draft'])
+        ['Date','Lot No','Driver Name','Supplier','Material','Received Qty','Invoice Qty','Unit','Category','Status'],
+        ...exportRows.map(r=>[r.receipt_date,r.lot_no,r.driver_name,r.supplier_name,r.material_name,r.received_qty,r.invoice_qty,r.unit,r.category,r.status>=1?'Submitted':'Draft'])
     ];
     const wb=XLSX.utils.book_new(), ws=XLSX.utils.aoa_to_sheet(wsData);
-    ws['!cols']=[{wch:12},{wch:14},{wch:26},{wch:28},{wch:14},{wch:12},{wch:8},{wch:20},{wch:10}];
+    ws['!cols']=[{wch:12},{wch:14},{wch:22},{wch:26},{wch:28},{wch:14},{wch:12},{wch:8},{wch:20},{wch:10}];
     XLSX.utils.book_append_sheet(wb,ws,'Material Inward');
     XLSX.writeFile(wb,`Material_Inward_Report_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.xlsx`);
     btn.disabled=false;
@@ -664,7 +674,7 @@ async function exportExcel() {
 async function fetchAllForExport() {
     const all=[]; let page=1, lastPage=1;
     do {
-        const params=new URLSearchParams({ date_from:document.getElementById('f_date_from').value, date_to:document.getElementById('f_date_to').value, supplier_id:document.getElementById('f_supplier_id').value, material_id:document.getElementById('f_material_id').value, category:document.getElementById('f_category').value, lot_no:document.getElementById('f_lot_no').value, sort_by:currentSort, sort_dir:currentDir, per_page:500, page });
+        const params=new URLSearchParams({ date_from:document.getElementById('f_date_from').value, date_to:document.getElementById('f_date_to').value, supplier_id:document.getElementById('f_supplier_id').value, material_id:document.getElementById('f_material_id').value, category:document.getElementById('f_category').value, lot_no:document.getElementById('f_lot_no').value, driver_name:document.getElementById('f_driver_name')?.value??'', sort_by:currentSort, sort_dir:currentDir, per_page:500, page });
         [...params.keys()].forEach(k=>{ if(!params.get(k)) params.delete(k); });
         const res=await apiFetch(`/reports/material-inward?${params.toString()}`);
         if (!res?.ok) break;
@@ -675,7 +685,7 @@ async function fetchAllForExport() {
 
 function setLoading(on) {
     if (on) {
-        document.getElementById('reportBody').innerHTML=`<tr class="state-row"><td colspan="9"><span class="spinner"></span>Loading…</td></tr>`;
+        document.getElementById('reportBody').innerHTML=`<tr class="state-row"><td colspan="10"><span class="spinner"></span>Loading…</td></tr>`;
         document.getElementById('reportFoot').style.display='none';
         document.getElementById('pagBar').style.display='none';
     }

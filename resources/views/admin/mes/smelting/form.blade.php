@@ -1440,7 +1440,7 @@
                             <circle cx="12" cy="12" r="10" />
                             <polyline points="12 6 12 12 16 14" />
                         </svg>
-                        <input type="text" id="charge_no" placeholder="Enter charge no…">
+                        <input type="text" id="charge_no" readonly placeholder="Select Rotary No first…" style="background:var(--gl);font-weight:700;color:var(--g);cursor:default;">
                     </div>
                 </div>
             </div>
@@ -1961,6 +1961,30 @@
             // FIX: guard the change listener so it doesn't clear blocks during load
             document.getElementById('output_material').addEventListener('change', () => {
                 if (!_loadingRecord) onOutputMaterialChange();
+            });
+
+            document.getElementById('rotary_no').addEventListener('change', async (e) => {
+                const rNo = e.target.value;
+                const chargeInput = document.getElementById('charge_no');
+                if (!rNo) {
+                    chargeInput.value = '';
+                    chargeInput.placeholder = 'Select Rotary No first…';
+                    return;
+                }
+                chargeInput.placeholder = 'Generating…';
+                try {
+                    const res = await apiFetch(`/smelting-batches/generate-charge-no?rotary_no=${encodeURIComponent(rNo)}`);
+                    if (res?.ok) {
+                        const data = await res.json();
+                        chargeInput.value = data.charge_no ?? '';
+                    } else {
+                        chargeInput.value = '';
+                        chargeInput.placeholder = 'Failed to generate';
+                    }
+                } catch (err) {
+                    chargeInput.value = '';
+                    chargeInput.placeholder = 'Error generating';
+                }
             });
 
             if (isCreate) {
@@ -2509,6 +2533,9 @@
             if (!silent) btn.disabled = false; if (!res) return;
             const data = await res.json();
             if (res.ok && data.status === 'ok') {
+                if (data.data?.charge_no) {
+                    document.getElementById('charge_no').value = data.data.charge_no;
+                }
                 if (!silent) {
                     if (isCreate) { window.location.href = `{{ url('/admin/mes/smelting') }}/${data.data.id}/edit`; }
                     else { showAlert('Saved successfully.', 'success'); }

@@ -15,6 +15,11 @@ class SmeltingBatch extends Model
 
     protected $table = 'smelting_batches';
 
+    public const ROTARY_START_CHARGES = [
+        1 => 1069,
+        2 => 666,
+    ];
+
     protected $fillable = [
         'batch_no',
         'charge_no',
