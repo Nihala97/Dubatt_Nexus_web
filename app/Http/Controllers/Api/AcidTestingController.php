@@ -14,6 +14,7 @@ use App\Models\Material;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
 
+
 class AcidTestingController extends Controller
 {
     protected $inventoryService;
@@ -400,9 +401,7 @@ class AcidTestingController extends Controller
             // then post one stockIn per group.
             //
             $activeDetails = $header->details->where('is_active', 1);
-            $batchAcidCondition = (float) $header->net_avg_acid_pct > 0
-                ? $this->resolveCondition((float) $header->net_avg_acid_pct)
-                : null;
+            $batchAcidCondition = $this->resolveCondition((float) $header->net_avg_acid_pct);
 
             // Build a map: materialKey → total net_weight
             $grouped = [];
@@ -553,10 +552,7 @@ class AcidTestingController extends Controller
                 });
         }
 
-        // Resolve stock condition once for ALL acid rows using batch net avg acid%
-        $batchAcidCondition = $netAvgAcidPct > 0
-            ? $this->resolveCondition($netAvgAcidPct)
-            : null;
+        $batchAcidCondition = $this->resolveCondition($netAvgAcidPct);
 
         foreach ($details as $row) {
             $frontUlabType = (string) ($row['ulab_type'] ?? '');
@@ -607,46 +603,46 @@ class AcidTestingController extends Controller
     // ─────────────────────────────────────────────────────────────
     public function uploadAttachment(Request $request, $id)
     {
-         $uploadErrors = [];
+        $uploadErrors = [];
 
-foreach ($request->allFiles() as $key => $value) {
-    foreach (is_array($value) ? $value : [$value] as $file) {
-        if ($file instanceof \Illuminate\Http\UploadedFile) {
-            $uploadErrors[$key][] = [
-                'name' => $file->getClientOriginalName(),
-                'error' => $file->getError(),
-                'valid' => $file->isValid(),
-                'size' => $file->getSize(),
-            ];
+        foreach ($request->allFiles() as $key => $value) {
+            foreach (is_array($value) ? $value : [$value] as $file) {
+                if ($file instanceof \Illuminate\Http\UploadedFile) {
+                    $uploadErrors[$key][] = [
+                        'name' => $file->getClientOriginalName(),
+                        'error' => $file->getError(),
+                        'valid' => $file->isValid(),
+                        'size' => $file->getSize(),
+                    ];
+                }
+            }
         }
-    }
-}
 
-\Log::info('Acid attachment upload diagnostic', [
-    'content_length' => $request->server('CONTENT_LENGTH'),
-    'content_type' => $request->header('Content-Type'),
-    'all_file_keys' => array_keys($request->allFiles()),
-    'attachments_present' => $request->hasFile('attachments'),
-    'attachment_present' => $request->hasFile('attachment'),
-    'php_file_errors' => $uploadErrors,
-]);
+        \Log::info('Acid attachment upload diagnostic', [
+            'content_length' => $request->server('CONTENT_LENGTH'),
+            'content_type' => $request->header('Content-Type'),
+            'all_file_keys' => array_keys($request->allFiles()),
+            'attachments_present' => $request->hasFile('attachments'),
+            'attachment_present' => $request->hasFile('attachment'),
+            'php_file_errors' => $uploadErrors,
+        ]);
         $header = AcidTesting::where('is_active', 1)->findOrFail($id);
 
         $files = [];
 
-       if ($request->hasFile('attachments')) {
-           $f = $request->file('attachments');
-           $files = is_array($f) ? $f : [$f];
-       } elseif ($request->hasFile('attachments[]')) {
-           $f = $request->file('attachments[]');
-           $files = is_array($f) ? $f : [$f]; 
-       } elseif ($request->hasFile('attachment')) {
-           $files = [$request->file('attachment')];
-       }
+        if ($request->hasFile('attachments')) {
+            $f = $request->file('attachments');
+            $files = is_array($f) ? $f : [$f];
+        } elseif ($request->hasFile('attachments[]')) {
+            $f = $request->file('attachments[]');
+            $files = is_array($f) ? $f : [$f];
+        } elseif ($request->hasFile('attachment')) {
+            $files = [$request->file('attachment')];
+        }
 
         if (empty($files)) {
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'Please select at least one valid file to upload.',
             ], 422);
         }
@@ -654,9 +650,9 @@ foreach ($request->allFiles() as $key => $value) {
         $uploaded = [];
         foreach ($files as $file) {
             // max 50 MB per file
-            if ($file->getSize() > 52428800 ) {
+            if ($file->getSize() > 52428800) {
                 return response()->json([
-                    'status'  => 'error',
+                    'status' => 'error',
                     'message' => "File {$file->getClientOriginalName()} exceeds the 20 MB limit.",
                 ], 422);
             }
@@ -669,11 +665,11 @@ foreach ($request->allFiles() as $key => $value) {
 
             $att = \App\Models\AcidTestAttachment::create([
                 'acid_test_id' => $header->id,
-                'file_path'    => $path,
-                'file_name'    => $originalName,
-                'file_size'    => $file->getSize(),
-                'mime_type'    => $file->getMimeType(),
-                'created_by'   => auth()->id(),
+                'file_path' => $path,
+                'file_name' => $originalName,
+                'file_size' => $file->getSize(),
+                'mime_type' => $file->getMimeType(),
+                'created_by' => auth()->id(),
             ]);
 
             $uploaded[] = $att;
@@ -684,17 +680,17 @@ foreach ($request->allFiles() as $key => $value) {
         $header->update([
             'attachment_path' => $latest?->file_path,
             'attachment_name' => $latest?->file_name,
-            'updated_by'      => auth()->id(),
+            'updated_by' => auth()->id(),
         ]);
 
         return response()->json([
-            'status'  => 'ok',
+            'status' => 'ok',
             'message' => count($uploaded) > 1
                 ? count($uploaded) . ' attachments uploaded successfully.'
                 : 'Attachment uploaded successfully.',
-            'data'    => [
-                'attachments'    => $header->attachments()->get(),
-                'count'          => $header->attachments()->count(),
+            'data' => [
+                'attachments' => $header->attachments()->get(),
+                'count' => $header->attachments()->count(),
                 'has_attachment' => true,
             ],
         ]);
@@ -739,19 +735,20 @@ foreach ($request->allFiles() as $key => $value) {
         $header->update([
             'attachment_path' => $latest?->file_path,
             'attachment_name' => $latest?->file_name,
-            'updated_by'      => auth()->id(),
+            'updated_by' => auth()->id(),
         ]);
 
         $remainingCount = $header->attachments()->count();
 
         return response()->json([
-            'status'  => 'ok',
+            'status' => 'ok',
             'message' => 'Attachment removed successfully.',
-            'data'    => [
-                'attachments'    => $header->attachments()->get(),
-                'count'          => $remainingCount,
+            'data' => [
+                'attachments' => $header->attachments()->get(),
+                'count' => $remainingCount,
                 'has_attachment' => $remainingCount > 0,
             ],
         ]);
     }
+
 }

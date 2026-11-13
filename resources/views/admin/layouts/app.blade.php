@@ -647,6 +647,18 @@
                 </svg>
                 <span class="nav-label">Acid Test Status</span>
             </a>
+            <a href="{{ route('admin.reports.acidCategoryBreakdown') }}" data-label="Acid Category Breakdown"
+                data-permission="acid_category_rpt"
+                class="nav-item {{ request()->routeIs('admin.reports.acidCategoryBreakdown') ? 'active' : '' }}">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <line x1="3" y1="9" x2="21" y2="9" />
+                    <line x1="9" y1="3" x2="9" y2="21" />
+                    <line x1="15" y1="3" x2="15" y2="21" />
+                </svg>
+                <span class="nav-label">Acid Category Breakdown</span>
+            </a>
 
             <a href="{{ route('admin.reports.bbsu') }}" data-label="BBSU Dashboard" data-permission="bbsu_dashboard"
                 class="nav-item {{ request()->routeIs('admin.reports.bbsu') ? 'active' : '' }}">
@@ -681,6 +693,18 @@
                         d="M12 2a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4z" />
                 </svg>
                 <span class="nav-label">Refining Dashboard</span>
+            </a>
+            <a href="{{ route('admin.reports.stockLedger') }}" data-label="Stock Ledger"
+                data-permission="stock_ledger_rpt"
+                class="nav-item {{ request()->routeIs('admin.reports.stockLedger') ? 'active' : '' }}">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    <line x1="9" y1="7" x2="16" y2="7" />
+                    <line x1="9" y1="11" x2="16" y2="11" />
+                </svg>
+                <span class="nav-label">Stock Ledger Report</span>
             </a>
             <a href="{{ route('admin.reports.user_activity') }}" data-label="User Activity Log"
                 data-permission="user_activity_log"

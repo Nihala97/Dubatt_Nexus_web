@@ -161,9 +161,9 @@ Route::middleware('auth:sanctum')->group(function () {
           Route::patch('/{bbsu_batch}/status', [BbsuBatchController::class, 'updateStatus'])->middleware('module:bbsu,can_edit');
      });
 
-    Route::prefix('smelting-batches')->group(function () {
-        Route::get('/bbsu-lots/all', [SmeltingBatchController::class, 'getAllBbsuLots']);
-    });
+     Route::prefix('smelting-batches')->group(function () {
+          Route::get('/bbsu-lots/all', [SmeltingBatchController::class, 'getAllBbsuLots']);
+     });
 
      // ── Smelting ──────────────────────────────────────────────────
      Route::prefix('smelting-batches')->middleware('module:smelting')->group(function () {
@@ -218,7 +218,6 @@ Route::middleware('auth:sanctum')->group(function () {
                ->middleware('module:material_inward_rpt')
                ->name('materialInward.filters');
 
-          // ↓ FIXED: was '/reports/material-inward/dashboard' → now 'material-inward/dashboard'
           Route::get('material-inward/dashboard', [\App\Http\Controllers\Api\ReportController::class, 'materialInwardDashboard'])
                ->middleware('module:material_inward_rpt')
                ->name('materialInward.dashboard');
@@ -233,6 +232,7 @@ Route::middleware('auth:sanctum')->group(function () {
           Route::get('acid-test-status/filters', [\App\Http\Controllers\Api\ReportController::class, 'acidTestStatusFilters'])
                ->middleware('module:acid_test_status_rpt')
                ->name('acidTestStatus.filters');
+
           Route::get('acid-test-status/{id}/detail', [\App\Http\Controllers\Api\ReportController::class, 'acidTestStatusDetail']);
 
 
@@ -279,6 +279,22 @@ Route::middleware('auth:sanctum')->group(function () {
 
           Route::get('user-activity', [\App\Http\Controllers\Api\ReportController::class, 'userActivityReport'])
                ->name('userActivity');
+
+          Route::get('stock-ledger/filters', [\App\Http\Controllers\Api\ReportController::class, 'stockLedgerFilters'])
+               ->middleware('module:stock_ledger_rpt')
+               ->name('stockLedger.filters');
+
+          Route::get('stock-ledger', [\App\Http\Controllers\Api\ReportController::class, 'stockLedger'])
+               ->middleware('module:stock_ledger_rpt')
+               ->name('stockLedger');
+
+          Route::get('acid-category-breakdown/filters', [\App\Http\Controllers\Api\ReportController::class, 'acidCategoryBreakdownFilters'])
+               ->middleware('module:acid_category_rpt')
+               ->name('acidCategory.filters');
+
+          Route::get('acid-category-breakdown', [\App\Http\Controllers\Api\ReportController::class, 'acidCategoryBreakdown'])
+               ->middleware('module:acid_category_rpt')
+               ->name('acidCategory');
 
      });
      Route::prefix('admin')->name('admin.')->group(function () {

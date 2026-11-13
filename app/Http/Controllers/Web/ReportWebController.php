@@ -34,5 +34,13 @@ class ReportWebController extends Controller
     {
         return view('admin.reports.user_activity');
     }
+    public function stockLedger()
+    {
+        return view('admin.reports.stock_ledger');
+    }
+    public function acidCategoryBreakdown()
+    {
+        return view('admin.reports.acid_category_breakdown');
+    }
 
 }

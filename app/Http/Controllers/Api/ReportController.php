@@ -4,12 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcidTesting;
+use App\Models\AcidStockCondition;
+use App\Models\AcidTestPercentageDetail;
 use App\Models\Receiving;
 use App\Models\Supplier;
 use App\Models\Material;
+use App\Models\StockLedger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+
+
 
 class ReportController extends Controller
 {
@@ -43,7 +48,7 @@ class ReportController extends Controller
             ->when($request->filled('category'), fn($q) => $q->whereHas(
                 'material',
                 fn($mq) =>
-                $mq->where('category', $request->category)
+                    $mq->where('category', $request->category)
             ));
 
         $nativeSort = in_array($sortBy, ['receipt_date', 'lot_no', 'driver_name', 'received_qty', 'invoice_qty']);
@@ -93,25 +98,25 @@ class ReportController extends Controller
     {
         try {
             $now = Carbon::now();
-    
+
             // ── Resolve period label & month badge ──────────────────────
             $from = $request->date_from
                 ? Carbon::parse($request->date_from)->format('d M Y') : null;
-            $to   = $request->date_to
+            $to = $request->date_to
                 ? Carbon::parse($request->date_to)->format('d M Y') : null;
-    
+
             $periodLabel = match (true) {
                 (bool) $from && (bool) $to => "{$from} → {$to}",
-                (bool) $from               => "From {$from}",
-                (bool) $to                 => "Up to {$to}",
-                default                    => 'Current Month',
+                (bool) $from => "From {$from}",
+                (bool) $to => "Up to {$to}",
+                default => 'Current Month',
             };
-    
+
             // Month badge shown inside score-card headers
             $monthLabel = ($from || $to)
                 ? ($from && $to ? "{$from} → {$to}" : ($from ?? $to))
                 : $now->format('F Y');
-    
+
             // ── Shared filter closure (date + supplier + material) ───────
             // Used for EVERY score-card query — so all cards respect filters
             $applyFilters = function ($query) use ($request, $now) {
@@ -145,39 +150,39 @@ class ReportController extends Controller
                 }
                 return $query;
             };
-    
+
             // ── Main dataset (all score-cards use this) ──────────────────
             $mainRows = $applyFilters(
                 Receiving::with(['supplier', 'material'])
                     ->orderByRaw('COALESCE(receipt_date, DATE(created_at)) DESC')
             )->get();
-    
+
             // ── Known categories ─────────────────────────────────────────
             $knownCategories = ['ULAB', 'ULAB PLATES / TERMINALS', 'DROSS', 'CHEMICAL / METALS', 'RML'];
-    
+
             $resolveCategory = function ($r) use ($knownCategories) {
                 $cat = $r->material->category
                     ?? $r->material->material_category
                     ?? null;
                 return ($cat && in_array($cat, $knownCategories)) ? $cat : 'Others';
             };
-    
+
             // ══════════════════════════════════════════════════════════════
             // 1. CATEGORY SCORECARD — rounded, filter-aware
             // ══════════════════════════════════════════════════════════════
             $byCategory = $mainRows
                 ->groupBy(fn($r) => $resolveCategory($r))
                 ->map(fn($group, $cat) => [
-                    'category'     => $cat,
-                    'unit'         => $group->first()->material->unit
-                                    ?? $group->first()->material->uom
-                                    ?? 'KG',
-                    'total_qty'    => (int) round($group->sum('received_qty')), // ← whole number
+                    'category' => $cat,
+                    'unit' => $group->first()->material->unit
+                        ?? $group->first()->material->uom
+                        ?? 'KG',
+                    'total_qty' => (int) round($group->sum('received_qty')), // ← whole number
                     'record_count' => $group->count(),
                 ])
                 ->sortByDesc('total_qty')
                 ->values();
-    
+
             // ══════════════════════════════════════════════════════════════
             // 2. MATERIAL SCORECARD — rounded, filter-aware
             // ══════════════════════════════════════════════════════════════
@@ -185,18 +190,18 @@ class ReportController extends Controller
                 ->groupBy('material_id')
                 ->map(fn($group) => [
                     'material_name' => $group->first()->material->material_name
-                                    ?? $group->first()->material->name
-                                    ?? 'Unknown',
-                    'category'     => $resolveCategory($group->first()),
-                    'unit'         => $group->first()->material->unit
-                                    ?? $group->first()->material->uom
-                                    ?? 'KG',
-                    'total_qty'    => (int) round($group->sum('received_qty')), // ← whole number
+                        ?? $group->first()->material->name
+                        ?? 'Unknown',
+                    'category' => $resolveCategory($group->first()),
+                    'unit' => $group->first()->material->unit
+                        ?? $group->first()->material->uom
+                        ?? 'KG',
+                    'total_qty' => (int) round($group->sum('received_qty')), // ← whole number
                     'record_count' => $group->count(),
                 ])
                 ->sortByDesc('total_qty')
                 ->values();
-    
+
             // ══════════════════════════════════════════════════════════════
             // 3. SUPPLIER WISE ACCUMULATION — rounded, filter-aware
             // ══════════════════════════════════════════════════════════════
@@ -204,35 +209,35 @@ class ReportController extends Controller
                 ->groupBy(fn($r) => ($r->supplier_id ?? 0) . '_' . ($r->material_id ?? 0))
                 ->map(fn($group) => [
                     'supplier_name' => $group->first()->supplier->supplier_name
-                                    ?? $group->first()->supplier->name
-                                    ?? 'Unknown',
+                        ?? $group->first()->supplier->name
+                        ?? 'Unknown',
                     'material_name' => $group->first()->material->material_name
-                                    ?? $group->first()->material->name
-                                    ?? '—',
-                    'unit'          => $group->first()->material->unit
-                                    ?? $group->first()->material->uom
-                                    ?? 'KG',
-                    'total_qty'     => (int) round($group->sum('received_qty')), // ← whole number
+                        ?? $group->first()->material->name
+                        ?? '—',
+                    'unit' => $group->first()->material->unit
+                        ?? $group->first()->material->uom
+                        ?? 'KG',
+                    'total_qty' => (int) round($group->sum('received_qty')), // ← whole number
                 ])
                 ->sortByDesc('total_qty')
                 ->values();
-    
+
             // ══════════════════════════════════════════════════════════════
             // 4. LAST DAY INWARDS — from the same filtered dataset
             // ══════════════════════════════════════════════════════════════
-            $lastDay     = collect();
+            $lastDay = collect();
             $lastDayDate = '';
-    
+
             if ($mainRows->isNotEmpty()) {
                 $lastDate = $mainRows->map(
                     fn($r) => $r->receipt_date
                         ? Carbon::parse($r->receipt_date)->toDateString()
                         : $r->created_at?->toDateString()
                 )->filter()->max();
-    
+
                 if ($lastDate) {
                     $lastDayDate = Carbon::parse($lastDate)->format('d M Y');
-    
+
                     $lastDay = $mainRows
                         ->filter(fn($r) => (
                             ($r->receipt_date
@@ -245,46 +250,46 @@ class ReportController extends Controller
                         ->map(fn($r) => [
                             'supplier_name' => $r->supplier->supplier_name ?? '—',
                             'material_name' => $r->material->material_name
-                                            ?? $r->material->name
-                                            ?? '—',
-                            'received_qty'  => (int) round($r->received_qty ?? 0), // ← whole number
-                            'unit'          => $r->material->unit
-                                            ?? $r->material->uom
-                                            ?? 'KG',
-                            'section'       => $resolveCategory($r),
+                                ?? $r->material->name
+                                ?? '—',
+                            'received_qty' => (int) round($r->received_qty ?? 0), // ← whole number
+                            'unit' => $r->material->unit
+                                ?? $r->material->uom
+                                ?? 'KG',
+                            'section' => $resolveCategory($r),
                         ]);
                 }
             }
-    
+
             return response()->json([
                 'status' => 'ok',
-                'data'   => [
-                    'by_category'            => $byCategory,
-                    'by_material'            => $byMaterial,
-                    'supplier_accumulation'  => $supplierAccumulation,
-                    'last_day'               => $lastDay,
-                    'last_day_date'          => $lastDayDate,
-                    'period_label'           => $periodLabel,
-                    'month_label'            => $monthLabel,
+                'data' => [
+                    'by_category' => $byCategory,
+                    'by_material' => $byMaterial,
+                    'supplier_accumulation' => $supplierAccumulation,
+                    'last_day' => $lastDay,
+                    'last_day_date' => $lastDayDate,
+                    'period_label' => $periodLabel,
+                    'month_label' => $monthLabel,
                 ],
             ]);
-    
+
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Dashboard error', [
-                'msg'   => $e->getMessage(),
+                'msg' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => $e->getMessage(),
-                'data'    => [
-                    'by_category'           => [],
-                    'by_material'           => [],
+                'data' => [
+                    'by_category' => [],
+                    'by_material' => [],
                     'supplier_accumulation' => [],
-                    'last_day'              => [],
-                    'last_day_date'         => '',
-                    'period_label'          => 'Error: ' . $e->getMessage(),
-                    'month_label'           => now()->format('F Y'),
+                    'last_day' => [],
+                    'last_day_date' => '',
+                    'period_label' => 'Error: ' . $e->getMessage(),
+                    'month_label' => now()->format('F Y'),
                 ],
             ], 200);
         }
@@ -1488,8 +1493,8 @@ class ReportController extends Controller
 
         return [
             'id' => $b->id,
-            'date' => $b->date?->format('d/m/Y') ?? '—',
-            'date_raw' => $b->date?->toDateString() ?? '',
+            'date' => $b->date ? Carbon::parse($b->date)->format('d/m/Y') : '—',
+            'date_raw' => $b->date ? Carbon::parse($b->date)->toDateString() : '',
             'batch_no' => $b->batch_no,
             'charge_no' => $b->charge_no ?? '—',
             'rotary_no' => $b->rotary_no,
@@ -1822,9 +1827,9 @@ class ReportController extends Controller
         $query = \App\Models\RefiningBatch::with([
             'material',
             'rawMaterials.material',
-            'rawMaterials.refBatch',     
+            'rawMaterials.refBatch',
             'chemicals',
-            'chemicals.refBatch',       
+            'chemicals.refBatch',
             'processDetails',
             'finishedGoodsSummary.material',
             'drossSummary.material',
@@ -1920,8 +1925,8 @@ class ReportController extends Controller
 
         return [
             'id' => $b->id,
-            'date' => $b->date?->format('d/m/Y') ?? '—',
-            'date_raw' => $b->date?->toDateString() ?? '',
+            'date' => $b->date ? Carbon::parse($b->date)->format('d/m/Y') : '—',
+            'date_raw' => $b->date ? Carbon::parse($b->date)->toDateString() : '',
             'batch_no' => $b->batch_no,
             'pot_no' => $b->pot_no ?? '—',
             'material_name' => $b->material->material_name ?? $b->material->name ?? '—',
@@ -2135,6 +2140,338 @@ class ReportController extends Controller
                 'departments' => $departments,
             ],
         ]);
+    }
+    // ═════════════════════════════════════════════════════════════
+    // STOCK LEDGER REPORT
+    // GET /api/reports/stock-ledger
+    // ═════════════════════════════════════════════════════════════
+    public function stockLedger(Request $request)
+    {
+        $allowedSorts = ['created_at', 'doc_no', 'in_qty', 'out_qty', 'balance_qty'];
+        $sortBy = in_array($request->sort_by, $allowedSorts) ? $request->sort_by : 'created_at';
+        $sortDir = $request->sort_dir === 'asc' ? 'asc' : 'desc';
+        $perPage = min((int) ($request->per_page ?? 50), 500);
+
+        $clean = fn($v) => array_values(array_filter((array) $v, fn($x) => $x !== '' && $x !== null));
+        $materialIds = $clean($request->input('material_id', []));
+        $processTypes = $clean($request->input('process_type', []));
+
+        $base = StockLedger::query()
+            ->where('is_active', true)
+            ->when($request->filled('date_from'), fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
+            ->when($request->filled('date_to'), fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
+            ->when(count($materialIds), fn($q) => $q->whereIn('material_id', $materialIds))
+            ->when(count($processTypes), fn($q) => $q->whereIn('process_type', $processTypes))
+            ->when($request->filled('doc_no'), fn($q) => $q->where('doc_no', 'like', '%' . $request->doc_no . '%'));
+
+        // Totals for the WHOLE filtered result (not just the current page)
+        $totals = (clone $base)
+            ->selectRaw('COALESCE(SUM(in_qty),0) as total_in, COALESCE(SUM(out_qty),0) as total_out')
+            ->first();
+
+        // Closing balance is only meaningful when exactly one material is selected
+        $closingBalance = null;
+        if (count($materialIds) === 1) {
+            $closingBalance = (clone $base)
+                ->orderByDesc('created_at')->orderByDesc('id')
+                ->value('balance_qty');
+        }
+
+        $paginated = (clone $base)
+            ->with('material')
+            ->orderBy($sortBy, $sortDir)
+            ->orderBy('id', $sortDir)
+            ->paginate($perPage);
+
+        $rows = collect($paginated->items())->map(fn($r) => [
+            'id' => $r->id,
+            'date' => $r->created_at ? $r->created_at->format('d/m/Y') : '—',
+            'date_raw' => $r->created_at ? $r->created_at->toDateString() : null,
+            'doc_no' => $r->doc_no ?? '—',
+            'process_type' => $r->process_type ?? '—',
+            'material_code' => $r->material->material_code ?? '',
+            'material_name' => $r->material->material_name ?? $r->material->name ?? '—',
+            'material_desc' => $r->material->secondary_name ?? '',
+            'unit' => $r->material->unit ?? $r->material->uom ?? 'KG',
+            'in_qty' => (float) ($r->in_qty ?? 0),
+            'out_qty' => (float) ($r->out_qty ?? 0),
+            'balance_qty' => (float) ($r->balance_qty ?? 0),
+        ]);
+
+        return response()->json([
+            'status' => 'ok',
+            'data' => $rows->values(),
+            'meta' => [
+                'total' => $paginated->total(),
+                'per_page' => $paginated->perPage(),
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'summary' => [
+                    'total_in' => round((float) ($totals->total_in ?? 0), 3),
+                    'total_out' => round((float) ($totals->total_out ?? 0), 3),
+                    'net' => round((float) ($totals->total_in ?? 0) - (float) ($totals->total_out ?? 0), 3),
+                    'closing_balance' => $closingBalance !== null ? round((float) $closingBalance, 3) : null,
+                ],
+            ],
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // GET /api/reports/stock-ledger/filters
+    // ─────────────────────────────────────────────────────────────
+    public function stockLedgerFilters()
+    {
+        $ledgerMaterialIds = StockLedger::where('is_active', true)
+            ->whereNotNull('material_id')->distinct()->pluck('material_id');
+
+        $materials = Material::whereIn('id', $ledgerMaterialIds)
+            ->orderBy('material_name')
+            ->get()
+            ->map(function ($m) {
+                $name = $m->material_name ?? $m->name ?? '—';
+                $code = $m->material_code ?? '';
+                return [
+                    'id' => $m->id,
+                    'label' => $code ? "{$code} - {$name}" : $name,
+                    'description' => $m->secondary_name ?? '',
+                ];
+            })->values();
+
+        $processTypes = StockLedger::where('is_active', true)
+            ->whereNotNull('process_type')->distinct()->orderBy('process_type')
+            ->pluck('process_type')
+            ->map(fn($p) => ['value' => $p, 'label' => \Illuminate\Support\Str::headline($p)])
+            ->values();
+
+        return response()->json([
+            'status' => 'ok',
+            'data' => compact('materials', 'processTypes'),
+        ]);
+    }
+    // ═════════════════════════════════════════════════════════════
+    // ACID TEST — CATEGORY-WISE BREAKDOWN
+    // GET /api/reports/acid-category-breakdown
+    // ═════════════════════════════════════════════════════════════
+    public function acidCategoryBreakdown(Request $request)
+    {
+        $sortMap = [
+            'lot_number' => null,                                   // numeric-aware, handled below
+            'arrival_date' => 'arrival_date',
+            'received_qty' => 'acid_test_header.received_qty',
+            'net_avg_acid_pct' => 'acid_test_header.net_avg_acid_pct',
+        ];
+        $sortBy = in_array($request->sort_by, array_keys($sortMap), true) ? $request->sort_by : 'lot_number';
+        $sortDir = $request->sort_dir === 'desc' ? 'desc' : 'asc';
+        $perPage = min((int) ($request->per_page ?? 50), 500);
+
+        // Date of Arrival = receiving receipt date (fallback: receiving created date, then test date)
+        $arrival = "COALESCE(
+            (SELECT r.receipt_date FROM receivings r WHERE r.lot_no = acid_test_header.lot_number ORDER BY r.id LIMIT 1),
+            (SELECT DATE(r2.created_at) FROM receivings r2 WHERE r2.lot_no = acid_test_header.lot_number ORDER BY r2.id LIMIT 1),
+            acid_test_header.test_date)";
+
+        $acidOps = ['lte' => '<=', 'gte' => '>=', 'lt' => '<', 'gt' => '>', 'eq' => '='];
+        $acidOp = $acidOps[$request->acid_op] ?? '<=';
+
+        // Submitted acid tests only
+        $base = AcidTesting::query()
+            ->where('acid_test_header.is_active', true)
+            ->where('acid_test_header.status', '>=', 1)
+            ->when($request->filled('supplier_id'), fn($q) => $q->where('acid_test_header.supplier_id', $request->supplier_id))
+            ->when($request->filled('lot_no'), fn($q) => $q->where('acid_test_header.lot_number', 'like', '%' . $request->lot_no . '%'))
+            ->when($request->filled('date_from'), fn($q) => $q->whereRaw("DATE({$arrival}) >= ?", [$request->date_from]))
+            ->when($request->filled('date_to'), fn($q) => $q->whereRaw("DATE({$arrival}) <= ?", [$request->date_to]))
+            ->when(
+                $request->filled('acid_value') && is_numeric($request->acid_value),
+                fn($q) => $q->whereRaw("ROUND(acid_test_header.net_avg_acid_pct, 2) {$acidOp} ?", [(float) $request->acid_value])
+            );
+
+        // ── Category columns come from the Acid Stock Conditions master ──
+        $allConditions = AcidStockCondition::where('is_active', true)->get();
+
+        // Ranged (acid %) conditions first, ascending by min %  — same rule used by AcidTestingController::resolveCondition
+        $ranged = $allConditions
+            ->filter(fn($c) => (float) $c->min_pct > 0 || (float) $c->max_pct > 0)
+            ->sortBy(fn($c) => (float) $c->min_pct)
+            ->values();
+
+        // Then the non-range categories in a fixed order
+        $fixedOrder = ['1000028', '1000024', '1000025', '1000026']; // Industrial, Gel, Traction, MC
+        $rest = $allConditions
+            ->reject(fn($c) => $ranged->contains('id', $c->id))
+            ->sortBy(function ($c) use ($fixedOrder) {
+                $i = array_search((string) $c->stock_code, $fixedOrder, true);
+                return sprintf('%02d-%s', $i === false ? 99 : $i, $c->stock_code);
+            })
+            ->values();
+
+        $ordered = $ranged->concat($rest)->values();
+        $validCodes = $ordered->pluck('stock_code')->map(fn($v) => (string) $v)->all();
+
+        // ── Breakdown for ALL filtered lots (needed for the totals row) ──
+        $allHeaders = (clone $base)->get([
+            'acid_test_header.id',
+            'acid_test_header.net_avg_acid_pct',
+            'acid_test_header.received_qty',
+        ]);
+        $breakdown = $this->acidCategoryBuild($allHeaders, $ranged, $validCodes);
+
+        $totals = ['received_qty' => 0.0, 'total_net' => 0.0, 'cats' => []];
+        foreach ($allHeaders as $h) {
+            $totals['received_qty'] += (float) $h->received_qty;
+            $b = $breakdown[$h->id] ?? null;
+            if (!$b) {
+                continue;
+            }
+            $totals['total_net'] += $b['total_net'];
+            foreach ($b['cats'] as $code => $w) {
+                $totals['cats'][$code] = ($totals['cats'][$code] ?? 0) + $w;
+            }
+        }
+
+        $columns = $ordered->map(fn($c) => [
+            'code' => (string) $c->stock_code,
+            'label' => $c->description,
+        ])->values()->all();
+        if (($totals['cats']['other'] ?? 0) > 0) {
+            $columns[] = ['code' => 'other', 'label' => 'Other / Unclassified'];
+        }
+
+        // ── The page of lots ──
+        $pageQuery = (clone $base)
+            ->selectRaw("acid_test_header.*, {$arrival} as arrival_date")
+            ->with('supplier:id,supplier_name');
+
+        if ($sortBy === 'lot_number') {
+            $pageQuery->orderByRaw("CAST(acid_test_header.lot_number AS UNSIGNED) {$sortDir}")
+                ->orderBy('acid_test_header.lot_number', $sortDir);
+        } else {
+            $pageQuery->orderBy($sortMap[$sortBy], $sortDir)
+                ->orderBy('acid_test_header.id', $sortDir);
+        }
+
+        $paginated = $pageQuery->paginate($perPage);
+
+        $rows = $paginated->getCollection()->map(function ($h) use ($breakdown) {
+            $b = $breakdown[$h->id] ?? ['total_net' => 0, 'cats' => []];
+            return [
+                'id' => $h->id,
+                'lot_number' => $h->lot_number ?? '—',
+                'supplier_name' => $h->supplier->supplier_name ?? '—',
+                'arrival_date' => $h->arrival_date ? Carbon::parse($h->arrival_date)->format('d/m/Y') : '—',
+                'received_qty' => round((float) $h->received_qty, 3),
+                'total_net' => round((float) $b['total_net'], 3),
+                'acid_pct' => round((float) $h->net_avg_acid_pct, 2),
+                'cats' => array_map(fn($v) => round($v, 3), $b['cats']),
+            ];
+        });
+
+        return response()->json([
+            'status' => 'ok',
+            'data' => $rows->values(),
+            'columns' => $columns,
+            'meta' => [
+                'total' => $paginated->total(),
+                'per_page' => $paginated->perPage(),
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'totals' => [
+                    'received_qty' => round($totals['received_qty'], 3),
+                    'total_net' => round($totals['total_net'], 3),
+                    'cats' => array_map(fn($v) => round($v, 3), $totals['cats']),
+                ],
+            ],
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // GET /api/reports/acid-category-breakdown/filters
+    // ─────────────────────────────────────────────────────────────
+    public function acidCategoryBreakdownFilters()
+    {
+        $supplierIds = AcidTesting::where('is_active', true)
+            ->where('status', '>=', 1)
+            ->pluck('supplier_id')->filter()->unique();
+
+        $suppliers = Supplier::whereIn('id', $supplierIds)
+            ->orderBy('supplier_name')
+            ->get(['id', 'supplier_name']);
+
+        return response()->json([
+            'status' => 'ok',
+            'data' => compact('suppliers'),
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // PRIVATE: same range rule as AcidTestingController::resolveCondition
+    // ─────────────────────────────────────────────────────────────
+    private function acidCategoryResolve($ranged, float $pct)
+    {
+        foreach ($ranged as $c) {
+            $min = (float) $c->min_pct;
+            $max = (float) $c->max_pct;
+
+            if ($pct < $min) {
+                continue;
+            }
+            if ($max > 0 && $pct > $max) {
+                continue;
+            }
+            return $c;
+        }
+        return null;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // PRIVATE: net weight per category for each lot.
+    // Mirrors the stock-IN posting in AcidTestingController::updateStatus():
+    //   • acid pallets (type 5 / pallets with acid readings) → the lot's
+    //     acid category, resolved from the lot's net average acid %
+    //   • all other pallets → their own stock code (gel, traction, MC, industrial…)
+    // ─────────────────────────────────────────────────────────────
+    private function acidCategoryBuild($headers, $ranged, array $validCodes): array
+    {
+        $out = [];
+        if ($headers->isEmpty()) {
+            return $out;
+        }
+
+        $acidCodes = ['1000001', '1000002', '1000003', '1000022', '1000052'];
+
+        $batchCode = [];
+        foreach ($headers as $h) {
+            $pct = (float) $h->net_avg_acid_pct;
+            $cond = $pct > 0 ? $this->acidCategoryResolve($ranged, $pct) : null;
+            $batchCode[$h->id] = $cond ? (string) $cond->stock_code : null;
+            $out[$h->id] = ['total_net' => 0.0, 'cats' => []];
+        }
+
+        foreach ($headers->pluck('id')->chunk(1000) as $chunk) {
+            $groups = AcidTestPercentageDetail::query()
+                ->whereIn('acid_test_id', $chunk->all())
+                ->where('is_active', 1)
+                ->where('net_weight', '>', 0)
+                ->selectRaw('acid_test_id, ulab_type, (avg_acid_pct > 0) as has_acid, SUM(net_weight) as net')
+                ->groupBy('acid_test_id', 'ulab_type', DB::raw('(avg_acid_pct > 0)'))
+                ->get();
+
+            foreach ($groups as $g) {
+                $ulab = (string) $g->ulab_type;
+                $isAcidRow = $ulab === '5' || (int) $g->has_acid === 1 || in_array($ulab, $acidCodes, true);
+                $key = $isAcidRow ? ($batchCode[$g->acid_test_id] ?? $ulab) : $ulab;
+
+                if (!in_array($key, $validCodes, true)) {
+                    $key = 'other';
+                }
+
+                $net = (float) $g->net;
+                $out[$g->acid_test_id]['total_net'] += $net;
+                $out[$g->acid_test_id]['cats'][$key] = ($out[$g->acid_test_id]['cats'][$key] ?? 0) + $net;
+            }
+        }
+
+        return $out;
     }
 
 }

@@ -98,6 +98,12 @@ Route::prefix('admin/reports')->name('admin.reports.')->group(function () {
     Route::get('user-activity', [\App\Http\Controllers\Web\ReportWebController::class, 'userActivity'])
         ->name('user_activity');
 
+    Route::get('stock-ledger', [\App\Http\Controllers\Web\ReportWebController::class, 'stockLedger'])
+        ->name('stockLedger');
+
+    Route::get('acid-category-breakdown', [\App\Http\Controllers\Web\ReportWebController::class, 'acidCategoryBreakdown'])
+        ->name('acidCategoryBreakdown');
+
 });
 Route::prefix('admin/settings')->name('admin.settings.')->group(function () {
     Route::get('users', [\App\Http\Controllers\Web\AdminWebController::class, 'users'])->name('users');
